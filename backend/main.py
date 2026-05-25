@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.career_assistant.routes.applications import router as applications_router
+from app.cv_intelligence.routes.resumes import router as resumes_router
 from app.core.config import settings
 
 app = FastAPI(title="CareerPilot API")
@@ -16,6 +17,10 @@ app.add_middleware(
 
 app.include_router(
     applications_router,
+    prefix=settings.api_v1_prefix,
+)
+app.include_router(
+    resumes_router,
     prefix=settings.api_v1_prefix,
 )
 

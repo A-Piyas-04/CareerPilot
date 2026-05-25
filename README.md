@@ -66,38 +66,6 @@ codesprint-2/
 
 ---
 
-## Environment Setup
-
-The root `.env` file is used by Docker Compose for both services. Create or update it with the following variables:
-
-```env
-# ── Frontend (Next.js) ─────────────────────────────────────────────────────
-# Supabase project URL
-NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
-
-# Supabase anon/public key — safe to expose to the browser
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
-
-# Base URL for the FastAPI backend
-NEXT_PUBLIC_API_URL=http://localhost:8000
-
-# ── Backend (FastAPI) ──────────────────────────────────────────────────────
-# Supabase project base URL — must NOT include /rest/v1/ suffix
-SUPABASE_URL=https://<project-ref>.supabase.co
-
-# Supabase service role key — KEEP SECRET, never expose to the browser
-SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
-
-# Anthropic Claude API key (referenced in config, not yet used in routes)
-ANTHROPIC_API_KEY=<your-anthropic-key>
-
-# ── Supabase CLI ───────────────────────────────────────────────────────────
-SUPABASE_DB_PASSWORD=<your-db-password>
-```
-
-> **Important:** `SUPABASE_URL` for the backend must be the bare project URL (e.g. `https://abc.supabase.co`), **not** the REST endpoint (`/rest/v1/`).
-
----
 
 ## Running the Project
 
