@@ -76,13 +76,20 @@ class TestEmbedBatch:
             assert len(vec) == EMBEDDING_DIM
 
     def test_batch_matches_individual_embeddings(self):
-        """Batch and single-text embeddings must produce identical vectors."""
+        """Batch and single-text embeddings must be numerically close.
+
+        PyTorch batch vs single-item encoding can differ at ~7th decimal place
+        due to floating-point non-associativity, so we use approximate comparison.
+        """
+        import numpy as np
+
         texts = ["Python developer", "FastAPI backend"]
         batch_result = embed_batch(texts)
         for i, text in enumerate(texts):
             single = embed_text(text)
-            assert batch_result[i] == single, (
-                f"Batch embedding[{i}] differs from embed_text result"
+            np.testing.assert_allclose(
+                batch_result[i], single, rtol=1e-4, atol=1e-5,
+                err_msg=f"Batch embedding[{i}] differs too much from embed_text result",
             )
 
     def test_order_preserved(self):

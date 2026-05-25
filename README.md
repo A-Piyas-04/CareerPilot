@@ -18,7 +18,9 @@ Built as a full-stack monorepo with **Next.js 16**, **FastAPI**, and **Supabase*
 | Backend | FastAPI + Uvicorn, Python 3.11 |
 | Validation | Pydantic v2, pydantic-settings |
 | Database | Supabase (PostgreSQL 15) with RLS on all tables |
-| Vector Search | pgvector (enabled, for future CV/RAG features) |
+| Vector Search | pgvector (`vector(384)` on `resume_chunks`, cosine similarity retrieval) |
+| CV Embeddings | `sentence-transformers/all-MiniLM-L6-v2` (384-dim) |
+| CV Parsing | `pypdf`, `python-docx` |
 | Containers | Docker Compose |
 | Migrations | Supabase CLI (`supabase db push`) |
 
@@ -35,8 +37,12 @@ codesprint-2/
 │   └── app/
 │       ├── core/               # Config, auth, database clients, enums, base models
 │       ├── career_assistant/   # Models, routes, services (applications fully wired)
-│       ├── cv_intelligence/    # Models only (no routes yet)
+│       ├── cv_intelligence/    # CV upload, parse, chunk, embed, retrieve (backend API)
+│       │   ├── routes/resumes.py
+│       │   └── services/         # parser, section_detector, chunker, embeddings, skills, retrieval
 │       └── job_intelligence/   # Models only (no routes yet)
+│   └── test/
+│       └── CV-intelligence/    # Unit tests for CV pipeline services
 ├── frontend/                   # Next.js application
 │   ├── Dockerfile
 │   ├── next.config.ts
@@ -101,6 +107,16 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
+**First-time CV embedding setup:** The backend downloads `sentence-transformers/all-MiniLM-L6-v2` (~90 MB) on first upload or test run. Set `HF_TOKEN` in the repo root `.env` for faster, authenticated downloads from Hugging Face:
+
+```bash
+# Pre-download the model (optional but recommended before first upload)
+cd backend
+# Windows PowerShell — token is loaded from ../.env when using Docker; for local runs:
+$env:HF_TOKEN = "<your-huggingface-token>"
+python -c "from huggingface_hub import snapshot_download; snapshot_download('sentence-transformers/all-MiniLM-L6-v2')"
+```
+
 **Frontend**
 
 ```bash
@@ -134,7 +150,7 @@ Migrations in `supabase/migrations/`:
 
 ## Testing the Present State
 
-The only fully implemented vertical feature is the **Kanban job application tracker**. Here is a step-by-step test walkthrough.
+Two vertical features are fully implemented on the backend: the **Kanban job application tracker** (full-stack) and the **CV Intelligence pipeline** (backend API + unit tests). Below is a step-by-step walkthrough for both.
 
 ### 1 — Start the stack
 
@@ -155,7 +171,7 @@ Wait until both containers are healthy (you should see Uvicorn and Next.js start
 
 Open the interactive API docs at http://localhost:8000/docs.
 
-You should see all routes under `/api/v1/applications`.
+You should see routes under **`/api/v1/applications`** (Kanban) and **`/api/v1/resumes`** (CV Intelligence).
 
 ### 4 — Use the Kanban board
 
@@ -204,6 +220,75 @@ curl -X PATCH http://localhost:8000/api/v1/applications/<ID>/status \
 
 > To get a `Bearer` token from the browser: open DevTools → Application → Cookies → copy the value of the `sb-*-auth-token` cookie, or use Supabase's `getSession()` in the browser console.
 
+### 7 — CV Intelligence API (backend)
+
+All resume endpoints require `Authorization: Bearer <supabase_access_token>`. The backend uses the Supabase **service role** server-side and enforces ownership via `user_id` on every query.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/v1/resumes/upload` | Upload PDF/DOCX → parse → chunk → embed → store skills |
+| `GET` | `/api/v1/resumes` | List current user's resumes (newest first) |
+| `GET` | `/api/v1/resumes/{resume_id}` | Resume detail + sections + skills + chunk count |
+| `GET` | `/api/v1/resumes/{resume_id}/chunks` | All chunks for a resume |
+| `POST` | `/api/v1/resumes/query` | Semantic search over chunks (cosine similarity) |
+
+**Upload a resume (PowerShell)**
+
+```powershell
+$token = "your_supabase_access_token"
+$filePath = "E:\path\to\my_cv.pdf"
+
+curl.exe -X POST "http://localhost:8000/api/v1/resumes/upload" `
+  -H "Authorization: Bearer $token" `
+  -F "file=@$filePath"
+```
+
+**Query resume chunks (PowerShell)**
+
+```powershell
+$token = "your_supabase_access_token"
+
+curl.exe -X POST "http://localhost:8000/api/v1/resumes/query" `
+  -H "Authorization: Bearer $token" `
+  -H "Content-Type: application/json" `
+  -d '{\"query\": \"Python FastAPI experience\", \"top_k\": 5}'
+```
+
+Optional body fields for query: `resume_id` (scope to one resume), `top_k` (default `5`, max `50`).
+
+**Pipeline (on upload):** validate file → extract text (pypdf / python-docx) → detect sections → chunk (900 chars, 150 overlap) → embed (`all-MiniLM-L6-v2`, 384-dim) → store `resumes`, `resume_sections`, `resume_chunks`, `user_skills` → set resume `is_active`, mark others inactive.
+
+### 8 — CV Intelligence unit tests
+
+```bash
+cd backend
+
+# Fast tests (no model download): parser, section detector, chunker, skill extractor
+python -m pytest test/CV-intelligence/test_resume_parser.py test/CV-intelligence/test_section_detector.py test/CV-intelligence/test_chunker.py test/CV-intelligence/test_skill_extractor.py -v
+
+# Embedding tests (requires all-MiniLM-L6-v2 cached — set HF_TOKEN in .env first)
+$env:HF_TOKEN = "<your-huggingface-token>"   # or rely on repo root .env via Docker
+python -m pytest test/CV-intelligence/test_embedding_service.py -v
+```
+
+---
+
+## Environment Variables
+
+Copy and fill in the repo root `.env` (gitignored). Docker Compose loads it for both services.
+
+| Variable | Used by | Description |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Frontend | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Frontend | Supabase anon key |
+| `NEXT_PUBLIC_API_URL` | Frontend | Backend base URL (e.g. `http://localhost:8000`) |
+| `SUPABASE_URL` | Backend | Bare project URL (no `/rest/v1/` suffix) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Backend | Service role key (server-side only) |
+| `HF_TOKEN` | Backend / local dev | Hugging Face token for embedding model downloads |
+| `ANTHROPIC_API_KEY` | Backend | Claude API (future assistant features) |
+
+See [`backend/.env.example`](backend/.env.example) for a backend-only template.
+
 ---
 
 ## Feature Implementation Status
@@ -213,8 +298,8 @@ curl -X PATCH http://localhost:8000/api/v1/applications/<ID>/status \
 | **Auth (Supabase)** | ✅ | ✅ | — | ✅ Login page + sessions |
 | **Kanban Tracker** | ✅ | ✅ | ✅ Full CRUD + status | ✅ Full Kanban board |
 | **Application History** | ✅ | ✅ | ✅ Included in detail | ✅ Timeline in drawer |
-| CV Upload / Parse | ✅ | ✅ | — | — |
-| User Skills | ✅ | ✅ | — | — |
+| **CV Upload / Parse / RAG** | ✅ | ✅ | ✅ Upload, list, detail, chunks, query | — |
+| **User Skills (from CV)** | ✅ | ✅ | ✅ Extracted on upload | — |
 | Job Search | ✅ | ✅ | — | — |
 | Job Matching | ✅ | ✅ | — | — |
 | AI Chat / Assistant | ✅ | ✅ | — | — |

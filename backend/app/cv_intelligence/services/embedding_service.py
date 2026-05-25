@@ -1,6 +1,8 @@
 """Embedding generation using sentence-transformers all-MiniLM-L6-v2 (384 dimensions)."""
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -10,12 +12,21 @@ EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_DIM: int = 384
 _BATCH_SIZE: int = 32
 
+# Local fallback path: ~/.cache/huggingface/hub/sentence-transformers_all-MiniLM-L6-v2
+_LOCAL_MODEL_DIR: Path = (
+    Path.home() / ".cache" / "huggingface" / "hub" / "sentence-transformers_all-MiniLM-L6-v2"
+)
+
 # Module-level singleton — loaded once on first use
 _model: "_SentenceTransformerType | None" = None
 
 
 def _get_model() -> "_SentenceTransformerType":
-    """Lazy-load and cache the SentenceTransformer model."""
+    """Lazy-load and cache the SentenceTransformer model.
+
+    Loads from the local direct-download cache when available, otherwise falls
+    back to the HuggingFace Hub ID (requires network / HF_TOKEN env var).
+    """
     global _model
     if _model is None:
         try:
@@ -24,7 +35,10 @@ def _get_model() -> "_SentenceTransformerType":
             raise RuntimeError(
                 "sentence-transformers is not installed. Run: pip install sentence-transformers"
             ) from exc
-        _model = SentenceTransformer(EMBEDDING_MODEL)
+
+        # Prefer the pre-downloaded local directory so HF network calls are skipped
+        model_id = str(_LOCAL_MODEL_DIR) if _LOCAL_MODEL_DIR.exists() else EMBEDDING_MODEL
+        _model = SentenceTransformer(model_id)
     return _model
 
 
