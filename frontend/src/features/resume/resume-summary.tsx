@@ -3,7 +3,7 @@
 import { AlertCircle, FileText, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 
-import type { ResumeDetail } from "./types";
+import type { ResumeDetail, ResumeSkill } from "./types";
 import { formatResumeDate, truncateText } from "./types";
 
 type ResumeSummaryProps = {
@@ -185,7 +185,7 @@ export function ResumeSummary({
                   </p>
                 ) : null}
                 <div className="flex flex-wrap gap-2">
-                  {categorySkills.map((skill) => (
+                  {categorySkills.map((skill: ResumeSkill) => (
                     <span
                       className="rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-900"
                       key={skill.id}

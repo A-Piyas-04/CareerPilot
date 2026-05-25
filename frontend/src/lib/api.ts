@@ -4,7 +4,7 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
 
 type ApiOptions = Omit<RequestInit, "body"> & {
-  body?: unknown;
+  body?: Record<string, unknown> | FormData;
 };
 
 export async function apiRequest<T>(path: string, options: ApiOptions = {}) {
@@ -33,7 +33,7 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}) {
       options.body === undefined
         ? undefined
         : isFormData
-          ? options.body
+          ? (options.body as FormData)
           : JSON.stringify(options.body),
   });
 
