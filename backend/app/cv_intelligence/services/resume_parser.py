@@ -14,12 +14,12 @@ def validate_file(filename: str, size: int) -> None:
     ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"Unsupported file type '{ext}'. Allowed: {', '.join(ALLOWED_EXTENSIONS)}",
         )
     if size > MAX_FILE_BYTES:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"File too large ({size} bytes). Maximum allowed is {MAX_FILE_BYTES} bytes.",
         )
 
@@ -35,7 +35,7 @@ def extract_text(filename: str, file_bytes: bytes) -> str:
     text = _normalise(raw)
     if not text:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="No text could be extracted from the uploaded file. "
             "Please ensure the file contains selectable text (not a scanned image).",
         )
