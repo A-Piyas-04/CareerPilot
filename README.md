@@ -1,3 +1,27 @@
+
+    "status": "saved"
+  }'
+```
+#### Example — list applications
+```bash
+curl http://localhost:8000/api/v1/applications \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+#### Example — change status
+```bash
+APP_ID="<application-uuid>"
+curl -X PATCH http://localhost:8000/api/v1/applications/$APP_ID/status \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"new_status": "applied"}'
+```
+---
+## API Reference
+Base URL: `http://localhost:8000`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/` | — | Health check |
+| `GET` | `/health` | — | Health check |
 | `GET` | `/api/v1/applications` | Bearer | List user's applications (optional `?status_filter=`) |
 | `POST` | `/api/v1/applications` | Bearer | Create a manual application |
 | `GET` | `/api/v1/applications/{id}` | Bearer | Get application detail + status history |
