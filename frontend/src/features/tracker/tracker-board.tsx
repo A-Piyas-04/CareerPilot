@@ -2,7 +2,8 @@
 
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, Plus } from "lucide-react";
+import { CalendarDays, LogOut, Plus } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -120,6 +121,13 @@ export function TrackerBoard() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+              href="/calendar"
+            >
+              <CalendarDays className="h-4 w-4" />
+              Calendar
+            </Link>
             <button
               className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
               type="button"
