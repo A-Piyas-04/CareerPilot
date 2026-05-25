@@ -63,3 +63,6 @@ Thumbs.db
 *.pem
 
 .puku/
+
+# ignore a folder named myDocs
+myDocs/

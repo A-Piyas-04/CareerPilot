@@ -13,7 +13,7 @@ def get_supabase_client() -> Client:
     if _supabase_client is None:
         if not settings.supabase_url or not settings.supabase_key:
             raise ValueError(
-                "SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment variables"
+                "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in environment variables"
             )
         _supabase_client = create_client(
             supabase_url=settings.supabase_url,
