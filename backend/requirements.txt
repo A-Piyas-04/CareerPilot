@@ -13,7 +13,7 @@ pypdf
 python-docx
 scikit-learn
 numpy
-anthropic
+google-generativeai
 # sentence-transformers is NOT installed by default — it pulls in PyTorch + CUDA (~2 GB).
 # Only install it when you want semantic embeddings:
 #   pip install sentence-transformers
