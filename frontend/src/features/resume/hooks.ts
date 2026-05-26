@@ -1,7 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-import { getResume, listResumes, queryResume, uploadResume } from "./api";
-import type { ResumeQueryRequest } from "./types";
+import {
+  askCvQuestion,
+  deleteResume,
+  getResume,
+  listResumes,
+  queryResume,
+  uploadResume,
+} from "./api";
+import type { CvAnswerRequest, ResumeQueryRequest } from "./types";
 
 export const resumeKeys = {
   list: ["resumes"] as const,
@@ -33,6 +41,25 @@ export function useUploadResume() {
       queryClient.invalidateQueries({
         queryKey: resumeKeys.detail(resume.id),
       });
+      toast.success(`"${resume.file_name}" uploaded and processed.`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Upload failed. Please try again.");
+    },
+  });
+}
+
+export function useDeleteResume() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteResume,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: resumeKeys.list });
+      toast.success("Resume deleted.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete resume.");
     },
   });
 }
@@ -40,5 +67,14 @@ export function useUploadResume() {
 export function useQueryResume() {
   return useMutation({
     mutationFn: (payload: ResumeQueryRequest) => queryResume(payload),
+  });
+}
+
+export function useAskCvQuestion() {
+  return useMutation({
+    mutationFn: (payload: CvAnswerRequest) => askCvQuestion(payload),
+    onError: (error: Error) => {
+      toast.error(error.message || "Could not get an answer. Try again.");
+    },
   });
 }

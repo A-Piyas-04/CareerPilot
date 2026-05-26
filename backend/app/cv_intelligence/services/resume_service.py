@@ -1,7 +1,6 @@
 """Resume service — orchestrates the full CV ingestion pipeline and read operations."""
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any, Optional
 
@@ -14,31 +13,12 @@ from app.cv_intelligence.models.resume import Resume
 from app.cv_intelligence.models.resume_chunk import ResumeChunk
 from app.cv_intelligence.models.resume_section import ResumeSection
 from app.cv_intelligence.models.user_skill import UserSkill
+from app.cv_intelligence.services._helpers import _row, _rows
 from app.cv_intelligence.services.chunker import chunk_sections
 from app.cv_intelligence.services.embedding_service import embed_batch
 from app.cv_intelligence.services.resume_parser import extract_text, validate_file
 from app.cv_intelligence.services.section_detector import detect_sections
 from app.cv_intelligence.services.skill_extractor import extract_skills
-
-
-# ---------------------------------------------------------------------------
-# Supabase response helpers (same pattern as career_assistant/services)
-# ---------------------------------------------------------------------------
-
-def _rows(response: Any) -> list[dict[str, Any]]:
-    data = getattr(response, "data", None)
-    if data is None and isinstance(response, dict):
-        data = response.get("data")
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict):
-        return [data]
-    return []
-
-
-def _row(response: Any) -> dict[str, Any] | None:
-    rows = _rows(response)
-    return rows[0] if rows else None
 
 
 def _not_found(resource: str = "Resume") -> HTTPException:
@@ -308,6 +288,33 @@ def process_resume(user_id: str, filename: str, file_bytes: bytes) -> Resume:
     except Exception as exc:
         _mark_failed(supabase, resume_id, user_id, str(exc))
         raise_http_for_supabase(exc, context="process resume")
+
+
+# ---------------------------------------------------------------------------
+# Delete operation
+# ---------------------------------------------------------------------------
+
+def delete_resume(user_id: str, resume_id: str) -> None:
+    """
+    Delete a resume row for the authenticated user.
+
+    Cascade DELETE in the DB removes resume_sections and resume_chunks.
+    user_skills rows have resume_id set to NULL (on delete set null).
+    Raises 404 if not found or owned by another user.
+    """
+    _get_owned_resume(user_id, resume_id)  # ownership check / 404
+
+    run_supabase(
+        "delete resume",
+        lambda: (
+            get_supabase_client()
+            .table("resumes")
+            .delete()
+            .eq("id", resume_id)
+            .eq("user_id", user_id)
+            .execute()
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -8,9 +8,13 @@ from fastapi import HTTPException, status
 from supabase import Client
 
 from app.core.supabase_errors import run_supabase
+from app.cv_intelligence.services._helpers import _rows
 from app.cv_intelligence.services.embedding_service import embed_text
 
 logger = logging.getLogger(__name__)
+
+# Chunks with similarity below this threshold are excluded from results.
+MIN_SIMILARITY: float = 0.05
 
 
 def search_chunks(
@@ -19,14 +23,17 @@ def search_chunks(
     supabase: Client,
     resume_id: Optional[str] = None,
     top_k: int = 5,
+    min_similarity: float = MIN_SIMILARITY,
 ) -> list[dict]:
     """
     Embed the query and return the top-k most similar resume chunks for user_id.
 
     Strategy:
-    1. Try the Supabase RPC `match_resume_chunks` (pgvector cosine search).
-    2. If the RPC doesn't exist or fails, fall back to fetching all relevant
-       chunks and ranking with numpy cosine similarity in Python.
+    1. Try the Supabase RPC `match_resume_chunks` (pgvector IVFFlat cosine search).
+    2. If the RPC doesn't exist or returns empty, fall back to fetching all
+       relevant chunks and ranking with numpy cosine similarity in Python.
+
+    Chunks with similarity < min_similarity are filtered out.
 
     Each returned dict has keys:
         chunk_id, resume_id, section_name, chunk_text, similarity
@@ -47,7 +54,8 @@ def search_chunks(
         response = supabase.rpc(rpc_name, params).execute()
         rows = _rows(response)
         if rows:
-            return [_format_rpc_row(r) for r in rows]
+            results = [_format_rpc_row(r) for r in rows]
+            return [r for r in results if r["similarity"] >= min_similarity]
     except Exception as exc:
         logger.warning(
             "pgvector RPC %s unavailable, using numpy fallback: %s",
@@ -62,6 +70,7 @@ def search_chunks(
         supabase=supabase,
         resume_id=resume_id,
         top_k=top_k,
+        min_similarity=min_similarity,
     )
 
 
@@ -71,6 +80,7 @@ def _python_cosine_search(
     supabase: Client,
     resume_id: Optional[str],
     top_k: int,
+    min_similarity: float,
 ) -> list[dict]:
     """Fetch chunks for the user and rank by cosine similarity using numpy."""
     try:
@@ -114,7 +124,8 @@ def _python_cosine_search(
         if c_norm == 0:
             continue
         similarity = float(np.dot(q_vec, c_vec / c_norm))
-        scored.append((similarity, row))
+        if similarity >= min_similarity:
+            scored.append((similarity, row))
 
     scored.sort(key=lambda x: x[0], reverse=True)
     top = scored[:top_k]
@@ -152,12 +163,3 @@ def _format_rpc_row(row: dict) -> dict:
         "chunk_text": row.get("chunk_text"),
         "similarity": round(float(row.get("similarity", 0.0)), 6),
     }
-
-
-def _rows(response: Any) -> list[dict]:
-    data = getattr(response, "data", None)
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict):
-        return [data]
-    return []

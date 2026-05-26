@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "CareerPilot",
-  description: "CareerPilot application tracker",
+  description: "AI-powered career co-pilot — job tracker, CV intelligence, and career planning.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-[#f6f7f9]">
         <Providers>{children}</Providers>
       </body>
     </html>

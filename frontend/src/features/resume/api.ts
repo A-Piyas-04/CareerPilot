@@ -5,6 +5,8 @@ import {
   MAX_RESUME_FILE_BYTES,
 } from "./types";
 import type {
+  CvAnswerRequest,
+  CvAnswerResponse,
   Resume,
   ResumeDetail,
   ResumeQueryRequest,
@@ -48,11 +50,28 @@ export function uploadResume(file: File) {
   });
 }
 
+export function deleteResume(resumeId: string) {
+  return apiRequest<void>(`/api/v1/resumes/${resumeId}`, {
+    method: "DELETE",
+  });
+}
+
 export function queryResume(payload: ResumeQueryRequest) {
   return apiRequest<ResumeQueryResponse>("/api/v1/resumes/query", {
     method: "POST",
     body: {
       query: payload.query,
+      resume_id: payload.resume_id,
+      top_k: payload.top_k ?? 5,
+    },
+  });
+}
+
+export function askCvQuestion(payload: CvAnswerRequest) {
+  return apiRequest<CvAnswerResponse>("/api/v1/resumes/answer", {
+    method: "POST",
+    body: {
+      question: payload.question,
       resume_id: payload.resume_id,
       top_k: payload.top_k ?? 5,
     },
