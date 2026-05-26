@@ -1,4 +1,4 @@
-"""Tests for embedding_service — vector generation with all-MiniLM-L6-v2."""
+"""Tests for embedding_service — HashingVectorizer 384-dim vectors."""
 import pytest
 
 from app.cv_intelligence.services.embedding_service import (
@@ -6,10 +6,6 @@ from app.cv_intelligence.services.embedding_service import (
     embed_batch,
     embed_text,
 )
-
-# These tests load the sentence-transformer model on first run (~100MB download
-# on a fresh machine). Subsequent runs are fast because the model is cached.
-# The model singleton is shared across all tests in this session.
 
 
 class TestEmbedText:
@@ -36,23 +32,30 @@ class TestEmbedText:
         v2 = embed_text("Accountant with Excel skills")
         assert v1 != v2
 
-    def test_similar_texts_produce_similar_vectors(self):
-        """Cosine similarity between semantically close texts should be high."""
+    def test_overlapping_texts_higher_similarity_than_unrelated(self):
+        """Texts with shared tokens should be more similar than unrelated pairs."""
         import numpy as np
 
-        v1 = np.array(embed_text("Python software engineer"))
-        v2 = np.array(embed_text("Python developer"))
-        cos_sim = float(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
-        assert cos_sim > 0.8, f"Expected high similarity, got {cos_sim:.3f}"
+        def cosine(a: list[float], b: list[float]) -> float:
+            va, vb = np.array(a), np.array(b)
+            return float(np.dot(va, vb) / (np.linalg.norm(va) * np.linalg.norm(vb)))
 
-    def test_dissimilar_texts_lower_similarity(self):
-        """Cosine similarity between unrelated texts should be lower."""
+        v_python_eng = embed_text("Python software engineer")
+        v_python_dev = embed_text("Python developer")
+        v_chef = embed_text("Professional pastry chef with baking expertise")
+
+        overlap_sim = cosine(v_python_eng, v_python_dev)
+        unrelated_sim = cosine(v_python_eng, v_chef)
+        assert overlap_sim > unrelated_sim
+
+    def test_identical_texts_unit_cosine_similarity(self):
         import numpy as np
 
-        v1 = np.array(embed_text("Python backend developer"))
-        v2 = np.array(embed_text("Professional pastry chef with baking expertise"))
+        text = "Python backend developer"
+        v1 = np.array(embed_text(text))
+        v2 = np.array(embed_text(text))
         cos_sim = float(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
-        assert cos_sim < 0.85, f"Expected lower similarity for unrelated texts, got {cos_sim:.3f}"
+        assert cos_sim == pytest.approx(1.0, rel=1e-5)
 
 
 class TestEmbedBatch:
@@ -76,24 +79,13 @@ class TestEmbedBatch:
             assert len(vec) == EMBEDDING_DIM
 
     def test_batch_matches_individual_embeddings(self):
-        """Batch and single-text embeddings must be numerically close.
-
-        PyTorch batch vs single-item encoding can differ at ~7th decimal place
-        due to floating-point non-associativity, so we use approximate comparison.
-        """
-        import numpy as np
-
         texts = ["Python developer", "FastAPI backend"]
         batch_result = embed_batch(texts)
         for i, text in enumerate(texts):
             single = embed_text(text)
-            np.testing.assert_allclose(
-                batch_result[i], single, rtol=1e-4, atol=1e-5,
-                err_msg=f"Batch embedding[{i}] differs too much from embed_text result",
-            )
+            assert batch_result[i] == single
 
     def test_order_preserved(self):
-        """Embeddings must be returned in the same order as input texts."""
         texts = ["alpha text", "beta text", "gamma text"]
         batch = embed_batch(texts)
         singles = [embed_text(t) for t in texts]

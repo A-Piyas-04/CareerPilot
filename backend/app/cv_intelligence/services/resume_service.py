@@ -8,6 +8,7 @@ from typing import Any, Optional
 from fastapi import HTTPException, status
 
 from app.core.database import get_supabase_client
+from app.core.supabase_errors import raise_http_for_supabase, run_supabase
 from app.core.enums import ResumeStatus
 from app.cv_intelligence.models.resume import Resume
 from app.cv_intelligence.models.resume_chunk import ResumeChunk
@@ -53,13 +54,16 @@ def _not_found(resource: str = "Resume") -> HTTPException:
 
 def list_resumes(user_id: str) -> list[Resume]:
     """Return all resumes for the user, newest first."""
-    response = (
-        get_supabase_client()
-        .table("resumes")
-        .select("*")
-        .eq("user_id", user_id)
-        .order("created_at", desc=True)
-        .execute()
+    response = run_supabase(
+        "list resumes",
+        lambda: (
+            get_supabase_client()
+            .table("resumes")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .execute()
+        ),
     )
     return [Resume(**item) for item in _rows(response)]
 
@@ -76,34 +80,43 @@ def get_resume_detail(user_id: str, resume_id: str) -> dict[str, Any]:
     """
     resume = _get_owned_resume(user_id, resume_id)
 
-    sections_resp = (
-        get_supabase_client()
-        .table("resume_sections")
-        .select("*")
-        .eq("resume_id", resume_id)
-        .eq("user_id", user_id)
-        .order("section_order")
-        .execute()
+    sections_resp = run_supabase(
+        "list resume sections",
+        lambda: (
+            get_supabase_client()
+            .table("resume_sections")
+            .select("*")
+            .eq("resume_id", resume_id)
+            .eq("user_id", user_id)
+            .order("section_order")
+            .execute()
+        ),
     )
     sections = [ResumeSection(**s) for s in _rows(sections_resp)]
 
-    skills_resp = (
-        get_supabase_client()
-        .table("user_skills")
-        .select("*")
-        .eq("resume_id", resume_id)
-        .eq("user_id", user_id)
-        .execute()
+    skills_resp = run_supabase(
+        "list resume skills",
+        lambda: (
+            get_supabase_client()
+            .table("user_skills")
+            .select("*")
+            .eq("resume_id", resume_id)
+            .eq("user_id", user_id)
+            .execute()
+        ),
     )
     skills = [UserSkill(**sk) for sk in _rows(skills_resp)]
 
-    chunk_count_resp = (
-        get_supabase_client()
-        .table("resume_chunks")
-        .select("id", count="exact")
-        .eq("resume_id", resume_id)
-        .eq("user_id", user_id)
-        .execute()
+    chunk_count_resp = run_supabase(
+        "count resume chunks",
+        lambda: (
+            get_supabase_client()
+            .table("resume_chunks")
+            .select("id", count="exact")
+            .eq("resume_id", resume_id)
+            .eq("user_id", user_id)
+            .execute()
+        ),
     )
     chunk_count = getattr(chunk_count_resp, "count", 0) or len(_rows(chunk_count_resp))
 
@@ -118,14 +131,20 @@ def get_resume_detail(user_id: str, resume_id: str) -> dict[str, Any]:
 def get_resume_chunks(user_id: str, resume_id: str) -> list[ResumeChunk]:
     """Return all chunks for a resume, enforcing ownership."""
     _get_owned_resume(user_id, resume_id)
-    response = (
-        get_supabase_client()
-        .table("resume_chunks")
-        .select("id, resume_id, user_id, section_id, section_name, chunk_index, chunk_text, token_count, metadata, created_at")
-        .eq("resume_id", resume_id)
-        .eq("user_id", user_id)
-        .order("chunk_index")
-        .execute()
+    response = run_supabase(
+        "list resume chunks",
+        lambda: (
+            get_supabase_client()
+            .table("resume_chunks")
+            .select(
+                "id, resume_id, user_id, section_id, section_name, chunk_index, "
+                "chunk_text, token_count, metadata, created_at"
+            )
+            .eq("resume_id", resume_id)
+            .eq("user_id", user_id)
+            .order("chunk_index")
+            .execute()
+        ),
     )
     return [ResumeChunk(**item) for item in _rows(response)]
 
@@ -151,18 +170,21 @@ def process_resume(user_id: str, filename: str, file_bytes: bytes) -> Resume:
     validate_file(filename, len(file_bytes))
 
     # 2. Create resume row with status=processing
-    insert_resp = (
-        supabase.table("resumes")
-        .insert(
-            {
-                "user_id": user_id,
-                "file_name": filename,
-                "file_type": file_type,
-                "status": ResumeStatus.PROCESSING.value,
-                "is_active": True,
-            }
-        )
-        .execute()
+    insert_resp = run_supabase(
+        "create resume",
+        lambda: (
+            supabase.table("resumes")
+            .insert(
+                {
+                    "user_id": user_id,
+                    "file_name": filename,
+                    "file_type": file_type,
+                    "status": ResumeStatus.PROCESSING.value,
+                    "is_active": True,
+                }
+            )
+            .execute()
+        ),
     )
     created = _row(insert_resp)
     if not created:
@@ -281,14 +303,11 @@ def process_resume(user_id: str, filename: str, file_bytes: bytes) -> Resume:
         return Resume(**(final or created))
 
     except HTTPException:
-        _mark_failed(supabase, resume_id, user_id, "File validation failed.")
+        _mark_failed(supabase, resume_id, user_id, "Resume processing failed.")
         raise
     except Exception as exc:
         _mark_failed(supabase, resume_id, user_id, str(exc))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Resume processing failed: {exc}",
-        ) from exc
+        raise_http_for_supabase(exc, context="process resume")
 
 
 # ---------------------------------------------------------------------------
@@ -296,14 +315,17 @@ def process_resume(user_id: str, filename: str, file_bytes: bytes) -> Resume:
 # ---------------------------------------------------------------------------
 
 def _get_owned_resume(user_id: str, resume_id: str) -> Resume:
-    response = (
-        get_supabase_client()
-        .table("resumes")
-        .select("*")
-        .eq("id", resume_id)
-        .eq("user_id", user_id)
-        .limit(1)
-        .execute()
+    response = run_supabase(
+        "get resume",
+        lambda: (
+            get_supabase_client()
+            .table("resumes")
+            .select("*")
+            .eq("id", resume_id)
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        ),
     )
     row = _row(response)
     if not row:

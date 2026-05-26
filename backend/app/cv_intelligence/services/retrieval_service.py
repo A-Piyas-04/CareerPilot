@@ -1,12 +1,16 @@
 """Semantic chunk retrieval — pgvector RPC with numpy cosine fallback."""
 from __future__ import annotations
 
+import logging
 from typing import Any, Optional
 
 from fastapi import HTTPException, status
 from supabase import Client
 
+from app.core.supabase_errors import run_supabase
 from app.cv_intelligence.services.embedding_service import embed_text
+
+logger = logging.getLogger(__name__)
 
 
 def search_chunks(
@@ -30,6 +34,7 @@ def search_chunks(
     query_embedding = embed_text(query)
 
     # --- Attempt pgvector RPC first ---
+    rpc_name = "match_resume_chunks_with_resume" if resume_id else "match_resume_chunks"
     try:
         params: dict[str, Any] = {
             "query_embedding": query_embedding,
@@ -39,14 +44,16 @@ def search_chunks(
         if resume_id:
             params["match_resume_id"] = resume_id
 
-        rpc_name = "match_resume_chunks_with_resume" if resume_id else "match_resume_chunks"
         response = supabase.rpc(rpc_name, params).execute()
         rows = _rows(response)
         if rows:
             return [_format_rpc_row(r) for r in rows]
-    except Exception:
-        # RPC not found or failed — fall through to Python fallback
-        pass
+    except Exception as exc:
+        logger.warning(
+            "pgvector RPC %s unavailable, using numpy fallback: %s",
+            rpc_name,
+            exc,
+        )
 
     # --- Python / numpy fallback ---
     return _python_cosine_search(
@@ -79,7 +86,7 @@ def _python_cosine_search(
     if resume_id:
         query_select = query_select.eq("resume_id", resume_id)
 
-    response = query_select.execute()
+    response = run_supabase("fetch resume chunks for search", query_select.execute)
     rows = _rows(response)
 
     if not rows:
