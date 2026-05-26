@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     project_name: str = "CareerPilot"
     debug: bool = Field(default=False, validation_alias="DEBUG")
 
+    # AI / ML
+    anthropic_api_key: str = Field(default="", validation_alias="ANTHROPIC_API_KEY")
+    embedding_backend: str = Field(default="hashing", validation_alias="EMBEDDING_BACKEND")
+
     # CORS
     cors_origins: list[str] = Field(
         default_factory=lambda: [

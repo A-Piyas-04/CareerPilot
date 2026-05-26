@@ -2,12 +2,12 @@
 
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
 import { useResume, useResumes } from "./hooks";
-import { ResumeQueryBox } from "./resume-query-box";
+import { ResumeAnswerBox } from "./resume-answer-box";
 import { ResumeSummary } from "./resume-summary";
 import { ResumeUploadCard } from "./resume-upload-card";
 import {
@@ -20,16 +20,17 @@ const BADGE_STYLES: Record<
   ReturnType<typeof getPageStatusBadge>,
   string
 > = {
-  no_cv: "bg-zinc-100 text-zinc-700",
+  no_cv:      "bg-zinc-100 text-zinc-600",
   processing: "bg-amber-100 text-amber-900",
-  failed: "bg-red-100 text-red-800",
-  rag_ready: "bg-emerald-100 text-emerald-800",
+  failed:     "bg-red-100 text-red-800",
+  rag_ready:  "bg-emerald-100 text-emerald-800",
 };
 
 export function ResumePageClient() {
   const router = useRouter();
   const resumesQuery = useResumes();
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
+  const uploadCardRef = useRef<HTMLDivElement>(null);
 
   const resumes = resumesQuery.data ?? [];
   const primaryResume = useMemo(() => pickPrimaryResume(resumes), [resumes]);
@@ -60,18 +61,18 @@ export function ResumePageClient() {
     setSelectedResumeId(resumeId);
   }
 
+  function handleRequestReupload() {
+    uploadCardRef.current?.scrollIntoView({ behavior: "smooth" });
+  }
+
   return (
     <main className="min-h-screen bg-[#f6f7f9]">
+      {/* Page header */}
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              CareerPilot
-            </p>
-            <h1 className="text-2xl font-semibold text-zinc-950">
-              CV Intelligence
-            </h1>
-            <p className="mt-1 text-sm text-zinc-600">
+            <h1 className="text-xl font-semibold text-zinc-950">CV Intelligence</h1>
+            <p className="mt-0.5 text-sm text-zinc-500">
               Upload your resume and turn it into searchable career context.
             </p>
           </div>
@@ -83,7 +84,7 @@ export function ResumePageClient() {
               {PAGE_STATUS_LABELS[pageBadge]}
             </span>
             <button
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+              className="flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-900"
               type="button"
               onClick={handleSignOut}
             >
@@ -94,23 +95,22 @@ export function ResumePageClient() {
         </div>
       </header>
 
+      {/* Body */}
       <div className="mx-auto max-w-6xl px-5 py-6">
-        {resumesQuery.error ? (
-          <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        {resumesQuery.error && (
+          <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
             {resumesQuery.error.message}
           </p>
-        ) : null}
+        )}
 
-        {resumes.length > 1 ? (
-          <div className="mb-4">
-            <label
-              className="text-sm font-medium text-zinc-800"
-              htmlFor="resume-select"
-            >
-              Resume
+        {/* Multi-resume selector */}
+        {resumes.length > 1 && (
+          <div className="mb-5">
+            <label className="text-sm font-medium text-zinc-800" htmlFor="resume-select">
+              Active resume
             </label>
             <select
-              className="mt-1 block w-full max-w-md rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900"
+              className="mt-1 block w-full max-w-md rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
               id="resume-select"
               value={effectiveResumeId ?? ""}
               onChange={(e) => setSelectedResumeId(e.target.value)}
@@ -123,20 +123,25 @@ export function ResumePageClient() {
               ))}
             </select>
           </div>
-        ) : null}
+        )}
 
         <div className="grid gap-6 lg:grid-cols-2">
+          {/* Left column: upload + summary */}
           <div className="space-y-6">
-            <ResumeUploadCard onUploadSuccess={handleUploadSuccess} />
+            <div ref={uploadCardRef}>
+              <ResumeUploadCard onUploadSuccess={handleUploadSuccess} />
+            </div>
             <ResumeSummary
               detail={detailQuery.data}
               error={detailQuery.error}
               hasResumes={resumes.length > 0}
               isLoading={resumesQuery.isLoading || detailQuery.isLoading}
+              onRequestReupload={handleRequestReupload}
             />
           </div>
 
-          <ResumeQueryBox
+          {/* Right column: AI answer box */}
+          <ResumeAnswerBox
             resumeId={effectiveResumeId ?? undefined}
             resumeStatus={selectedResume?.status}
           />
