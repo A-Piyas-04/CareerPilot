@@ -9,6 +9,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     Text,
@@ -52,6 +53,9 @@ class Application(Base, TimestampMixin):
             "job_id is not null or nullif(btrim(manual_job_title), '') is not null",
             name="applications_has_job_or_manual_title",
         ),
+        Index("idx_applications_user_id", "user_id"),
+        Index("idx_applications_job_id", "job_id"),
+        Index("idx_applications_status", "status"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -91,6 +95,10 @@ class Application(Base, TimestampMixin):
 
 class ApplicationHistory(Base):
     __tablename__ = "application_history"
+    __table_args__ = (
+        Index("idx_application_history_application_id", "application_id"),
+        Index("idx_application_history_changed_at", "changed_at"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -118,6 +126,10 @@ class ApplicationHistory(Base):
 
 class AssistantConversation(Base, TimestampMixin):
     __tablename__ = "assistant_conversations"
+    __table_args__ = (
+        Index("idx_assistant_conversations_user_id", "user_id"),
+        Index("idx_assistant_conversations_updated_at", "updated_at"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -137,6 +149,11 @@ class AssistantConversation(Base, TimestampMixin):
 
 class AssistantMessage(Base, CreatedAtMixin):
     __tablename__ = "assistant_messages"
+    __table_args__ = (
+        Index("idx_assistant_messages_conversation_id", "conversation_id"),
+        Index("idx_assistant_messages_user_id", "user_id"),
+        Index("idx_assistant_messages_created_at", "created_at"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -173,6 +190,11 @@ class AssistantMessage(Base, CreatedAtMixin):
 
 class CoverLetter(Base, TimestampMixin):
     __tablename__ = "cover_letters"
+    __table_args__ = (
+        Index("idx_cover_letters_user_id", "user_id"),
+        Index("idx_cover_letters_resume_id", "resume_id"),
+        Index("idx_cover_letters_job_id", "job_id"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -203,6 +225,10 @@ class CoverLetter(Base, TimestampMixin):
 
 class Roadmap(Base, TimestampMixin):
     __tablename__ = "roadmaps"
+    __table_args__ = (
+        Index("idx_roadmaps_user_id", "user_id"),
+        Index("idx_roadmaps_target_role", "target_role"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -224,6 +250,12 @@ class Roadmap(Base, TimestampMixin):
 
 class RoadmapItem(Base, CreatedAtMixin):
     __tablename__ = "roadmap_items"
+    __table_args__ = (
+        Index("idx_roadmap_items_roadmap_id", "roadmap_id"),
+        Index("idx_roadmap_items_user_id", "user_id"),
+        Index("idx_roadmap_items_status", "status"),
+        Index("idx_roadmap_items_week_number", "week_number"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -259,6 +291,11 @@ class RoadmapItem(Base, CreatedAtMixin):
 
 class Goal(Base, TimestampMixin):
     __tablename__ = "goals"
+    __table_args__ = (
+        Index("idx_goals_user_id", "user_id"),
+        Index("idx_goals_status", "status"),
+        Index("idx_goals_target_date", "target_date"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -284,6 +321,11 @@ class Task(Base, TimestampMixin):
     __tablename__ = "tasks"
     __table_args__ = (
         CheckConstraint("priority between 1 and 3", name="tasks_priority_range"),
+        Index("idx_tasks_user_id", "user_id"),
+        Index("idx_tasks_goal_id", "goal_id"),
+        Index("idx_tasks_status", "status"),
+        Index("idx_tasks_priority", "priority"),
+        Index("idx_tasks_due_date", "due_date"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -329,6 +371,13 @@ class Task(Base, TimestampMixin):
 
 class CalendarEvent(Base, TimestampMixin):
     __tablename__ = "calendar_events"
+    __table_args__ = (
+        Index("idx_calendar_events_user_id", "user_id"),
+        Index("idx_calendar_events_task_id", "task_id"),
+        Index("idx_calendar_events_application_id", "application_id"),
+        Index("idx_calendar_events_event_type", "event_type"),
+        Index("idx_calendar_events_start_time", "start_time"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -366,6 +415,11 @@ class CalendarEvent(Base, TimestampMixin):
 
 class SkillGapAnalysis(Base, CreatedAtMixin):
     __tablename__ = "skill_gap_analysis"
+    __table_args__ = (
+        Index("idx_skill_gap_analysis_user_id", "user_id"),
+        Index("idx_skill_gap_analysis_target_role", "target_role"),
+        Index("idx_skill_gap_analysis_created_at", "created_at"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

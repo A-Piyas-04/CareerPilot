@@ -1,7 +1,7 @@
 """Profile ORM entity."""
 import uuid
 
-from sqlalchemy import Column, ForeignKey, Table, Text
+from sqlalchemy import Column, ForeignKey, Index, Table, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -23,6 +23,10 @@ auth_users = Table(
 
 class Profile(Base, TimestampMixin):
     __tablename__ = "profiles"
+    __table_args__ = (
+        Index("idx_profiles_email", "email"),
+        Index("idx_profiles_target_role", "target_role"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

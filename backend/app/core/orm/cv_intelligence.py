@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Text,
     UniqueConstraint,
@@ -32,6 +33,11 @@ resume_status_pg = ENUM(
 
 class Resume(Base, TimestampMixin):
     __tablename__ = "resumes"
+    __table_args__ = (
+        Index("idx_resumes_user_id", "user_id"),
+        Index("idx_resumes_status", "status"),
+        Index("idx_resumes_is_active", "is_active"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -61,6 +67,11 @@ class Resume(Base, TimestampMixin):
 
 class ResumeSection(Base, CreatedAtMixin):
     __tablename__ = "resume_sections"
+    __table_args__ = (
+        Index("idx_resume_sections_resume_id", "resume_id"),
+        Index("idx_resume_sections_user_id", "user_id"),
+        Index("idx_resume_sections_section_name", "section_name"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -92,6 +103,17 @@ class ResumeSection(Base, CreatedAtMixin):
 
 class ResumeChunk(Base, CreatedAtMixin):
     __tablename__ = "resume_chunks"
+    __table_args__ = (
+        Index("idx_resume_chunks_resume_id", "resume_id"),
+        Index("idx_resume_chunks_user_id", "user_id"),
+        Index("idx_resume_chunks_section_id", "section_id"),
+        Index(
+            "idx_resume_chunks_embedding",
+            "embedding",
+            postgresql_using="ivfflat",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -128,7 +150,13 @@ class ResumeChunk(Base, CreatedAtMixin):
 
 class UserSkill(Base, CreatedAtMixin):
     __tablename__ = "user_skills"
-    __table_args__ = (UniqueConstraint("user_id", "skill_name"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "skill_name"),
+        Index("idx_user_skills_user_id", "user_id"),
+        Index("idx_user_skills_resume_id", "resume_id"),
+        Index("idx_user_skills_category", "category"),
+        Index("idx_user_skills_skill_name", "skill_name"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

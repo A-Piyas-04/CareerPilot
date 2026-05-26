@@ -7,6 +7,7 @@ from sqlalchemy import (
     ARRAY,
     Date,
     ForeignKey,
+    Index,
     Numeric,
     Text,
     UniqueConstraint,
@@ -22,6 +23,10 @@ from app.core.orm.base import CreatedAtMixin
 
 class JobSearch(Base, CreatedAtMixin):
     __tablename__ = "job_searches"
+    __table_args__ = (
+        Index("idx_job_searches_user_id", "user_id"),
+        Index("idx_job_searches_created_at", "created_at"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -43,6 +48,12 @@ class JobSearch(Base, CreatedAtMixin):
 
 class Job(Base, CreatedAtMixin):
     __tablename__ = "jobs"
+    __table_args__ = (
+        Index("idx_jobs_search_id", "search_id"),
+        Index("idx_jobs_title", "title"),
+        Index("idx_jobs_company", "company"),
+        Index("idx_jobs_location", "location"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -71,7 +82,13 @@ class Job(Base, CreatedAtMixin):
 
 class JobMatch(Base, CreatedAtMixin):
     __tablename__ = "job_matches"
-    __table_args__ = (UniqueConstraint("user_id", "job_id", "resume_id"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "job_id", "resume_id"),
+        Index("idx_job_matches_user_id", "user_id"),
+        Index("idx_job_matches_job_id", "job_id"),
+        Index("idx_job_matches_resume_id", "resume_id"),
+        Index("idx_job_matches_fit_score", "fit_score"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
