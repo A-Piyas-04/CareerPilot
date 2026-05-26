@@ -11,4 +11,7 @@ python-docx
 scikit-learn
 numpy
 anthropic
-sentence-transformers
+# sentence-transformers is NOT installed by default — it pulls in PyTorch + CUDA (~2 GB).
+# Only install it when you want semantic embeddings:
+#   pip install sentence-transformers
+# Then set EMBEDDING_BACKEND=transformers in backend/.env

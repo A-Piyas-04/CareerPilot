@@ -460,7 +460,6 @@ No automated integration tests against live Supabase — manual testing required
 
 - `pypdf`, `python-docx` — parsing
 - `scikit-learn` — HashingVectorizer embeddings (default)
-- `sentence-transformers` — semantic embeddings (when `EMBEDDING_BACKEND=transformers`)
 - `numpy` — retrieval fallback cosine similarity
 - `python-multipart` — multipart upload
 - `anthropic` — Claude API for `/answer`

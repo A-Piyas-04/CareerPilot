@@ -46,7 +46,7 @@ Four vertical features are fully wired end-to-end today:
 codesprint-2/
 ├── backend/
 │   ├── main.py                 # FastAPI app, CORS, exception handlers, routers
-│   ├── requirements.txt        # fastapi, supabase, pypdf, python-docx, scikit-learn, numpy, anthropic, sentence-transformers…
+│   ├── requirements.txt        # fastapi, supabase, pypdf, python-docx, scikit-learn, numpy, anthropic (sentence-transformers opt-in)
 │   ├── Dockerfile
 │   ├── .env.example
 │   └── app/

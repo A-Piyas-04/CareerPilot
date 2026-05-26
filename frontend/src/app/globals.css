@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "react-big-calendar/lib/css/react-big-calendar.css";
 
 :root {
   --background: #f6f7f9;

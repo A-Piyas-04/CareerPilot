@@ -293,9 +293,16 @@ The home route (`/`) redirects to `/tracker`. If you add more authenticated page
 
 **Added in May 2026 refactor:**
 
-- `anthropic` — Claude LLM integration
-- `sentence-transformers` — optional semantic embedding backend
+- `anthropic` — Claude LLM integration (in `requirements.txt`)
 - `sonner` (frontend) — toast notifications
+
+**Intentionally NOT in `requirements.txt`:**
+
+- `sentence-transformers` — pulls PyTorch + NVIDIA CUDA packages (~2 GB); times out Docker builds. Install manually only when setting `EMBEDDING_BACKEND=transformers`:
+
+```bash
+pip install sentence-transformers
+```
 
 **Removed from active default path:**
 
