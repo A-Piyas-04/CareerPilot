@@ -4,7 +4,7 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
 
 type ApiOptions = Omit<RequestInit, "body"> & {
-  body?: unknown;
+  body?: Record<string, unknown> | FormData;
 };
 
 export async function apiRequest<T>(path: string, options: ApiOptions = {}) {
@@ -20,14 +20,21 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}) {
   const headers = new Headers(options.headers);
   headers.set("Authorization", `Bearer ${session.access_token}`);
 
-  if (options.body !== undefined) {
+  const isFormData = options.body instanceof FormData;
+
+  if (options.body !== undefined && !isFormData) {
     headers.set("Content-Type", "application/json");
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    body:
+      options.body === undefined
+        ? undefined
+        : isFormData
+          ? (options.body as FormData)
+          : JSON.stringify(options.body),
   });
 
   if (response.status === 204) {

@@ -1,0 +1,1 @@
+used "scklit-learn" instead of "sentence-transformers" for faster docker build
