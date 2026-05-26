@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
+import { AppNav } from "@/components/nav/AppNav";
 import { TrackerBoard } from "@/features/tracker/tracker-board";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function TrackerPage() {
   const supabase = await createClient();
@@ -13,5 +14,10 @@ export default async function TrackerPage() {
     redirect("/login?next=/tracker");
   }
 
-  return <TrackerBoard />;
+  return (
+    <>
+      <AppNav />
+      <TrackerBoard />
+    </>
+  );
 }

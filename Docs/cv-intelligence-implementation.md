@@ -3,13 +3,13 @@
 > Last updated: May 26, 2026  
 > Module owner area: `backend/app/cv_intelligence/`, `frontend/src/features/resume/`
 
-This document describes how CV Intelligence is built end-to-end: data model, ingestion pipeline, embeddings, retrieval, API contracts, frontend integration, and tests.
+This document describes how CV Intelligence is built end-to-end: data model, ingestion pipeline, embeddings, LLM answers, retrieval, API contracts, frontend integration, and tests.
 
 ---
 
 ## 1. Purpose and scope
 
-CV Intelligence turns an uploaded resume (PDF or DOCX) into structured, searchable data:
+CV Intelligence turns an uploaded resume (PDF or DOCX) into structured, searchable data, and grounds AI answers in that data:
 
 | Output | Storage | Used for |
 |---|---|---|
@@ -18,9 +18,10 @@ CV Intelligence turns an uploaded resume (PDF or DOCX) into structured, searchab
 | Sections | `resume_sections` | Human-readable structure |
 | Chunks + vectors | `resume_chunks` | RAG / semantic search |
 | Skills | `user_skills` | Profile skills, future job matching |
+| AI answers | None (generated at request time) | User questions grounded in CV |
 
-**In scope today:** upload, parse, chunk, embed, extract skills, list/detail/query APIs, `/resume` UI.  
-**Out of scope today:** file storage in Supabase Storage, LLM answers over chunks, job-resume matching.
+**In scope:** upload, parse, chunk, embed, skill extract, list/detail/query/answer/delete APIs, `/resume` UI.  
+**Out of scope:** file storage in Supabase Storage, OCR for scanned PDFs, multi-turn assistant conversation history.
 
 ---
 
@@ -29,8 +30,10 @@ CV Intelligence turns an uploaded resume (PDF or DOCX) into structured, searchab
 ```mermaid
 flowchart TB
   subgraph frontend [Next.js /resume]
+    NAV[AppNav]
     UP[ResumeUploadCard]
     SUM[ResumeSummary]
+    ANS[ResumeAnswerBox]
     RAG[ResumeQueryBox]
     API_FE[api.ts + React Query]
   end
@@ -44,6 +47,8 @@ flowchart TB
     EM[embedding_service]
     SK[skill_extractor]
     RTV[retrieval_service]
+    LLM[llm_service]
+    HLP[_helpers.py]
   end
 
   subgraph db [Supabase Postgres]
@@ -51,26 +56,34 @@ flowchart TB
     SEC[(resume_sections)]
     CHK[(resume_chunks)]
     USK[(user_skills)]
+    RPC[(pgvector RPC)]
+  end
+
+  subgraph ai [Anthropic]
+    CL[Claude claude-3-haiku]
   end
 
   UP --> API_FE --> RT
   SUM --> API_FE
+  ANS --> API_FE
   RAG --> API_FE
-  RT --> RS
-  RS --> RP --> SD --> CH --> EM
+  RT --> RS --> RP --> SD --> CH --> EM
   RS --> SK
+  RS --> HLP
   RT --> RTV --> EM
+  RT --> LLM --> CL
+  RTV --> RPC
   RS --> R & SEC & CHK & USK
   RTV --> CHK
 ```
 
-**Auth pattern:** Frontend sends `Authorization: Bearer <supabase_access_token>`. Backend validates via `get_current_user()` and uses the **service role** client for DB writes, scoping every query with `user_id`.
+**Auth pattern:** Frontend sends `Authorization: Bearer <supabase_access_token>`. Backend validates via `get_current_user()` and uses the **service role** client for all DB writes, scoping every query with `user_id`.
 
 ---
 
 ## 3. Database layer
 
-### 3.1 Tables (from `20250525_001_initial_schema.sql`)
+### 3.1 Tables (from `supabase/migrations/20250525_001_initial_schema.sql`)
 
 #### `resumes`
 
@@ -80,11 +93,11 @@ flowchart TB
 | `user_id` | uuid FK → `profiles` | Owner |
 | `file_name` | text | Original filename |
 | `file_type` | text | Extension without dot, e.g. `pdf` |
-| `file_url` | text nullable | Reserved for Storage URL (not set yet) |
+| `file_url` | text nullable | Reserved for Storage URL (not yet populated) |
 | `raw_text` | text nullable | Full extracted text after success |
 | `parsed_summary` | jsonb nullable | `{section_count, chunk_count, skill_count, section_names}` |
 | `status` | `resume_status` enum | `uploaded`, `processing`, `processed`, `failed` |
-| `is_active` | boolean | Only one active resume per user after upload |
+| `is_active` | boolean | Only one active resume per user |
 | `error_message` | text nullable | Set when `status = failed` |
 
 #### `resume_sections`
@@ -118,23 +131,21 @@ flowchart TB
 
 ### 3.2 RLS and grants
 
-- **RLS** is enabled on all CV tables (policies in initial migration for `authenticated` users).
-- **Backend** uses the service role and enforces ownership in Python (`user_id` filters).
-- **Grants migration** (`20250526120000_resume_cv_grants.sql`) explicitly grants `SELECT, INSERT, UPDATE, DELETE` on CV tables to `authenticated` and `service_role`. Without this, PostgREST returns `42501 permission denied for table resumes`.
+- **RLS** is enabled on all CV tables; policies allow row access by `auth.uid() = user_id`.
+- **Backend** uses the service role and enforces ownership in Python (`user_id` filters on every query).
+- **Grants migration** `20250526120000_resume_cv_grants.sql` grants `SELECT, INSERT, UPDATE, DELETE` on CV tables to `authenticated` and `service_role`. Without this, PostgREST returns `42501 permission denied for table resumes`.
 
 ### 3.3 pgvector
 
-- Extension and `vector(384)` type are created in the initial migration.
-- Index: `idx_resume_chunks_embedding` using `ivfflat` with `vector_cosine_ops`.
-- **RPC functions** `match_resume_chunks` and `match_resume_chunks_with_resume` are **not** defined in migrations; retrieval code attempts them and falls back to Python (see §6).
+- Extension and `vector(384)` type in the initial migration.
+- IVFFlat index: `idx_resume_chunks_embedding` using `ivfflat` with `vector_cosine_ops`.
+- **RPC functions** `match_resume_chunks` and `match_resume_chunks_with_resume` defined in `supabase/migrations/20250526130000_pgvector_rpc.sql`. Both set `ivfflat.probes = 10` inside the function body.
 
 ---
 
 ## 4. Ingestion pipeline (`resume_service.process_resume`)
 
 **Entry:** `POST /api/v1/resumes/upload` → `resume_service.process_resume(user_id, filename, file_bytes)`
-
-### Step-by-step
 
 | Step | Function | Behavior |
 |---|---|---|
@@ -144,89 +155,84 @@ flowchart TB
 | 4 | `detect_sections` | Keyword headings → sections; else single `general` |
 | 5 | Insert `resume_sections` | Batch insert; build `section_name → id` map |
 | 6 | `chunk_sections` | 900-char windows, 150-char overlap, global `chunk_index` |
-| 7 | `embed_batch` | HashingVectorizer → `list[list[float]]` length 384 |
+| 7 | `embed_batch` | HashingVectorizer **or** sentence-transformers → `list[list[float]]` length 384 |
 | 8 | Insert `resume_chunks` | Includes `embedding` per row |
-| 9 | `extract_skills` | Regex over curated keyword list |
+| 9 | `extract_skills` | Regex over curated keyword list (~50 skills) |
 | 10 | Upsert `user_skills` | `on_conflict=user_id,skill_name`, `ignore_duplicates=True` |
 | 11 | Deactivate siblings | Other resumes: `is_active=false` |
 | 12 | Final update | `status=processed`, `raw_text`, `parsed_summary` |
 
-### Failure handling
-
-- `HTTPException` (validation): resume marked `failed` with generic message, then re-raised.
-- Other exceptions: `_mark_failed` with exception text (truncated 2000 chars), then `raise_http_for_supabase`.
-- `_mark_failed` is best-effort (swallows its own errors).
-
-### Read paths
-
-| Function | Endpoint |
-|---|---|
-| `list_resumes` | `GET /resumes` |
-| `get_resume_detail` | `GET /resumes/{id}` — sections, skills, chunk count |
-| `get_resume_chunks` | `GET /resumes/{id}/chunks` — selects columns **without** embedding |
-
-All reads use `run_supabase()` for consistent PostgREST error mapping.
+**Failure handling:**
+- `HTTPException` (validation): resume marked `failed`, original exception re-raised.
+- Other exceptions: `_mark_failed` with exception text (truncated to 2000 chars), then `raise_http_for_supabase`.
+- `_mark_failed` is best-effort — swallows its own errors so it doesn't obscure the original.
 
 ---
 
 ## 5. Service modules (backend)
 
-### 5.1 `resume_parser.py`
+### 5.1 `_helpers.py`
 
-- **Constants:** `ALLOWED_EXTENSIONS = {".pdf", ".docx"}`, `MAX_FILE_BYTES = 10 MiB`
-- **PDF:** `pypdf.PdfReader`, per-page `extract_text()`
-- **DOCX:** `python-docx`, paragraph text joined
-- **`_normalise`:** collapse spaces/tabs; max two consecutive newlines
-
-### 5.2 `section_detector.py`
-
-- **Dictionary:** `SECTION_HEADINGS` maps canonical names (`summary`, `experience`, `education`, `skills`, …) to alias lists.
-- **Heading rules:** line ≤ 60 chars; alias match (exact, all-caps, or `startswith`).
-- **Fallback:** one section `{ section_name: "general", content: full text }`
-- **Empty sections:** skipped; if all empty → `general` fallback
-
-### 5.3 `chunker.py`
-
-- **Constants:** `CHUNK_SIZE = 900`, `OVERLAP = 150`
-- **Step:** `CHUNK_SIZE - OVERLAP` per window (750 chars advance)
-- **`token_count`:** `max(1, len(chunk_text) // 4)` — heuristic only, not a tokenizer
-
-### 5.4 `embedding_service.py`
+Shared Supabase response helpers used by all services in this module:
 
 ```python
-HashingVectorizer(
-    n_features=384,
-    alternate_sign=False,
-    norm="l2",
-)
+def _rows(response) -> list[dict]  # extracts list from APIResponse
+def _row(response) -> dict | None  # extracts first row or None
 ```
 
-- **Singleton** vectorizer (lazy init).
-- **`embed_text`:** single string → `list[float]` length 384.
-- **`embed_batch`:** matrix transform → list of vectors in input order.
-- **Properties:** deterministic, no network, fast cold start (important for Docker).
-- **Trade-off:** bag-of-words style hashing, not semantic transformers — adequate for hackathon RAG demo and keyword-heavy CV text.
+Previously duplicated in `resume_service.py` and `retrieval_service.py`; extracted to avoid drift.
 
-### 5.5 `skill_extractor.py`
+### 5.2 `resume_parser.py`
 
-- **~50 skills** across 6 categories in `_SKILL_DEFINITIONS`.
-- **Matching:** pre-compiled case-insensitive regex per pattern; word boundaries where needed (`\bgo\b`, `\bjava\b`).
-- **Evidence:** ±120 characters around first match.
-- **Dedup:** one entry per canonical skill name.
+- **Constants:** `ALLOWED_EXTENSIONS = {".pdf", ".docx"}`, `MAX_FILE_BYTES = 10 MiB`
+- **PDF:** `pypdf.PdfReader`, per-page `extract_text()` — does **not** handle scanned/image PDFs
+- **DOCX:** `python-docx`, paragraph text joined — tables/headers/footers in body paragraphs only
+- **`_normalise`:** collapse spaces/tabs; max two consecutive newlines
 
-### 5.6 `retrieval_service.py`
+### 5.3 `section_detector.py`
 
-**Input:** `user_id`, `query`, `supabase`, optional `resume_id`, `top_k` (default 5).
+- **Dictionary:** `SECTION_HEADINGS` maps canonical names to alias lists (9 canonical sections)
+- **Heading rules:** line ≤ 60 chars; exact alias match, all-caps match, or `startswith` match
+- **Fallback:** single section `{ section_name: "general", content: full text }` when no headings detected
+
+### 5.4 `chunker.py`
+
+- **Constants:** `CHUNK_SIZE = 900`, `OVERLAP = 150` (750-char step)
+- **`token_count`:** `max(1, len(chunk_text) // 4)` — heuristic, not a tokenizer
+
+### 5.5 `embedding_service.py`
+
+Two selectable backends via `EMBEDDING_BACKEND` environment variable:
+
+| Backend | Value | Properties |
+|---|---|---|
+| HashingVectorizer | `hashing` (default) | Deterministic, no model download, fast cold start, bag-of-words quality |
+| sentence-transformers | `transformers` | Semantic quality, ~90 MB download, requires `pip install sentence-transformers` |
+
+Both produce `list[float]` of length 384, compatible with the `vector(384)` column.
+
+```python
+embed_text(text: str) -> list[float]       # single text
+embed_batch(texts: list[str]) -> list[list[float]]  # batch
+```
+
+### 5.6 `skill_extractor.py`
+
+- **~50 skills** across 6 categories in `_SKILL_DEFINITIONS`
+- Pre-compiled case-insensitive regex per pattern; word boundaries where needed
+- Evidence: ±120 characters around first match
+- Dedup: one entry per canonical skill name
+
+### 5.7 `retrieval_service.py`
+
+**Input:** `user_id`, `query`, `supabase`, optional `resume_id`, `top_k` (default 5), `min_similarity` (default 0.05)
 
 1. `query_embedding = embed_text(query)`
-2. Try RPC `match_resume_chunks` or `match_resume_chunks_with_resume`
-3. On failure or empty → `_python_cosine_search`:
-   - Fetch chunks (`id`, `resume_id`, `section_name`, `chunk_text`, `embedding`)
-   - Parse embedding (list or `"[0.1,0.2,...]"` string)
-   - L2-normalize query and chunk vectors; `similarity = dot(q, c)`
-   - Sort descending, return top_k
+2. Try RPC `match_resume_chunks` or `match_resume_chunks_with_resume` — IVFFlat search, `probes=10`
+3. On RPC failure or empty → `_python_cosine_search` (numpy L2-normalize + dot product)
+4. Both paths filter results where `similarity < min_similarity`
 
-**Response shape (each hit):**
+**Response shape:**
 
 ```json
 {
@@ -238,15 +244,27 @@ HashingVectorizer(
 }
 ```
 
-### 5.7 `supabase_errors.py`
+### 5.8 `llm_service.py`
 
-| PostgREST code | HTTP | Client message |
-|---|---|---|
-| `42501` | 500 | Hint to apply `20250526120000_resume_cv_grants.sql` |
-| `PGRST116` | 404 | Resource not found |
-| Other | 500 | Safe message + optional hint |
+**Input:** `question: str`, `chunks: list[dict]`
 
-`run_supabase(context, fn)` wraps read paths; upload path uses `raise_http_for_supabase` on unexpected errors.
+**System prompt (excerpt):**
+> You are CareerPilot. Answer the user's question using ONLY the information present in the CV excerpts. Never invent work experience, skills, education, or achievements not found in the excerpts.
+
+- Uses `claude-3-haiku-20240307` — fast and cost-efficient for short answers
+- Context budget: 600 chars per chunk, 6000 chars total
+- Max tokens: 512
+- Graceful fallback if `ANTHROPIC_API_KEY` is missing or `anthropic` package not installed
+
+### 5.9 `resume_service.py` — delete
+
+```python
+def delete_resume(user_id: str, resume_id: str) -> None
+```
+
+- Ownership check via `_get_owned_resume` → raises 404 if not found/owned
+- DB cascade removes `resume_sections` and `resume_chunks` automatically
+- `user_skills.resume_id` set to NULL (on delete set null)
 
 ---
 
@@ -281,7 +299,7 @@ HashingVectorizer(
 
 ### `GET /{resume_id}/chunks`
 
-- **Response:** `ResumeChunk[]` without embedding field in SELECT
+- **Response:** `ResumeChunk[]` without `embedding` field in SELECT
 
 ### `POST /query`
 
@@ -297,6 +315,34 @@ HashingVectorizer(
 
 - **Response:** `ChunkQueryResult[]` (bare array)
 
+### `POST /answer`
+
+- **Body:**
+
+```json
+{
+  "question": "Summarize my professional background",
+  "resume_id": "optional-uuid",
+  "top_k": 5
+}
+```
+
+- **Response:**
+
+```json
+{
+  "answer": "Based on your CV, you have 5 years of experience...",
+  "evidence_chunks": [ { "chunk_id": "...", "similarity": 0.82, "chunk_text": "..." } ]
+}
+```
+
+- **Notes:** If `ANTHROPIC_API_KEY` is not configured, returns a clear fallback message rather than a 500.
+
+### `DELETE /{resume_id}`
+
+- **Response:** `204 No Content`
+- **Errors:** `404` if not found or owned by another user
+
 ---
 
 ## 7. Pydantic models
@@ -308,7 +354,7 @@ HashingVectorizer(
 | `ResumeChunk` | `models/resume_chunk.py` | Chunk row (embedding optional on read) |
 | `UserSkill` | `models/user_skill.py` | Extracted skill row |
 
-Route-specific schemas in `routes/resumes.py`: `ResumeDetailResponse`, `QueryRequest`, `ChunkQueryResult`.
+Route-specific schemas in `routes/resumes.py`: `ResumeDetailResponse`, `QueryRequest`, `AnswerRequest`, `AnswerResponse`, `ChunkQueryResult`.
 
 **Status enum:** `app.core.enums.ResumeStatus` — `uploaded`, `processing`, `processed`, `failed`.
 
@@ -318,37 +364,61 @@ Route-specific schemas in `routes/resumes.py`: `ResumeDetailResponse`, `QueryReq
 
 ### 8.1 Routing
 
-- `src/app/resume/page.tsx` — server component; `getUser()` → redirect `/login?next=/resume`
-- `ResumePageClient` — main UI
+- `src/app/resume/page.tsx` — server component; `getUser()` → redirect `/login?next=/resume`; renders `<AppNav />` + `<ResumePageClient />`
 
-### 8.2 API client (`features/resume/api.ts`)
+### 8.2 Components
+
+| Component | File | Role |
+|---|---|---|
+| `AppNav` | `components/nav/AppNav.tsx` | Sticky top navbar; active-route highlighting; links to Tracker/CV/Goals |
+| `ResumePageClient` | `features/resume/resume-page-client.tsx` | Page layout, resume selector, status badge, sign-out |
+| `ResumeUploadCard` | `features/resume/resume-upload-card.tsx` | Animated drop zone, file icon/size, clear button, processing status strip |
+| `ResumeSummary` | `features/resume/resume-summary.tsx` | Skeleton loader, expandable section cards, category-colored skill chips, delete/retry |
+| `ResumeAnswerBox` | `features/resume/resume-answer-box.tsx` | AI answer panel, sample query chips, ⌘+Enter submit, collapsible evidence |
+| `ResumeQueryBox` | `features/resume/resume-query-box.tsx` | Raw chunk search view (similarity bars, expand/collapse) |
+
+### 8.3 API client (`features/resume/api.ts`)
 
 Uses shared `apiRequest` from `src/lib/api.ts`:
 
 - Attaches Bearer token from `supabase.auth.getSession()`
 - `uploadResume`: `FormData` without forcing `Content-Type` (browser sets boundary)
-- `queryResume`: JSON body with snake_case keys (`resume_id`, `top_k`)
+- `queryResume`: JSON with snake_case keys (`resume_id`, `top_k`)
+- `askCvQuestion`: JSON with `{ question, resume_id?, top_k? }`
+- `deleteResume`: `DELETE /{id}` — returns `void` (204)
 
-### 8.3 React Query (`hooks.ts`)
+### 8.4 React Query (`hooks.ts`)
 
-| Hook | Key | Purpose |
+| Hook | Type | Purpose |
 |---|---|---|
-| `useResumes` | `["resumes"]` | List |
-| `useResume(id)` | `["resumes", id]` | Detail |
-| `useUploadResume` | mutation | Invalidates list + detail on success |
-| `useQueryResume` | mutation | RAG search (no cache invalidation) |
+| `useResumes` | query | List user resumes |
+| `useResume(id)` | query | Resume detail |
+| `useUploadResume` | mutation | Upload; invalidates list + detail; `toast.success` on done |
+| `useDeleteResume` | mutation | Delete; invalidates list; `toast.success`/`toast.error` |
+| `useQueryResume` | mutation | Raw chunk search |
+| `useAskCvQuestion` | mutation | AI answer; `toast.error` on failure |
 
-### 8.4 UI behavior
+### 8.5 Toast notifications (Sonner)
 
-- **Status badge:** `no_cv` | `processing` | `failed` | `rag_ready`
-- **Resume selector:** shown when user has more than one resume
-- **Primary resume:** `is_active` or first in list
-- **RAG box:** enabled only when `resume.status === "processed"`; scopes query with `resume_id`
-- **Similarity display:** `Math.round(score * 100)%` in UI
+`Toaster` is mounted in `app/providers.tsx` (top-right, 4s auto-dismiss, `richColors`).
 
-### 8.5 Validation (client)
+Used for:
+- Upload success / error
+- Delete success / error
+- AI answer error
 
-Mirrors backend: `.pdf`/`.docx`, 10 MB max, non-empty file — in `validateResumeFile()` before upload.
+### 8.6 UI behaviors
+
+- **Status badge:** `no_cv` | `processing` | `failed` | `rag_ready` — shown in page header
+- **Primary resume:** `is_active` or first in list; auto-selected after upload
+- **Resume selector:** shown when user has > 1 resume
+- **Answer box:** enabled only when `resume.status === "processed"`
+- **Evidence toggle:** collapsible section under the AI answer showing retrieved chunks
+- **Similarity display:** filled progress bar + percentage beside each chunk
+- **Skill chips:** color-coded by category (blue=language, violet=framework, orange=database, slate=devops, sky=cloud, pink=ml/ai)
+- **Section cards:** expand/collapse toggle to see full section text
+- **Delete:** requires confirmation before firing the API call
+- **Skeleton loader:** shimmer placeholder shown during initial detail fetch
 
 ---
 
@@ -357,8 +427,8 @@ Mirrors backend: `.pdf`/`.docx`, 10 MB max, non-empty file — in `validateResum
 `backend/main.py`:
 
 - Registers `resumes_router` at `settings.api_v1_prefix` (`/api/v1`)
-- **CORS** middleware from `settings.cors_origins`
-- **Exception handlers** attach CORS headers to `HTTPException` and unhandled `500` responses (fixes browser “CORS error” masking real API failures)
+- **CORS** middleware from `settings.cors_origins` (default: `http://localhost:3000`)
+- **Exception handlers** attach CORS headers to `HTTPException` and unhandled `500` responses
 
 ---
 
@@ -372,14 +442,15 @@ Location: `backend/test/CV-intelligence/`
 | `test_section_detector.py` | Heading detection, fallbacks |
 | `test_chunker.py` | Window size, overlap, global index |
 | `test_skill_extractor.py` | Categories, dedup, evidence |
-| `test_embedding_service.py` | Dimension 384, floats, similarity property |
+| `test_embedding_service.py` | Dimension 384, floats, cosine similarity sanity |
 
 ```bash
 cd backend
 python -m pytest test/CV-intelligence/ -v
+# Expected: 95 passed, 1 skipped (PDF round-trip without reportlab)
 ```
 
-**Current result:** 95 passed, 1 skipped (PDF generation test without `reportlab`).
+No automated integration tests against live Supabase — manual testing required for the full upload → answer → delete flow.
 
 ---
 
@@ -388,12 +459,20 @@ python -m pytest test/CV-intelligence/ -v
 **`backend/requirements.txt` (CV-relevant):**
 
 - `pypdf`, `python-docx` — parsing
-- `scikit-learn` — embeddings
-- `numpy` — retrieval fallback
-- `python-multipart` — upload
+- `scikit-learn` — HashingVectorizer embeddings (default)
+- `numpy` — retrieval fallback cosine similarity
+- `python-multipart` — multipart upload
+- `anthropic` — Claude API for `/answer`
 - `supabase`, `fastapi`, `pydantic` — API + DB
 
-**Not required:** `sentence-transformers`, `torch`, `HF_TOKEN` (removed in favour of HashingVectorizer).
+**`EMBEDDING_BACKEND` env var:**
+
+| Value | Behavior |
+|---|---|
+| `hashing` (default) | sklearn HashingVectorizer — no download, deterministic, bag-of-words quality |
+| `transformers` | sentence-transformers `all-MiniLM-L6-v2` — ~90 MB download on first run, semantic quality |
+
+Both produce 384-dim L2-normalized vectors, compatible with the existing `vector(384)` DB column.
 
 ---
 
@@ -401,42 +480,54 @@ python -m pytest test/CV-intelligence/ -v
 
 | Item | Suggested approach |
 |---|---|
-| pgvector RPC | Migration defining `match_resume_chunks(query_embedding, match_user_id, match_count)` using `<=>` cosine distance |
-| File storage | Upload bytes to Supabase Storage; set `resumes.file_url` |
-| Better embeddings | Optional env flag to swap `embedding_service` implementation |
-| LLM RAG answers | New endpoint: retrieve chunks → prompt Claude with `ANTHROPIC_API_KEY` |
-| Job matching | Compare `user_skills` to `jobs.requirements` |
+| File storage | Upload bytes to Supabase Storage bucket `resumes/{user_id}/`; set `resumes.file_url` |
+| Re-process resume | `POST /{id}/reprocess` — re-run pipeline on stored `raw_text` |
+| Better skill extraction | Replace regex with NER model or LLM-based extraction |
+| Job matching | Compare `user_skills` to `jobs.requirements`; use `resume_chunks` for semantic fit score |
+| LLM skill gap | `POST /skill-gaps/analyze` — Claude compares CV chunks to job description |
+| Cover letter | `POST /cover-letters/generate` — Claude with CV chunks + job data |
+| pgvector HNSW | Upgrade IVFFlat to HNSW for better recall at large scale |
 
 ---
 
-## 13. File index (quick lookup)
+## 13. File index
 
 ```
 backend/app/cv_intelligence/
-├── routes/resumes.py
+├── routes/resumes.py               # 7 endpoints
 ├── models/
 │   ├── resume.py
 │   ├── resume_section.py
 │   ├── resume_chunk.py
 │   └── user_skill.py
 └── services/
-    ├── resume_service.py      # orchestrator
+    ├── _helpers.py                 # shared _rows()/_row()
+    ├── resume_service.py           # orchestrator + delete
     ├── resume_parser.py
     ├── section_detector.py
     ├── chunker.py
-    ├── embedding_service.py
+    ├── embedding_service.py        # dual-backend
     ├── skill_extractor.py
-    └── retrieval_service.py
+    ├── retrieval_service.py        # pgvector RPC + numpy fallback + min_similarity
+    └── llm_service.py              # Anthropic Claude
 
 frontend/src/features/resume/
-├── api.ts
-├── hooks.ts
-├── types.ts
+├── api.ts                          # upload, delete, query, askCvQuestion
+├── hooks.ts                        # mutations + queries + toasts
+├── types.ts                        # Resume, ResumeDetail, CvAnswer*
 ├── resume-page-client.tsx
-├── resume-upload-card.tsx
-├── resume-summary.tsx
-└── resume-query-box.tsx
+├── resume-upload-card.tsx          # redesigned UX
+├── resume-summary.tsx              # skeleton, expandable, delete, retry
+├── resume-answer-box.tsx           # AI answer panel (new)
+└── resume-query-box.tsx            # raw chunk search
+
+frontend/src/components/nav/
+└── AppNav.tsx                      # global navigation (new)
+
+supabase/migrations/
+├── 20250525_001_initial_schema.sql
+├── 20250526120000_resume_cv_grants.sql
+└── 20250526130000_pgvector_rpc.sql  # match_resume_chunks functions (new)
 
 backend/app/core/supabase_errors.py
-supabase/migrations/20250526120000_resume_cv_grants.sql
 ```

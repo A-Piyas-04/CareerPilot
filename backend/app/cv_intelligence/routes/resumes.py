@@ -1,7 +1,7 @@
 """CV Intelligence resume routes."""
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Response, UploadFile, status
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user
@@ -30,6 +30,17 @@ class QueryRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=1000)
     resume_id: Optional[str] = None
     top_k: int = Field(default=5, ge=1, le=50)
+
+
+class AnswerRequest(BaseModel):
+    question: str = Field(..., min_length=1, max_length=1000)
+    resume_id: Optional[str] = None
+    top_k: int = Field(default=5, ge=1, le=20)
+
+
+class AnswerResponse(BaseModel):
+    answer: str
+    evidence_chunks: list["ChunkQueryResult"]
 
 
 class ChunkQueryResult(BaseModel):
@@ -129,3 +140,55 @@ def query_resume_chunks(
         top_k=payload.top_k,
     )
     return [ChunkQueryResult(**r) for r in results]
+
+
+@router.post(
+    "/answer",
+    response_model=AnswerResponse,
+    summary="Ask a question grounded in your CV (RAG + LLM)",
+)
+def answer_cv_question(
+    payload: AnswerRequest,
+    user_id: str = Depends(get_current_user),
+) -> AnswerResponse:
+    """
+    Retrieve the most relevant CV chunks for the question, then ask Claude to
+    answer using only those chunks as evidence.  Returns the AI answer plus the
+    evidence chunks so the frontend can display citations.
+    """
+    from app.cv_intelligence.services import llm_service  # noqa: PLC0415
+
+    supabase = get_supabase_client()
+    chunks = retrieval_service.search_chunks(
+        user_id=user_id,
+        query=payload.question,
+        supabase=supabase,
+        resume_id=payload.resume_id,
+        top_k=payload.top_k,
+    )
+    answer = llm_service.answer_from_chunks(
+        question=payload.question,
+        chunks=chunks,
+    )
+    return AnswerResponse(
+        answer=answer,
+        evidence_chunks=[ChunkQueryResult(**c) for c in chunks],
+    )
+
+
+@router.delete(
+    "/{resume_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a resume and all associated data",
+)
+def delete_resume(
+    resume_id: str,
+    user_id: str = Depends(get_current_user),
+) -> Response:
+    """
+    Delete a resume row.  Cascade DELETE in the DB removes resume_sections,
+    resume_chunks, and sets resume_id=null on user_skills automatically.
+    Returns 404 if the resume does not exist or belongs to another user.
+    """
+    resume_service.delete_resume(user_id=user_id, resume_id=resume_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
