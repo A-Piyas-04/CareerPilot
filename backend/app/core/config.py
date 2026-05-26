@@ -8,7 +8,13 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # Supabase
-    supabase_url: str = Field(default="", validation_alias="SUPABASE_URL")
+    supabase_url: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "SUPABASE_URL",
+            "NEXT_PUBLIC_SUPABASE_URL",
+        ),
+    )
     supabase_key: str = Field(
         default="",
         validation_alias=AliasChoices(
