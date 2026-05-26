@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npx supabase *)",
       "Bash(PGPASSWORD='IUTcdi@2026' psql \"host=aws-1-ap-northeast-2.pooler.supabase.com port=5432 dbname=postgres user=postgres.hiqdwrjoqfpelrhujtoj sslmode=require\" -v ON_ERROR_STOP=1 -c \"select version, name, statements is not null as has_statements from supabase_migrations.schema_migrations order by version;\")",
-      "Bash(PGPASSWORD='IUTcdi@2026' psql \"host=aws-1-ap-northeast-2.pooler.supabase.com port=5432 dbname=postgres user=postgres.hiqdwrjoqfpelrhujtoj sslmode=require\" -v ON_ERROR_STOP=1 -c \"select column_name from information_schema.columns where table_schema='public' and table_name='tasks' and column_name='priority';\" -c \"select has_function_privilege\\('authenticated','public.match_resume_chunks\\(extensions.vector,uuid,integer\\)','execute'\\) as rpc_grant_ok;\" -c \"select count\\(*\\) as init_schema_rows from supabase_migrations.schema_migrations where version='20250525';\")"
+      "Bash(PGPASSWORD='IUTcdi@2026' psql \"host=aws-1-ap-northeast-2.pooler.supabase.com port=5432 dbname=postgres user=postgres.hiqdwrjoqfpelrhujtoj sslmode=require\" -v ON_ERROR_STOP=1 -c \"select column_name from information_schema.columns where table_schema='public' and table_name='tasks' and column_name='priority';\" -c \"select has_function_privilege\\('authenticated','public.match_resume_chunks\\(extensions.vector,uuid,integer\\)','execute'\\) as rpc_grant_ok;\" -c \"select count\\(*\\) as init_schema_rows from supabase_migrations.schema_migrations where version='20250525';\")",
+      "Bash(venv/Scripts/python.exe -m alembic revision --autogenerate -m \"initial_orm_baseline\")"
     ]
   }
 }
