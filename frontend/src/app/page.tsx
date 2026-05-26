@@ -18,6 +18,15 @@ import Link from "next/link";
 
 const corePages = [
   {
+    title: "AI Career Assistant",
+    href: "/chat",
+    description:
+      "Save career conversations, review message history, and prepare for the Phase 2.2 AI engine.",
+    icon: MessageSquareText,
+    accent: "bg-blue-50 text-blue-700",
+    status: "Live",
+  },
+  {
     title: "Application Tracker",
     href: "/tracker",
     description:
@@ -65,12 +74,6 @@ const corePages = [
 ];
 
 const futureFeatures = [
-  {
-    title: "AI Career Assistant",
-    description:
-      "Conversational guidance grounded in the user's real CV, recent messages, and job context.",
-    icon: MessageSquareText,
-  },
   {
     title: "Skill Gap Analysis",
     description:
@@ -276,7 +279,7 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {corePages.map((item) => {
             const Icon = item.icon;
             return (
