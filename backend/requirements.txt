@@ -6,3 +6,7 @@ pydantic
 pydantic-settings
 python-multipart
 asyncpg
+pypdf
+python-docx
+scikit-learn
+numpy
