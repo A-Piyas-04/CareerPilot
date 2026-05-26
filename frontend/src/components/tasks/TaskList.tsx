@@ -82,7 +82,10 @@ export function TaskList() {
   }
 
   return (
-    <aside className="flex min-h-[640px] flex-col rounded-lg border border-zinc-200 bg-white shadow-sm">
+    <aside
+      className="flex min-h-[640px] flex-col rounded-lg border border-zinc-200 bg-white shadow-sm"
+      id="tasks"
+    >
       <header className="border-b border-zinc-200 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
