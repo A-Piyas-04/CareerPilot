@@ -4,6 +4,7 @@ import {
   BriefcaseBusiness,
   FileText,
   LayoutDashboard,
+  Sparkles,
   Target,
   ChevronRight,
 } from "lucide-react";
@@ -15,6 +16,11 @@ const NAV_ITEMS = [
     href: "/tracker",
     label: "Job Tracker",
     icon: BriefcaseBusiness,
+  },
+  {
+    href: "/jobs",
+    label: "Job Hunter",
+    icon: Sparkles,
   },
   {
     href: "/resume",
