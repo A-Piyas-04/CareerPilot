@@ -8,7 +8,13 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # Supabase
-    supabase_url: str = Field(default="", validation_alias="SUPABASE_URL")
+    supabase_url: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "SUPABASE_URL",
+            "NEXT_PUBLIC_SUPABASE_URL",
+        ),
+    )
     supabase_key: str = Field(
         default="",
         validation_alias=AliasChoices(
@@ -33,6 +39,10 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     project_name: str = "CareerPilot"
     debug: bool = Field(default=False, validation_alias="DEBUG")
+
+    # AI / ML
+    gemini_api_key: str = Field(default="", validation_alias="GEMINI_API_KEY")
+    embedding_backend: str = Field(default="hashing", validation_alias="EMBEDDING_BACKEND")
 
     # CORS
     cors_origins: list[str] = Field(

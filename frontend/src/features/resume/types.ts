@@ -76,6 +76,17 @@ export type ResumeQueryChunk = {
 /** Backend returns a bare array from POST /api/v1/resumes/query */
 export type ResumeQueryResponse = ResumeQueryChunk[];
 
+export type CvAnswerRequest = {
+  question: string;
+  resume_id?: string;
+  top_k?: number;
+};
+
+export type CvAnswerResponse = {
+  answer: string;
+  evidence_chunks: ResumeQueryChunk[];
+};
+
 export const MAX_RESUME_FILE_BYTES = 10 * 1024 * 1024;
 
 export const ALLOWED_RESUME_EXTENSIONS = [".pdf", ".docx"] as const;
