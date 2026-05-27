@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from app.career_assistant.routes.applications import router as applications_router
 from app.career_assistant.routes.goals import router as goals_router
 from app.cv_intelligence.routes.resumes import router as resumes_router
+from app.job_intelligence.routes.jobs import router as jobs_router
 from app.core.config import settings
 
 app = FastAPI(title="CareerPilot API")
@@ -59,6 +60,10 @@ app.include_router(
 )
 app.include_router(
     resumes_router,
+    prefix=settings.api_v1_prefix,
+)
+app.include_router(
+    jobs_router,
     prefix=settings.api_v1_prefix,
 )
 

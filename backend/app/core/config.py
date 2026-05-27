@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     gemini_api_key: str = Field(default="", validation_alias="GEMINI_API_KEY")
     embedding_backend: str = Field(default="hashing", validation_alias="EMBEDDING_BACKEND")
 
+    # ─── External job-search providers ───────────────────────────────────────
+    rapidapi_key: str = Field(default="", validation_alias="RAPIDAPI_KEY")
+    rapidapi_host: str = Field(
+        default="jsearch.p.rapidapi.com",
+        validation_alias="RAPIDAPI_HOST",
+    )
+
     # CORS
     cors_origins: list[str] = Field(
         default_factory=lambda: [

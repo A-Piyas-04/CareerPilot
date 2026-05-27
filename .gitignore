@@ -65,6 +65,7 @@ Thumbs.db
 # ── Claude / AI assistants ──
 .claude/
 CLAUDE.md
+Docs/superpowers/
 
 .puku/
 
