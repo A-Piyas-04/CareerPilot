@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server";
 
 import { buildSystemPrompt } from "@/lib/assistant/buildSystemPrompt";
+import { detectAssistantIntent } from "@/lib/assistant/detectIntent";
 import { getResumeContext } from "@/lib/assistant/getResumeContext";
+import { buildIntentPrompt } from "@/lib/assistant/intentPrompts";
 import { loadConversationMemory } from "@/lib/assistant/loadConversationMemory";
 import type { AssistantProfile } from "@/lib/assistant/types";
 import {
@@ -70,10 +72,19 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    const systemPrompt = buildSystemPrompt({
+    const intentDetection = await detectAssistantIntent(message);
+    const intent = intentDetection.intent;
+    const baseSystemPrompt = buildSystemPrompt({
       profile,
       resumeContext: resumeContext.text,
     });
+    const intentPrompt = buildIntentPrompt(intent, {
+      conversationMemory: memory,
+      profile,
+      resumeContext: resumeContext.text,
+      userMessage: message,
+    });
+    const systemPrompt = `${baseSystemPrompt}\n\n${intentPrompt}`;
     const nextTitle = shouldGenerateTitle(conversation.title)
       ? titleFromMessage(message)
       : conversation.title;
@@ -178,7 +189,14 @@ export async function POST(request: NextRequest) {
                 metadata: {
                   model: MODEL,
                   streamed: true,
-                  source: "phase-2.2-gemini-response-engine",
+                  intent,
+                  intent_confidence: intentDetection.confidence,
+                  intent_detection_method: intentDetection.method,
+                  intent_reason: intentDetection.reason,
+                  matched_pattern: intentDetection.matchedPattern,
+                  source: "phase-2.3-benchmark-query-handlers",
+                  can_save_roadmap: intent === "roadmap_generation",
+                  can_save_cover_letter: intent === "cover_letter",
                   mock_resume_chunk_ids: resumeContext.usedResumeChunks,
                 },
               });

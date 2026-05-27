@@ -1,6 +1,10 @@
 import type { ConversationMemoryMessage } from "@/lib/assistant/types";
 
 export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+export const GEMINI_INTENT_MODEL =
+  process.env.GEMINI_INTENT_MODEL ||
+  process.env.GEMINI_MODEL ||
+  "gemini-2.0-flash-lite";
 
 export class GeminiApiError extends Error {
   status: number;
@@ -61,6 +65,75 @@ export async function createGeminiStream({
   }
 
   return response.body;
+}
+
+export async function createGeminiText({
+  maxOutputTokens = 120,
+  model = GEMINI_INTENT_MODEL,
+  prompt,
+  systemPrompt,
+  temperature = 0,
+}: {
+  maxOutputTokens?: number;
+  model?: string;
+  prompt: string;
+  systemPrompt?: string;
+  temperature?: number;
+}) {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not configured.");
+  }
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        ...(systemPrompt
+          ? {
+              systemInstruction: {
+                parts: [{ text: systemPrompt }],
+              },
+            }
+          : {}),
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens,
+          responseMimeType: "application/json",
+          temperature,
+        },
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new GeminiApiError(await readGeminiError(response), response.status);
+  }
+
+  const data = (await response.json()) as {
+    candidates?: {
+      content?: {
+        parts?: { text?: string }[];
+      };
+    }[];
+  };
+
+  return (
+    data.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text ?? "")
+      .join("") ?? ""
+  );
 }
 
 export function extractGeminiTextFromSsePayload(payload: string) {

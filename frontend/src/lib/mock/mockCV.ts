@@ -11,18 +11,18 @@ export const mockCV = {
   user_skills: ["Python", "React", "FastAPI", "PostgreSQL", "Docker"],
   resume_chunks: [
     {
-      id: "chunk-001",
+      id: "00000000-0000-4000-8000-000000000001",
       chunk_text:
         "Built a REST API with FastAPI and PostgreSQL serving 10k requests/day",
       section_name: "projects",
     },
     {
-      id: "chunk-002",
+      id: "00000000-0000-4000-8000-000000000002",
       chunk_text: "1 year experience as backend intern at StartupX",
       section_name: "experience",
     },
     {
-      id: "chunk-003",
+      id: "00000000-0000-4000-8000-000000000003",
       chunk_text: "Skills: Python, React, FastAPI, PostgreSQL, Docker",
       section_name: "skills",
     },
