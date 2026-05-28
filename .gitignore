@@ -62,6 +62,11 @@ Thumbs.db
 # ── Misc ──
 *.pem
 
+# ── Claude / AI assistants ──
+.claude/
+CLAUDE.md
+Docs/superpowers/
+
 .puku/
 
 # ignore a folder named myDocs
