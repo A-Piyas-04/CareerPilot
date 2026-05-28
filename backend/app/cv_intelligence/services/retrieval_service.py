@@ -120,6 +120,14 @@ def _python_cosine_search(
         if len(emb) == 0:
             continue
         c_vec = np.array(emb, dtype=np.float32)
+        if c_vec.shape[0] != q_vec.shape[0]:
+            logger.warning(
+                "Skipping chunk %s due to embedding dimension mismatch (%s != %s).",
+                row.get("id"),
+                c_vec.shape[0],
+                q_vec.shape[0],
+            )
+            continue
         c_norm = np.linalg.norm(c_vec)
         if c_norm == 0:
             continue
