@@ -20,27 +20,14 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     dim = int(os.getenv("EMBEDDING_VECTOR_DIM", "768"))
-    op.execute("DROP INDEX IF EXISTS idx_resume_chunks_embedding;")
+    op.execute(f"ALTER TABLE resume_chunks ADD COLUMN IF NOT EXISTS embedding_new vector({dim});")
     op.execute(
-        f"ALTER TABLE resume_chunks "
-        f"ALTER COLUMN embedding TYPE vector({dim}) "
-        f"USING embedding::vector({dim});"
-    )
-    op.execute(
-        "CREATE INDEX idx_resume_chunks_embedding ON resume_chunks "
-        "USING ivfflat (embedding vector_cosine_ops);"
+        "CREATE INDEX IF NOT EXISTS idx_resume_chunks_embedding_new ON resume_chunks "
+        "USING ivfflat (embedding_new vector_cosine_ops);"
     )
 
 
 def downgrade() -> None:
-    op.execute("DROP INDEX IF EXISTS idx_resume_chunks_embedding;")
-    op.execute(
-        "ALTER TABLE resume_chunks "
-        "ALTER COLUMN embedding TYPE vector(384) "
-        "USING embedding::vector(384);"
-    )
-    op.execute(
-        "CREATE INDEX idx_resume_chunks_embedding ON resume_chunks "
-        "USING ivfflat (embedding vector_cosine_ops);"
-    )
+    op.execute("DROP INDEX IF EXISTS idx_resume_chunks_embedding_new;")
+    op.execute("ALTER TABLE resume_chunks DROP COLUMN IF EXISTS embedding_new;")
 

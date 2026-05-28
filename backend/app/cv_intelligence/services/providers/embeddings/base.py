@@ -11,6 +11,9 @@ class EmbeddingProvider(Protocol):
     def vector_dim(self) -> int:
         """Return expected embedding vector dimension."""
 
-    def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        """Embed a batch of input texts."""
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        """Embed a batch of resume/document texts."""
+
+    def embed_query(self, text: str) -> list[float]:
+        """Embed a user search query."""
 

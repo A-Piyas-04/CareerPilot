@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from app.career_assistant.routes.applications import router as applications_router
 from app.career_assistant.routes.goals import router as goals_router
 from app.cv_intelligence.routes.resumes import router as resumes_router
+from app.cv_intelligence.services.reembedding_service import get_reembedding_status
 from app.job_intelligence.routes.jobs import router as jobs_router
 from app.core.config import settings
 
@@ -75,4 +76,7 @@ def root():
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "embedding_migration": get_reembedding_status(),
+    }

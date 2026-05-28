@@ -7,9 +7,10 @@ from typing import Any, Optional
 from fastapi import HTTPException, status
 from supabase import Client
 
+from app.core.config import settings
 from app.core.supabase_errors import run_supabase
 from app.cv_intelligence.services._helpers import _rows
-from app.cv_intelligence.services.embedding_service import embed_text
+from app.cv_intelligence.services.embedding_service import embed_query_text
 
 logger = logging.getLogger(__name__)
 
@@ -38,30 +39,31 @@ def search_chunks(
     Each returned dict has keys:
         chunk_id, resume_id, section_name, chunk_text, similarity
     """
-    query_embedding = embed_text(query)
+    query_embedding = embed_query_text(query)
 
-    # --- Attempt pgvector RPC first ---
-    rpc_name = "match_resume_chunks_with_resume" if resume_id else "match_resume_chunks"
-    try:
-        params: dict[str, Any] = {
-            "query_embedding": query_embedding,
-            "match_user_id": user_id,
-            "match_count": top_k,
-        }
-        if resume_id:
-            params["match_resume_id"] = resume_id
+    # --- Attempt pgvector RPC first (only when using canonical embedding column) ---
+    if (settings.embedding_active_column.strip() or "embedding") == "embedding":
+        rpc_name = "match_resume_chunks_with_resume" if resume_id else "match_resume_chunks"
+        try:
+            params: dict[str, Any] = {
+                "query_embedding": query_embedding,
+                "match_user_id": user_id,
+                "match_count": top_k,
+            }
+            if resume_id:
+                params["match_resume_id"] = resume_id
 
-        response = supabase.rpc(rpc_name, params).execute()
-        rows = _rows(response)
-        if rows:
-            results = [_format_rpc_row(r) for r in rows]
-            return [r for r in results if r["similarity"] >= min_similarity]
-    except Exception as exc:
-        logger.warning(
-            "pgvector RPC %s unavailable, using numpy fallback: %s",
-            rpc_name,
-            exc,
-        )
+            response = supabase.rpc(rpc_name, params).execute()
+            rows = _rows(response)
+            if rows:
+                results = [_format_rpc_row(r) for r in rows]
+                return [r for r in results if r["similarity"] >= min_similarity]
+        except Exception as exc:
+            logger.warning(
+                "pgvector RPC %s unavailable, using numpy fallback: %s",
+                rpc_name,
+                exc,
+            )
 
     # --- Python / numpy fallback ---
     return _python_cosine_search(
@@ -88,9 +90,10 @@ def _python_cosine_search(
     except ImportError as exc:
         raise RuntimeError("numpy is not installed. Run: pip install numpy") from exc
 
+    embedding_column = settings.embedding_active_column.strip() or "embedding"
     query_select = (
         supabase.table("resume_chunks")
-        .select("id, resume_id, section_name, chunk_text, embedding")
+        .select(f"id, resume_id, section_name, chunk_text, {embedding_column}")
         .eq("user_id", user_id)
     )
     if resume_id:
@@ -113,7 +116,7 @@ def _python_cosine_search(
 
     scored: list[tuple[float, dict]] = []
     for row in rows:
-        raw_emb = row.get("embedding")
+        raw_emb = row.get(embedding_column)
         if not raw_emb:
             continue
         emb = _parse_embedding(raw_emb)
@@ -121,12 +124,20 @@ def _python_cosine_search(
             continue
         c_vec = np.array(emb, dtype=np.float32)
         if c_vec.shape[0] != q_vec.shape[0]:
-            logger.warning(
-                "Skipping chunk %s due to embedding dimension mismatch (%s != %s).",
-                row.get("id"),
-                c_vec.shape[0],
-                q_vec.shape[0],
+            message = (
+                "Embedding dimension mismatch during retrieval: "
+                f"chunk={row.get('id')} chunk_dim={c_vec.shape[0]} "
+                f"query_dim={q_vec.shape[0]} column={embedding_column}"
             )
+            if settings.retrieval_require_dim_match:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail=(
+                        "Retrieval temporarily unavailable during embedding migration. "
+                        "Please retry after re-embedding completes."
+                    ),
+                ) from ValueError(message)
+            logger.warning("%s", message)
             continue
         c_norm = np.linalg.norm(c_vec)
         if c_norm == 0:

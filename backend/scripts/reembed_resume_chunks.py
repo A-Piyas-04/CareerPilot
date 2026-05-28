@@ -22,18 +22,16 @@ def _save_progress(progress: dict) -> None:
 
 def main() -> None:
     progress = _load_progress()
-    offset = int(progress.get("offset", 0))
     updated = int(progress.get("updated", 0))
 
     while True:
-        rows = fetch_chunk_batch(offset=offset, batch_size=_BATCH_SIZE)
+        rows = fetch_chunk_batch(batch_size=_BATCH_SIZE)
         if not rows:
             break
         updated_now = reembed_batch(rows)
         updated += updated_now
-        offset += len(rows)
-        _save_progress({"offset": offset, "updated": updated})
-        print(f"Processed offset={offset}, total_updated={updated}")
+        _save_progress({"updated": updated})
+        print(f"Processed batch_size={len(rows)}, total_updated={updated}")
 
     print(f"Re-embedding completed. Total updated rows: {updated}")
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import Any
 
 from app.core.config import settings
@@ -56,6 +57,34 @@ class GeminiResumeAnalysisProvider:
             self._genai = genai
         return self._genai
 
+    def _extract_json_payload(self, raw: str) -> dict[str, Any]:
+        text = (raw or "").strip()
+        if not text:
+            return {}
+
+        # Strip markdown fences when present.
+        fence_match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", text, re.DOTALL)
+        if fence_match:
+            text = fence_match.group(1).strip()
+
+        try:
+            payload = json.loads(text)
+            if isinstance(payload, dict):
+                return payload
+        except json.JSONDecodeError:
+            pass
+
+        # Fallback: extract first JSON object from noisy text.
+        obj_match = re.search(r"\{.*\}", text, re.DOTALL)
+        if obj_match:
+            try:
+                payload = json.loads(obj_match.group(0))
+                if isinstance(payload, dict):
+                    return payload
+            except json.JSONDecodeError:
+                return {}
+        return {}
+
     def _normalize(self, payload: dict[str, Any]) -> list[dict]:
         raw_skills = payload.get("skills", [])
         if not isinstance(raw_skills, list):
@@ -82,6 +111,6 @@ class GeminiResumeAnalysisProvider:
         prompt = f"{_PROMPT}\n\nResume text:\n{text[:12000]}"
         response = model.generate_content(prompt)
         raw = (response.text or "").strip()
-        payload = json.loads(raw)
+        payload = self._extract_json_payload(raw)
         return self._normalize(payload)
 
