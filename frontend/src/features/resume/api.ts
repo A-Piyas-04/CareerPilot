@@ -7,6 +7,7 @@ import {
 import type {
   CvAnswerRequest,
   CvAnswerResponse,
+  ManualResumePayload,
   Resume,
   ResumeDetail,
   ResumeQueryRequest,
@@ -47,6 +48,26 @@ export function uploadResume(file: File) {
   return apiRequest<Resume>("/api/v1/resumes/upload", {
     method: "POST",
     body: formData,
+  });
+}
+
+export function createManualResume(payload: ManualResumePayload) {
+  return apiRequest<Resume>("/api/v1/resumes/manual", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function updateManualResume({
+  payload,
+  resumeId,
+}: {
+  payload: ManualResumePayload;
+  resumeId: string;
+}) {
+  return apiRequest<Resume>(`/api/v1/resumes/${resumeId}/manual`, {
+    method: "PUT",
+    body: payload,
   });
 }
 

@@ -26,6 +26,74 @@ class ResumeDetailResponse(BaseModel):
     chunk_count: int
 
 
+class ManualPersonalDetails(BaseModel):
+    full_name: str = ""
+    email: str = ""
+    phone: str = ""
+    location: str = ""
+    website: str = ""
+    linkedin: str = ""
+    github: str = ""
+
+
+class ManualSkillInput(BaseModel):
+    skill_name: str
+    category: Optional[str] = None
+    proficiency: Optional[str] = None
+
+
+class ManualExperienceInput(BaseModel):
+    role: str = ""
+    company: str = ""
+    location: str = ""
+    start_date: str = ""
+    end_date: str = ""
+    is_current: bool = False
+    description: str = ""
+    highlights: list[str] = Field(default_factory=list)
+
+
+class ManualEducationInput(BaseModel):
+    degree: str = ""
+    institution: str = ""
+    location: str = ""
+    start_year: str = ""
+    end_year: str = ""
+    details: str = ""
+
+
+class ManualProjectInput(BaseModel):
+    name: str = ""
+    description: str = ""
+    technologies: str = ""
+    link: str = ""
+    highlights: list[str] = Field(default_factory=list)
+
+
+class ManualCertificationInput(BaseModel):
+    name: str = ""
+    issuer: str = ""
+    date: str = ""
+    details: str = ""
+
+
+class ManualLanguageInput(BaseModel):
+    name: str = ""
+    proficiency: str = ""
+
+
+class ManualResumePayload(BaseModel):
+    title: str = Field(default="Manual CV", max_length=160)
+    personal: ManualPersonalDetails = Field(default_factory=ManualPersonalDetails)
+    summary: str = ""
+    skills: list[ManualSkillInput] = Field(default_factory=list)
+    experience: list[ManualExperienceInput] = Field(default_factory=list)
+    education: list[ManualEducationInput] = Field(default_factory=list)
+    projects: list[ManualProjectInput] = Field(default_factory=list)
+    certifications: list[ManualCertificationInput] = Field(default_factory=list)
+    languages: list[ManualLanguageInput] = Field(default_factory=list)
+
+
 class QueryRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=1000)
     resume_id: Optional[str] = None
@@ -89,6 +157,23 @@ def list_resumes(
     return resume_service.list_resumes(user_id=user_id)
 
 
+@router.post(
+    "/manual",
+    response_model=Resume,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a manually entered CV",
+)
+def create_manual_resume(
+    payload: ManualResumePayload,
+    user_id: str = Depends(get_current_user),
+) -> Resume:
+    """Create a processed CV from structured manual fields."""
+    return resume_service.create_manual_resume(
+        user_id=user_id,
+        payload=payload.model_dump(),
+    )
+
+
 @router.get(
     "/{resume_id}",
     response_model=ResumeDetailResponse,
@@ -101,6 +186,24 @@ def get_resume_detail(
     """Return full resume metadata including sections, extracted skills, and chunk count."""
     detail = resume_service.get_resume_detail(user_id=user_id, resume_id=resume_id)
     return ResumeDetailResponse(**detail)
+
+
+@router.put(
+    "/{resume_id}/manual",
+    response_model=Resume,
+    summary="Update a CV from manually entered fields",
+)
+def update_manual_resume(
+    resume_id: str,
+    payload: ManualResumePayload,
+    user_id: str = Depends(get_current_user),
+) -> Resume:
+    """Replace a resume's generated manual CV content and search index."""
+    return resume_service.update_manual_resume(
+        user_id=user_id,
+        resume_id=resume_id,
+        payload=payload.model_dump(),
+    )
 
 
 @router.get(

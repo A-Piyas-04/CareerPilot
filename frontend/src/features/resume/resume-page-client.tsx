@@ -2,11 +2,12 @@
 
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
 import { useResume, useResumes } from "./hooks";
+import { ManualResumeEditor } from "./manual-resume-editor";
 import { ResumeAnswerBox } from "./resume-answer-box";
 import { ResumeSummary } from "./resume-summary";
 import { ResumeUploadCard } from "./resume-upload-card";
@@ -30,16 +31,11 @@ export function ResumePageClient() {
   const router = useRouter();
   const resumesQuery = useResumes();
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
+  const [entryMode, setEntryMode] = useState<"upload" | "manual">("upload");
   const uploadCardRef = useRef<HTMLDivElement>(null);
 
-  const resumes = resumesQuery.data ?? [];
+  const resumes = useMemo(() => resumesQuery.data ?? [], [resumesQuery.data]);
   const primaryResume = useMemo(() => pickPrimaryResume(resumes), [resumes]);
-
-  useEffect(() => {
-    if (primaryResume && !selectedResumeId) {
-      setSelectedResumeId(primaryResume.id);
-    }
-  }, [primaryResume, selectedResumeId]);
 
   const effectiveResumeId = selectedResumeId ?? primaryResume?.id ?? null;
   const detailQuery = useResume(effectiveResumeId ?? undefined);
@@ -61,8 +57,15 @@ export function ResumePageClient() {
     setSelectedResumeId(resumeId);
   }
 
+  function handleManualSaveSuccess(resumeId: string) {
+    setSelectedResumeId(resumeId);
+  }
+
   function handleRequestReupload() {
-    uploadCardRef.current?.scrollIntoView({ behavior: "smooth" });
+    setEntryMode("upload");
+    setTimeout(() => {
+      uploadCardRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 0);
   }
 
   return (
@@ -128,8 +131,43 @@ export function ResumePageClient() {
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Left column: upload + summary */}
           <div className="space-y-6">
+            <div className="rounded-xl border border-zinc-200 bg-white p-2 shadow-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  className={`h-10 rounded-lg text-sm font-semibold transition ${
+                    entryMode === "upload"
+                      ? "bg-[#1A56DB] text-white"
+                      : "text-zinc-600 hover:bg-zinc-50"
+                  }`}
+                  type="button"
+                  onClick={() => setEntryMode("upload")}
+                >
+                  Upload CV
+                </button>
+                <button
+                  className={`h-10 rounded-lg text-sm font-semibold transition ${
+                    entryMode === "manual"
+                      ? "bg-[#1A56DB] text-white"
+                      : "text-zinc-600 hover:bg-zinc-50"
+                  }`}
+                  type="button"
+                  onClick={() => setEntryMode("manual")}
+                >
+                  Manual Editor
+                </button>
+              </div>
+            </div>
+
             <div ref={uploadCardRef}>
-              <ResumeUploadCard onUploadSuccess={handleUploadSuccess} />
+              {entryMode === "upload" ? (
+                <ResumeUploadCard onUploadSuccess={handleUploadSuccess} />
+              ) : (
+                <ManualResumeEditor
+                  key={`${effectiveResumeId ?? "new"}-${detailQuery.data?.resume.updated_at ?? "loading"}`}
+                  detail={detailQuery.data}
+                  onSaveSuccess={handleManualSaveSuccess}
+                />
+              )}
             </div>
             <ResumeSummary
               detail={detailQuery.data}

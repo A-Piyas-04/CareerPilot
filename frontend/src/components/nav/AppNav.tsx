@@ -4,9 +4,9 @@ import {
   BriefcaseBusiness,
   FileText,
   LayoutDashboard,
+  Map,
   Sparkles,
   Target,
-  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -31,6 +31,11 @@ const NAV_ITEMS = [
     href: "/goals",
     label: "Goals",
     icon: Target,
+  },
+  {
+    href: "/roadmap",
+    label: "Roadmap",
+    icon: Map,
   },
 ] as const;
 

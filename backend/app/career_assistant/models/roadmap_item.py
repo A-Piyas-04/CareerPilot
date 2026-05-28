@@ -42,6 +42,7 @@ class RoadmapItem(RoadmapItemBase):
     due_date: Optional[date] = None
     completed_at: Optional[datetime] = None
     created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
