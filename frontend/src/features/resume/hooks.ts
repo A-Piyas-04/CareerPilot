@@ -3,13 +3,19 @@ import { toast } from "sonner";
 
 import {
   askCvQuestion,
+  buildResume,
   deleteResume,
   getResume,
   listResumes,
   queryResume,
+  rebuildResume,
   uploadResume,
 } from "./api";
-import type { CvAnswerRequest, ResumeQueryRequest } from "./types";
+import type {
+  BuildResumeRequest,
+  CvAnswerRequest,
+  ResumeQueryRequest,
+} from "./types";
 
 export const resumeKeys = {
   list: ["resumes"] as const,
@@ -28,6 +34,48 @@ export function useResume(resumeId?: string) {
     queryKey: resumeKeys.detail(resumeId ?? null),
     queryFn: () => getResume(resumeId!),
     enabled: Boolean(resumeId),
+  });
+}
+
+export function useBuildResume() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: BuildResumeRequest) => buildResume(payload),
+    onSuccess: (resume) => {
+      queryClient.invalidateQueries({ queryKey: resumeKeys.list });
+      queryClient.invalidateQueries({
+        queryKey: resumeKeys.detail(resume.id),
+      });
+      toast.success(`"${resume.file_name}" saved and indexed.`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Could not save CV. Please try again.");
+    },
+  });
+}
+
+export function useRebuildResume() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      resumeId,
+      payload,
+    }: {
+      resumeId: string;
+      payload: BuildResumeRequest;
+    }) => rebuildResume(resumeId, payload),
+    onSuccess: (resume) => {
+      queryClient.invalidateQueries({ queryKey: resumeKeys.list });
+      queryClient.invalidateQueries({
+        queryKey: resumeKeys.detail(resume.id),
+      });
+      toast.success(`"${resume.file_name}" updated and re-indexed.`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Could not update CV. Please try again.");
+    },
   });
 }
 

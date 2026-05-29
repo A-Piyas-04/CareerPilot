@@ -91,6 +91,48 @@ export const MAX_RESUME_FILE_BYTES = 10 * 1024 * 1024;
 
 export const ALLOWED_RESUME_EXTENSIONS = [".pdf", ".docx"] as const;
 
+export const BUILDER_SECTION_OPTIONS = [
+  { value: "summary", label: "Summary" },
+  { value: "experience", label: "Experience" },
+  { value: "education", label: "Education" },
+  { value: "skills", label: "Skills" },
+  { value: "projects", label: "Projects" },
+  { value: "certifications", label: "Certifications" },
+  { value: "achievements", label: "Achievements" },
+  { value: "publications", label: "Publications" },
+  { value: "languages", label: "Languages" },
+  { value: "general", label: "General" },
+] as const;
+
+export type BuilderSectionKey =
+  (typeof BUILDER_SECTION_OPTIONS)[number]["value"];
+
+const BUILDER_SECTION_VALUES = new Set<string>(
+  BUILDER_SECTION_OPTIONS.map((o) => o.value),
+);
+
+/** Coerce parsed/uploaded section names into a valid builder dropdown value. */
+export function normalizeBuilderSectionName(name: string): BuilderSectionKey {
+  const key = name.trim().toLowerCase();
+  if (BUILDER_SECTION_VALUES.has(key)) {
+    return key as BuilderSectionKey;
+  }
+  return "summary";
+}
+
+export type BuilderSectionInput = {
+  section_name: BuilderSectionKey;
+  content: string;
+};
+
+export type BuildResumeRequest = {
+  title: string;
+  sections: BuilderSectionInput[];
+};
+
+export const MAX_BUILDER_SECTIONS = 12;
+export const BUILDER_CONTENT_MAX = 20000;
+
 export function pickPrimaryResume(resumes: Resume[]): Resume | null {
   if (resumes.length === 0) {
     return null;

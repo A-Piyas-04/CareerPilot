@@ -50,12 +50,16 @@
 | Item | Requirement / Constraint | Status | Notes |
 |------|------------------------|--------|-------|
 | Upload | PDF/DOCX CV upload | ✅ | `POST /api/v1/resumes/upload`; max 10 MB; pypdf + python-docx |
-| In-app builder | Build CV directly inside platform | ❌ | Upload-only; no resume editor |
+| In-app builder | Build CV directly inside platform | ✅ | `POST /api/v1/resumes/build`, `PUT .../build`; frontend builder + edit |
 | Chunking | CV chunked by section (experience, education, skills, projects) | ✅ | `section_detector.py` + `chunker.py` (900 char / 150 overlap) |
 | Embedding | Chunks embedded and stored in vector DB | ✅ | Gemini embeddings → `resume_chunks` (pgvector) |
 | Downstream RAG | Job matching, cover letters, gap analysis use this store | ✅ | Scorer, assistant, `career_generation_service` use RAG context |
 | Semantic search | Query chunks by similarity | ✅ | `POST /api/v1/resumes/query` + RPC `match_resume_chunks` |
+| Semantic search UI | Raw chunk search on `/resume` | ✅ | `ResumeQueryBox` — advanced collapsible panel with similarity scores |
 | Grounded Q&A | Answer questions from CV with evidence | ✅ | `POST /api/v1/resumes/answer` + evidence UI on `/resume` |
+| CV upload preview UI | Post-upload summary in drawer | ✅ | `resume-upload-preview-drawer.tsx` — sections/skills/chunk counts |
+| CV section viewer UI | Full-screen section content | ✅ | `resume-section-viewer-drawer.tsx` |
+| CV delete confirm UI | Professional delete dialog | ✅ | `resume-delete-dialog.tsx` |
 | Skills extraction | Skills indexed from CV | ✅ | Gemini + regex fallback → `user_skills` |
 | Vector ops risk | Embedding dimension alignment (384 vs 768) | ⚠️ | App defaults 768 (Gemini); migrations/RPC may be 384 — Alembic `embedding_new` path; must align in deployment |
 | File storage | Raw CV in object storage | ❌ | `file_url` column unused; text-only pipeline |

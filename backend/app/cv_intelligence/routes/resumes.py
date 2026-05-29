@@ -51,9 +51,64 @@ class ChunkQueryResult(BaseModel):
     similarity: float
 
 
+class BuildSectionInput(BaseModel):
+    section_name: str = Field(..., min_length=1, max_length=64)
+    content: str = Field(..., min_length=1, max_length=20000)
+
+
+class BuildResumeRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    sections: list[BuildSectionInput] = Field(..., min_length=1, max_length=12)
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+@router.post(
+    "/build",
+    response_model=Resume,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create and index a CV from in-app builder sections",
+)
+def build_resume(
+    payload: BuildResumeRequest,
+    user_id: str = Depends(get_current_user),
+) -> Resume:
+    """Accept structured sections, chunk, embed, and mark the resume processed."""
+    section_dicts = [
+        {"section_name": s.section_name, "content": s.content}
+        for s in payload.sections
+    ]
+    return resume_service.process_resume_from_sections(
+        user_id=user_id,
+        title=payload.title,
+        sections=section_dicts,
+    )
+
+
+@router.put(
+    "/{resume_id}/build",
+    response_model=Resume,
+    summary="Rebuild an existing CV from in-app builder sections",
+)
+def rebuild_resume(
+    resume_id: str,
+    payload: BuildResumeRequest,
+    user_id: str = Depends(get_current_user),
+) -> Resume:
+    """Replace sections/chunks/skills for an owned resume and re-index."""
+    section_dicts = [
+        {"section_name": s.section_name, "content": s.content}
+        for s in payload.sections
+    ]
+    return resume_service.rebuild_resume_from_sections(
+        user_id=user_id,
+        resume_id=resume_id,
+        title=payload.title,
+        sections=section_dicts,
+    )
+
 
 @router.post(
     "/upload",

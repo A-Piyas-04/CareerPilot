@@ -129,8 +129,8 @@
 
 | Page | Path | Status | Notes |
 |------|------|--------|-------|
-| CV Intelligence | `/resume` | ✅ | `ResumePageClient` + `AppNav` |
-| In-app CV builder | ❌ | Upload-only |
+| CV Intelligence | `/resume` | ✅ | `ResumePageClient` + `AppNav`; polished hero + layout |
+| In-app CV builder | ✅ | Upload \| Build tabs; `resume-builder-card.tsx`; create + edit/rebuild |
 
 ### Panels & components
 
@@ -138,38 +138,44 @@
 |-----------|------|--------|-------|
 | Page header + status badge | `resume-page-client.tsx` | ✅ | `no_cv` / `processing` / `failed` / `rag_ready` |
 | Multi-resume selector | `resume-page-client.tsx` | ✅ | Shown when >1 resume |
-| Upload card (drag-and-drop) | `resume-upload-card.tsx` | ✅ | PDF/DOCX, drag state, file clear, upload progress strip |
+| Upload card (drag-and-drop) | `resume-upload-card.tsx` | ✅ | PDF/DOCX, drag state, file clear, upload progress strip, opens preview drawer |
 | Upload validation errors | `resume-upload-card.tsx` | ✅ | Client-side before API |
 | Resume summary | `resume-summary.tsx` | ✅ | Skeleton, sections (expand/collapse), skills by category, delete |
-| Delete resume | `resume-summary.tsx` | ✅ | `confirm()` + mutation + toast |
+| Delete resume | `resume-summary.tsx` | ✅ | `ResumeDeleteDialog` + mutation + toast |
 | Failed / re-upload CTA | `resume-summary.tsx` | ✅ | Scroll to upload card |
 | Ask about CV panel | `resume-answer-box.tsx` | ✅ | Textarea, sample question chips, answer + evidence |
-| Evidence cards (CV page) | `resume-answer-box.tsx` | ✅ | Similarity bars, expand chunk text |
-| Semantic query box (debug) | `resume-query-box.tsx` | ❌ | **Component exists but not mounted** on `/resume` |
-| Chunk evidence card (shared) | `chunk-evidence-card.tsx` | ✅ | Used in chat messages |
+| Evidence cards (CV page) | `resume-answer-box.tsx` | ✅ | Shared `ChunkEvidenceCard` variant=full |
+| Semantic query box (advanced) | `resume-query-box.tsx` | ✅ | Mounted below main grid; collapsible; `POST /query` |
+| Chunk evidence card (shared) | `chunk-evidence-card.tsx` | ✅ | Chat (compact) + CV page (full with similarity bar) |
+| Upload preview drawer | `resume-upload-preview-drawer.tsx` | ✅ | File meta, upload lifecycle, post-parse stats |
+| Section full-screen viewer | `resume-section-viewer-drawer.tsx` | ✅ | “View full” on long sections; metadata block |
+| Delete confirm dialog | `resume-delete-dialog.tsx` | ✅ | Centered modal with resume name + warning |
+| CV builder card | `resume-builder-card.tsx` | ✅ | Section rows, create + edit, preview drawer on success |
+| Shared UI tokens | `resume-ui.ts` | ✅ | Cards, buttons, tabs, inputs — consistent polish |
 | Sign out | `resume-page-client.tsx` | ✅ | Header button |
 
 ### Modals / drawers
 
 | UI | Status | Notes |
 |----|--------|-------|
-| Delete resume confirm | ⚠️ | Native `confirm()` in summary |
-| Upload preview modal | ❌ | File name only inline |
-| Section full-screen viewer | ❌ | Inline expand only |
+| Delete resume confirm | ✅ | `ResumeDeleteDialog` — filename, cancel, destructive confirm |
+| Upload preview drawer | ✅ | Right drawer on file select; success stats from `ResumeDetail` |
+| Section full-screen viewer | ✅ | Right drawer via “View full”; inline expand preserved |
 
 ### User flows
 
 | Flow | Status | Steps |
 |------|--------|-------|
-| Upload CV (click) | ✅ | Select file → Upload → processing toast → summary refreshes |
-| Upload CV (drag-and-drop) | ✅ | Drop zone on upload card |
-| View parsed sections & skills | ✅ | Expand sections; category-colored skill chips |
+| Upload CV (click) | ✅ | Select file → preview drawer → Upload → success stats → summary refreshes |
+| Upload CV (drag-and-drop) | ✅ | Drop → preview drawer → same flow as click |
+| View parsed sections & skills | ✅ | Inline expand + “View full” drawer; category-colored skill chips |
 | Ask grounded question about CV | ✅ | Pick/enter question → Ask → answer + collapsible evidence |
 | Switch active resume | ✅ | Dropdown when multiple resumes |
-| Delete CV | ✅ | Trash → confirm → list refresh |
+| Delete CV | ✅ | Trash → delete dialog → confirm → list refresh |
 | Recover from failed parse | ✅ | Error state + re-upload scroll |
-| Raw semantic chunk search | ❌ | `ResumeQueryBox` not on page |
-| Build CV in browser | ❌ | Not implemented |
+| Raw semantic chunk search | ✅ | Advanced panel → query → chunks with scores + expand |
+| Build CV in browser | ✅ | Build tab → sections → Save & index; Edit in builder on overview |
+| Edit CV in builder | ✅ | Overview → Edit in builder → Update & re-index |
 
 ---
 
@@ -418,9 +424,8 @@
 5. ❌ **Manual job paste** drawer on `/jobs`  
 6. ❌ **Dedicated pages** — skill gap, cover letters list, roadmap viewer  
 7. ⚠️ **Chat suggested prompts** — benchmark queries (readiness, gap, roadmap, letter)  
-8. ⚠️ **Mount or remove** `ResumeQueryBox` on `/resume`  
-9. ❌ **Shared confirm modal** instead of `window.confirm`  
-10. ⚠️ **Unify sign-out** on all authenticated pages (add to `/jobs` header)
+8. ❌ **Shared confirm modal** (tracker/chat/goals still use `window.confirm`; CV delete uses dedicated dialog)  
+9. ⚠️ **Unify sign-out** on all authenticated pages (add to `/jobs` header)
 
 ---
 
