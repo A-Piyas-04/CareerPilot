@@ -80,6 +80,15 @@ const corePages = [
     accent: "bg-blue-50 text-blue-700",
     status: "Live",
   },
+  {
+    title: "Progress Dashboard",
+    href: "/dashboard",
+    description:
+      "Track applications, roadmap progress, completed tasks, upcoming deadlines, and recent activity.",
+    icon: Layers3,
+    accent: "bg-zinc-100 text-zinc-700",
+    status: "Live",
+  },
 ];
 
 const futureFeatures = [
@@ -94,12 +103,6 @@ const futureFeatures = [
     description:
       "Generate week-by-week learning plans and turn roadmap items into tasks or calendar events.",
     icon: Map,
-  },
-  {
-    title: "Progress Dashboard",
-    description:
-      "Track applications, goals, completed tasks, upcoming deadlines, and recent activity.",
-    icon: Layers3,
   },
   {
     title: "AI Nudges",

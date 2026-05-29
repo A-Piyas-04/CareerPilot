@@ -74,6 +74,21 @@ class FakeQuery implements PromiseLike<{ data: unknown; error: unknown }> {
     return this;
   }
 
+  gt(key: string, value: unknown) {
+    this.filters.push([key, `gt:${String(value)}`]);
+    return this;
+  }
+
+  gte(key: string, value: unknown) {
+    this.filters.push([key, `gte:${String(value)}`]);
+    return this;
+  }
+
+  lte(key: string, value: unknown) {
+    this.filters.push([key, `lte:${String(value)}`]);
+    return this;
+  }
+
   not(key: string, operator: string, value: unknown) {
     this.filters.push([key, `${operator}:${String(value)}`]);
     return this;

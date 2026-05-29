@@ -34,6 +34,11 @@ const NAV_ITEMS = [
     icon: Target,
   },
   {
+    href: "/dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+  },
+  {
     href: "/roadmap",
     label: "Roadmap",
     icon: Map,
