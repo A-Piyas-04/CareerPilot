@@ -1,5 +1,12 @@
-"""Deterministic CV skill extraction using a curated keyword list."""
+"""CV skill extraction with provider-first and deterministic fallback."""
+from __future__ import annotations
+
+import logging
 import re
+
+from app.cv_intelligence.services.providers.analysis import get_analysis_provider
+
+logger = logging.getLogger(__name__)
 
 # Each entry: (canonical_skill_name, category, list_of_match_patterns)
 # Patterns are matched case-insensitively as whole words / phrases.
@@ -75,7 +82,7 @@ _COMPILED: list[tuple[str, str, list[re.Pattern]]] = [
 _EVIDENCE_WINDOW = 120  # chars on each side of a match to use as evidence
 
 
-def extract_skills(text: str) -> list[dict]:
+def _extract_skills_deterministic(text: str) -> list[dict]:
     """
     Scan text for known skill keywords and return a deduplicated list of matches.
 
@@ -104,3 +111,22 @@ def extract_skills(text: str) -> list[dict]:
                 break  # first pattern match is enough for this skill
 
     return list(found.values())
+
+
+def extract_skills(text: str) -> list[dict]:
+    """
+    Extract skills via configured provider first, then fall back to deterministic
+    regex extraction to keep ingestion resilient.
+    """
+    if not text.strip():
+        return []
+
+    try:
+        provider = get_analysis_provider()
+        skills = provider.extract_skills(text)
+        if skills:
+            return skills
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        logger.warning("Analysis provider failed; using deterministic fallback: %s", exc)
+
+    return _extract_skills_deterministic(text)

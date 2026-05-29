@@ -255,7 +255,7 @@ def answer_cv_question(
     user_id: str = Depends(get_current_user),
 ) -> AnswerResponse:
     """
-    Retrieve the most relevant CV chunks for the question, then ask Claude to
+    Retrieve the most relevant CV chunks for the question, then ask Gemini to
     answer using only those chunks as evidence.  Returns the AI answer plus the
     evidence chunks so the frontend can display citations.
     """

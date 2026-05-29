@@ -12,7 +12,7 @@ alembic>=1.13
 pgvector>=0.2.5
 pypdf
 python-docx
-scikit-learn
+# scikit-learn removed: embeddings now use Gemini provider backend
 numpy
 google-generativeai
 pytest

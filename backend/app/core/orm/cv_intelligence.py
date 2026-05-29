@@ -20,6 +20,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
 from app.core.enums import ResumeStatus
+from app.core.config import settings
 from app.core.orm.base import CreatedAtMixin, TimestampMixin
 
 
@@ -139,7 +140,9 @@ class ResumeChunk(Base, CreatedAtMixin):
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     chunk_text: Mapped[str] = mapped_column(Text, nullable=False)
     token_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    embedding: Mapped[list[float] | None] = mapped_column(Vector(384), nullable=True)
+    embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(settings.embedding_vector_dim), nullable=True
+    )
     metadata_: Mapped[dict[str, Any] | None] = mapped_column(
         "metadata",
         JSONB,

@@ -42,7 +42,21 @@ class Settings(BaseSettings):
 
     # AI / ML
     gemini_api_key: str = Field(default="", validation_alias="GEMINI_API_KEY")
-    embedding_backend: str = Field(default="hashing", validation_alias="EMBEDDING_BACKEND")
+    embedding_backend: str = Field(default="gemini", validation_alias="EMBEDDING_BACKEND")
+    analysis_backend: str = Field(default="gemini", validation_alias="ANALYSIS_BACKEND")
+    gemini_embedding_model: str = Field(
+        default="models/embedding-001",
+        validation_alias="GEMINI_EMBEDDING_MODEL",
+    )
+    embedding_vector_dim: int = Field(default=768, validation_alias="EMBEDDING_VECTOR_DIM")
+    retrieval_require_dim_match: bool = Field(
+        default=True,
+        validation_alias="RETRIEVAL_REQUIRE_DIM_MATCH",
+    )
+    embedding_active_column: str = Field(
+        default="embedding",
+        validation_alias="EMBEDDING_ACTIVE_COLUMN",
+    )
 
     # ─── External job-search providers ───────────────────────────────────────
     rapidapi_key: str = Field(default="", validation_alias="RAPIDAPI_KEY")
