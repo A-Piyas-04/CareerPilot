@@ -7,6 +7,10 @@ type TableState = {
 
 export class FakeSupabase {
   auth = {
+    getSession: vi.fn(async () => ({
+      data: { session: { access_token: "test-access-token" } },
+      error: null,
+    })),
     getUser: vi.fn(async () => ({
       data: { user: { id: "00000000-0000-0000-0000-000000000001" } },
       error: null,

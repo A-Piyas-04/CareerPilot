@@ -122,6 +122,7 @@ Rules:
 - If no duration is specified, default to 8 weeks.
 - Start only from skills and experience explicitly present in the CV context excerpts.
 - Make the roadmap realistic for the current background.
+- Do not say you saved the roadmap; chat drafts are not persisted as standalone roadmaps yet.
 - Do not invent prior achievements or experience.`;
 }
 

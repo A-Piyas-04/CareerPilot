@@ -56,7 +56,23 @@ export async function loadCoverLetterResumeContext(
     };
   }
 
-  const fallback = await getResumeContext(userId);
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    return {
+      resumeId: null,
+      text: "[Resume context unavailable] Upload your CV at /resume and try again.",
+    };
+  }
+
+  const fallback = await getResumeContext({
+    accessToken: session.access_token,
+    intent: "cover_letter",
+    query: "Generate a grounded cover letter from the user's CV.",
+    userId,
+  });
 
   return {
     resumeId: null,

@@ -7,6 +7,7 @@ import {
   GeminiApiError,
   intentModelCascade,
   isRetryableGeminiError,
+  parseGeminiModelList,
   resolveModelCascade,
 } from "./gemini";
 
@@ -35,10 +36,53 @@ describe("gemini model cascade", () => {
     ).toEqual(["gemini-2.0-flash", "gemini-2.5-pro", "gemini-1.5-flash"]);
   });
 
+  it("parses and deduplicates comma-separated fallback model lists", () => {
+    expect(
+      parseGeminiModelList(
+        " gemini-2.0-flash,gemini-1.5-flash,,gemini-2.0-flash ",
+      ),
+    ).toEqual(["gemini-2.0-flash", "gemini-1.5-flash"]);
+  });
+
+  it("uses configured generation fallback models after the preferred model", () => {
+    vi.stubEnv(
+      "GEMINI_GENERATION_FALLBACK_MODELS",
+      "gemini-custom-a, gemini-custom-b, gemini-custom-a",
+    );
+
+    expect(generationModelCascade("gemini-primary")).toEqual([
+      "gemini-primary",
+      "gemini-custom-a",
+      "gemini-custom-b",
+    ]);
+  });
+
+  it("uses configured intent fallback models after the preferred model", () => {
+    vi.stubEnv(
+      "GEMINI_INTENT_FALLBACK_MODELS",
+      "gemini-intent-a, gemini-intent-b",
+    );
+
+    expect(intentModelCascade("gemini-intent-primary")).toEqual([
+      "gemini-intent-primary",
+      "gemini-intent-a",
+      "gemini-intent-b",
+    ]);
+  });
+
   it("detects quota errors as retryable", () => {
     expect(isRetryableGeminiError(429, "Too Many Requests")).toBe(true);
     expect(
       isRetryableGeminiError(403, "Quota exceeded for generate_content"),
+    ).toBe(true);
+    expect(
+      isRetryableGeminiError(403, "Billing has not been enabled"),
+    ).toBe(true);
+    expect(
+      isRetryableGeminiError(404, "Model gemini-old was not found"),
+    ).toBe(true);
+    expect(
+      isRetryableGeminiError(400, "Model is not supported for this endpoint"),
     ).toBe(true);
     expect(isRetryableGeminiError(500, "Internal error")).toBe(false);
   });

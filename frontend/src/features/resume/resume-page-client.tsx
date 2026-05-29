@@ -9,7 +9,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
@@ -112,14 +112,8 @@ export function ResumePageClient() {
   const [builderEditId, setBuilderEditId] = useState<string | null>(null);
   const inputAreaRef = useRef<HTMLDivElement>(null);
 
-  const resumes = resumesQuery.data ?? [];
+  const resumes = useMemo(() => resumesQuery.data ?? [], [resumesQuery.data]);
   const primaryResume = useMemo(() => pickPrimaryResume(resumes), [resumes]);
-
-  useEffect(() => {
-    if (primaryResume && !selectedResumeId) {
-      setSelectedResumeId(primaryResume.id);
-    }
-  }, [primaryResume, selectedResumeId]);
 
   const effectiveResumeId = selectedResumeId ?? primaryResume?.id ?? null;
   const detailQuery = useResume(effectiveResumeId ?? undefined);
@@ -306,6 +300,7 @@ export function ResumePageClient() {
               )}
               {inputMode === "build" && (
                 <ResumeBuilderCard
+                  key={`${builderEditId ?? "new"}-${builderEditDetail?.resume.updated_at ?? "blank"}`}
                   buildDetail={detailQuery.data}
                   editResumeId={builderEditId}
                   initialDetail={builderEditDetail}

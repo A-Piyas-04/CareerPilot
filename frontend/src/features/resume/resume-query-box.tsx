@@ -21,7 +21,11 @@ export function ResumeQueryBox({
   resumeStatus,
 }: ResumeQueryBoxProps) {
   const [query, setQuery] = useState(DEFAULT_QUERY);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(() =>
+    typeof window === "undefined"
+      ? false
+      : window.matchMedia("(min-width: 1024px)").matches,
+  );
   const queryMutation = useQueryResume();
 
   const canQuery = Boolean(resumeId) && resumeStatus === "processed";
@@ -29,7 +33,6 @@ export function ResumeQueryBox({
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
-    setExpanded(mq.matches);
     const handler = (e: MediaQueryListEvent) => setExpanded(e.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);

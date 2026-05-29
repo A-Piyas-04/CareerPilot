@@ -25,6 +25,8 @@ export const DEFAULT_INTENT_CASCADE = [
   "gemini-1.5-flash",
 ] as const;
 
+const MODEL_LIST_SEPARATOR = ",";
+
 export class GeminiApiError extends Error {
   status: number;
 
@@ -50,25 +52,49 @@ export function resolveModelCascade(
   defaults: readonly string[],
 ): string[] {
   const first = preferred?.trim();
+  const dedupedDefaults = dedupeModels(defaults);
 
   if (!first) {
-    return [...defaults];
+    return dedupedDefaults;
   }
 
-  return [first, ...defaults.filter((model) => model !== first)];
+  return dedupeModels([first, ...dedupedDefaults]);
+}
+
+export function parseGeminiModelList(value: string | undefined): string[] {
+  if (!value) {
+    return [];
+  }
+
+  return dedupeModels(
+    value
+      .split(MODEL_LIST_SEPARATOR)
+      .map((model) => model.trim())
+      .filter(Boolean),
+  );
 }
 
 export function generationModelCascade(preferred?: string) {
+  const configuredFallbacks = parseGeminiModelList(
+    process.env.GEMINI_GENERATION_FALLBACK_MODELS,
+  );
+
   return resolveModelCascade(
     preferred ?? process.env.GEMINI_MODEL?.trim() ?? GEMINI_MODEL,
-    DEFAULT_GENERATION_CASCADE,
+    configuredFallbacks.length > 0
+      ? configuredFallbacks
+      : DEFAULT_GENERATION_CASCADE,
   );
 }
 
 export function intentModelCascade(preferred?: string) {
+  const configuredFallbacks = parseGeminiModelList(
+    process.env.GEMINI_INTENT_FALLBACK_MODELS,
+  );
+
   return resolveModelCascade(
     preferred ?? process.env.GEMINI_INTENT_MODEL?.trim() ?? GEMINI_INTENT_MODEL,
-    DEFAULT_INTENT_CASCADE,
+    configuredFallbacks.length > 0 ? configuredFallbacks : DEFAULT_INTENT_CASCADE,
   );
 }
 
@@ -78,13 +104,28 @@ export function isRetryableGeminiError(status: number, message: string) {
   }
 
   const normalized = message.toLowerCase();
+  const isQuotaOrBilling =
+    normalized.includes("quota") ||
+    normalized.includes("rate") ||
+    normalized.includes("rate limit") ||
+    normalized.includes("limit") ||
+    normalized.includes("exhausted") ||
+    normalized.includes("billing");
+  const isModelAvailability =
+    normalized.includes("model") &&
+    (normalized.includes("not found") ||
+      normalized.includes("not supported") ||
+      normalized.includes("unsupported") ||
+      normalized.includes("unavailable"));
 
   return (
-    status === 403 &&
-    (normalized.includes("quota") ||
-      normalized.includes("rate") ||
-      normalized.includes("limit") ||
-      normalized.includes("exhausted"))
+    (status === 403 && isQuotaOrBilling) ||
+    (status === 404 && isModelAvailability) ||
+    (status === 400 && isModelAvailability) ||
+    (status === 503 &&
+      (normalized.includes("unavailable") ||
+        normalized.includes("overloaded") ||
+        normalized.includes("try again")))
   );
 }
 
@@ -317,6 +358,24 @@ function geminiContentFromMemory(
 
 function isGeminiContent(value: GeminiContent | null): value is GeminiContent {
   return value !== null;
+}
+
+function dedupeModels(models: readonly string[]) {
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+
+  for (const model of models) {
+    const cleanModel = model.trim();
+
+    if (!cleanModel || seen.has(cleanModel)) {
+      continue;
+    }
+
+    seen.add(cleanModel);
+    deduped.push(cleanModel);
+  }
+
+  return deduped;
 }
 
 async function readGeminiError(response: Response) {

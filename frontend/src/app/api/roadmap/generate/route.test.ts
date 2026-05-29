@@ -9,7 +9,11 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/lib/gemini", () => ({
   GEMINI_MODEL: "gemini-test",
   GeminiApiError: class GeminiApiError extends Error {
-    status = 500;
+    status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.status = status;
+    }
   },
   createGeminiText: vi.fn(),
 }));
@@ -22,7 +26,7 @@ vi.mock("@/lib/assistant/getResumeContext", () => ({
 }));
 
 const { createClient } = await import("@/lib/supabase/server");
-const { createGeminiText } = await import("@/lib/gemini");
+const { createGeminiText, GeminiApiError } = await import("@/lib/gemini");
 const route = await import("./route");
 
 describe("POST /api/roadmap/generate", () => {
@@ -103,5 +107,32 @@ describe("POST /api/roadmap/generate", () => {
     expect(response.status).toBe(200);
     expect(body.items).toHaveLength(4);
     expect(supabase.calls.find((call) => call.table === "roadmap_items")?.payload).toHaveLength(4);
+  });
+
+  it("does not save a fake roadmap when every Gemini fallback model fails", async () => {
+    supabase.setTable("profiles", [{ data: { target_role: "ML Engineer" } }]);
+    supabase.setTable("resumes", [{ data: null }]);
+    vi.mocked(createGeminiText).mockRejectedValue(
+      new GeminiApiError("Quota exceeded across all configured models", 429),
+    );
+
+    const response = await route.POST(
+      new Request("http://localhost/api/roadmap/generate", {
+        body: JSON.stringify({ durationWeeks: 4, targetRole: "ML Engineer" }),
+        method: "POST",
+      }) as never,
+    );
+
+    expect(response.status).toBe(429);
+    expect(
+      supabase.calls.some(
+        (call) => call.table === "roadmaps" && call.mode === "insert",
+      ),
+    ).toBe(false);
+    expect(
+      supabase.calls.some(
+        (call) => call.table === "roadmap_items" && call.mode === "insert",
+      ),
+    ).toBe(false);
   });
 });

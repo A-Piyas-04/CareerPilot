@@ -68,7 +68,24 @@ export async function loadRoadmapResumeContext(
     };
   }
 
-  const fallback = await getResumeContext(userId);
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    return {
+      resumeId: null,
+      text: "[Resume context unavailable] Upload your CV at /resume and try again.",
+      usedResumeChunks: [],
+    };
+  }
+
+  const fallback = await getResumeContext({
+    accessToken: session.access_token,
+    intent: "roadmap_generation",
+    query: "Generate a grounded learning roadmap from the user's CV.",
+    userId,
+  });
 
   return {
     resumeId: null,

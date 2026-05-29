@@ -19,7 +19,7 @@ vi.mock("@/lib/gemini", () => ({
 }));
 
 const { createClient } = await import("@/lib/supabase/server");
-const { createGeminiText } = await import("@/lib/gemini");
+const { createGeminiText, GeminiApiError } = await import("@/lib/gemini");
 const route = await import("./route");
 
 describe("POST /api/cover-letter/generate", () => {
@@ -100,5 +100,39 @@ describe("POST /api/cover-letter/generate", () => {
       job_title: "ML Engineer Intern",
       version: 1,
     });
+  });
+
+  it("does not save a fake cover letter when every Gemini fallback model fails", async () => {
+    supabase.setTable("profiles", [{ data: { full_name: "John Doe" } }]);
+    supabase.setTable("resumes", [
+      {
+        data: {
+          id: "00000000-0000-4000-8000-000000000010",
+          raw_text: "Skills: Python, FastAPI, PostgreSQL. Backend intern.",
+        },
+      },
+    ]);
+    vi.mocked(createGeminiText).mockRejectedValue(
+      new GeminiApiError("Quota exceeded across all configured models", 429),
+    );
+
+    const response = await route.POST(
+      new Request("http://localhost/api/cover-letter/generate", {
+        body: JSON.stringify({
+          companyName: "Acme Corp",
+          jobDescription: "Python, SQL, PyTorch, REST API",
+          jobTitle: "ML Engineer Intern",
+          tone: "professional",
+        }),
+        method: "POST",
+      }) as never,
+    );
+
+    expect(response.status).toBe(429);
+    expect(
+      supabase.calls.some(
+        (call) => call.table === "cover_letters" && call.mode === "insert",
+      ),
+    ).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, PenLine, Plus, Save, Trash2 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 
 import { useBuildResume, useRebuildResume } from "./hooks";
 import {
@@ -87,13 +87,6 @@ export function ResumeBuilderCard({
   const buildMutation = useBuildResume();
   const rebuildMutation = useRebuildResume();
   const isPending = buildMutation.isPending || rebuildMutation.isPending;
-
-  useEffect(() => {
-    if (initialDetail) {
-      setTitle(initialDetail.resume.file_name);
-      setRows(detailToRows(initialDetail));
-    }
-  }, [initialDetail]);
 
   function validateForm(): BuildResumeRequest | null {
     setLocalError(null);

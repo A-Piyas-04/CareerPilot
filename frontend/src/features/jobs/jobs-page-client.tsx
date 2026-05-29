@@ -11,7 +11,7 @@ import { useJobMatches } from "./hooks";
 
 export function JobsPageClient() {
   const resumesQuery = useResumes();
-  const resumes = resumesQuery.data ?? [];
+  const resumes = useMemo(() => resumesQuery.data ?? [], [resumesQuery.data]);
   const primary = useMemo(() => pickPrimaryResume(resumes), [resumes]);
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(
     primary?.id ?? null,

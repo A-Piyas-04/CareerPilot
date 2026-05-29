@@ -9,13 +9,17 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/lib/gemini", () => ({
   GEMINI_MODEL: "gemini-test",
   GeminiApiError: class GeminiApiError extends Error {
-    status = 500;
+    status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.status = status;
+    }
   },
   createGeminiText: vi.fn(),
 }));
 
 const { createClient } = await import("@/lib/supabase/server");
-const { createGeminiText } = await import("@/lib/gemini");
+const { createGeminiText, GeminiApiError } = await import("@/lib/gemini");
 const route = await import("./route");
 
 describe("POST /api/cover-letter/[id]/regenerate", () => {
@@ -80,5 +84,39 @@ describe("POST /api/cover-letter/[id]/regenerate", () => {
     expect(response.status).toBe(200);
     expect(body.coverLetter.version).toBe(2);
     expect(supabase.calls.some((call) => call.mode === "delete")).toBe(false);
+  });
+
+  it("does not create a new version when every Gemini fallback model fails", async () => {
+    supabase.setTable("cover_letters", [
+      {
+        data: {
+          company_name: "Acme",
+          content: "Old",
+          id: "00000000-0000-4000-8000-000000000001",
+          job_description: "Python REST API",
+          job_id: null,
+          job_title: "Backend Intern",
+          tone: "professional",
+          user_id: "00000000-0000-0000-0000-000000000001",
+          version: 1,
+        },
+      },
+    ]);
+    supabase.setTable("profiles", [{ data: { full_name: "John Doe" } }]);
+    supabase.setTable("resumes", [{ data: null }]);
+    vi.mocked(createGeminiText).mockRejectedValue(
+      new GeminiApiError("Quota exceeded across all configured models", 429),
+    );
+
+    const response = await route.POST({} as Request, {
+      params: Promise.resolve({ id: "00000000-0000-4000-8000-000000000001" }),
+    });
+
+    expect(response.status).toBe(429);
+    expect(
+      supabase.calls.some(
+        (call) => call.table === "cover_letters" && call.mode === "insert",
+      ),
+    ).toBe(false);
   });
 });
