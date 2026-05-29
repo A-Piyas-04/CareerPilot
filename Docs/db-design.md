@@ -1,17 +1,67 @@
 # CareerPilot — Database Schema Documentation
 
+> **Last updated:** May 29, 2026  
+> **Authoritative SQL:** `supabase/migrations/` (apply via `supabase db push`)  
+> **Runtime reference:** [`present-state.md`](present-state.md) for feature ↔ API ↔ UI wiring
+
 ## Purpose
 
-This document defines the database schema for CareerPilot using the actual 3-member team structure.
+This document defines the PostgreSQL schema for CareerPilot (Supabase), organized by the original 3-member team modules. It describes **every table, enum, index, RLS policy, grant, and database function** — and records which parts are **live in production code** vs **schema-only placeholders**.
 
 The database is organized into:
 
-1. Member 1 Module — CV Intelligence
-2. Member 2 Module — Job Intelligence
-3. Member 3 Module — Career Assistant & Tracker
-4. Shared/Core Module — Users, Evaluation, and System Support
+1. **Member 1 — CV Intelligence** — resumes, sections, chunks, embeddings, skills
+2. **Member 2 — Job Intelligence** — job searches, jobs, fit matches
+3. **Member 3 — Career Assistant & Tracker** — Kanban, goals, tasks, calendar, AI chat
+4. **Shared/Core** — profiles, evaluation tests
 
-The goal is to keep the schema simple for team development while still making it future-proof and easy to integrate.
+---
+
+## Implementation Status (May 2026)
+
+| Table / object | DB | Backend writes | Frontend reads/writes | Notes |
+| --- | --- | --- | --- | --- |
+| `profiles` | ✅ | trigger on signup | Supabase (auth, assistant) | `handle_new_user()` |
+| `resumes` | ✅ | FastAPI service role | FastAPI + UI `/resume` | No Storage upload (`file_url` unused) |
+| `resume_sections` | ✅ | FastAPI | via resume detail | |
+| `resume_chunks` | ✅ | FastAPI (Gemini embed) | RAG via FastAPI | See embedding dimensions below |
+| `user_skills` | ✅ | FastAPI upsert | resume detail UI | unique `(user_id, skill_name)` |
+| `job_searches` | ✅ | FastAPI | — | |
+| `jobs` | ✅ | FastAPI | match cards | RLS: authenticated SELECT |
+| `job_matches` | ✅ | FastAPI upsert | `/jobs` | unique `(user_id, job_id, resume_id)` |
+| `applications` | ✅ | FastAPI + RPC | `/tracker` | manual_* columns + job link |
+| `application_history` | ✅ | RPC only | detail drawer | INSERT via `change_application_status` |
+| `goals` | ✅ | FastAPI | `/goals` | |
+| `tasks` | ✅ | FastAPI + Supabase | goals + standalone list | `priority` 1–3 constraint |
+| `calendar_events` | ✅ | — | Supabase direct `/calendar` | |
+| `assistant_conversations` | ✅ | — | Supabase direct `/chat` | |
+| `assistant_messages` | ✅ | Next.js route | `/chat` stream | metadata stores intent |
+| `cover_letters` | ✅ schema | — | — | Not wired |
+| `roadmaps` / `roadmap_items` | ✅ schema | — | — | Chat intent only |
+| `skill_gap_analysis` | ✅ schema | — | — | Chat intent only |
+| `evaluation_tests` | ✅ schema | — | — | Hackathon eval suite |
+| `match_resume_chunks` RPC | ✅ | FastAPI retrieval | — | `vector(384)` in migration — see below |
+| `change_application_status` RPC | ✅ | FastAPI PATCH status | Kanban drag | atomic history insert |
+| `embedding_new` column | Alembic | reembed script | — | `vector(768)` default; not in Supabase migrations yet |
+
+### Access patterns
+
+| Client | Key | RLS | Typical use |
+| --- | --- | --- | --- |
+| Browser (logged-in user) | `anon` + JWT | **Enforced** | Calendar, tasks, assistant CRUD |
+| FastAPI backend | `service_role` | **Bypassed** | CV pipeline, jobs, applications, goals; must filter `user_id` in code |
+| Next.js assistant route | `service_role` or server Supabase | Mixed | Conversations/messages |
+
+**Grants:** Several migrations explicitly `GRANT` table privileges to `authenticated` and `service_role` (required for PostgREST even when RLS policies exist). See [Migrations & Grants](#migrations--grants).
+
+### Embedding columns (`resume_chunks`)
+
+| Column | Origin | Dimension | Used when |
+| --- | --- | --- | --- |
+| `embedding` | Initial migration `20250525000001` | `vector(384)` | `EMBEDDING_ACTIVE_COLUMN=embedding` (legacy) |
+| `embedding_new` | Alembic `2b7f66d7a1b2` | `vector(768)` default | Gemini rollout / backfill |
+
+**Runtime default:** Gemini `models/embedding-001` at **768 dimensions** (`EMBEDDING_VECTOR_DIM=768`). The pgvector RPC functions in `20250527000000_match_resume_chunks_rpc.sql` still declare `vector(384)` — **production must align** RPC signature, active column, and stored dimension before relying on IVFFlat RPC (numpy fallback works cross-dim only when `RETRIEVAL_REQUIRE_DIM_MATCH=false`).
 
 ---
 
@@ -152,6 +202,8 @@ Member 1
 ## Final Deliverable
 
 The system understands the user profile from their CV.
+
+**Status:** Fully implemented end-to-end (`/resume`, FastAPI `/api/v1/resumes/*`, Gemini embeddings + answers).
 
 ## Responsible Features
 
@@ -301,9 +353,19 @@ This is the main RAG table.
 | chunk_index  | INTEGER     | Yes      | Order of chunk inside resume                   |
 | chunk_text   | TEXT        | Yes      | Text content of the chunk                      |
 | token_count  | INTEGER     | No       | Approximate token count                        |
-| embedding    | VECTOR(384) | No       | Vector embedding for semantic search           |
+| embedding    | VECTOR(384) | No       | Legacy IVFFlat column (initial migration)      |
+| embedding_new| VECTOR(768) | No       | Gemini backfill column (Alembic; optional)     |
 | metadata     | JSONB       | No       | Extra chunk metadata                           |
 | created_at   | TIMESTAMPTZ | Yes      | Creation time                                  |
+
+### Indexes
+
+- `idx_resume_chunks_embedding` — IVFFlat on `embedding` (`vector_cosine_ops`)
+- `idx_resume_chunks_embedding_new` — IVFFlat on `embedding_new` (Alembic, when applied)
+
+### Retrieval RPC
+
+`match_resume_chunks(query_embedding, match_user_id, match_count)` and `match_resume_chunks_with_resume(..., match_resume_id, ...)` return top-k rows ordered by cosine distance (`<=>`). Called from `backend/app/cv_intelligence/services/retrieval_service.py` when `EMBEDDING_ACTIVE_COLUMN=embedding`.
 
 ---
 
@@ -348,6 +410,8 @@ Stores structured skills extracted from the user's resume or added manually.
 ## Owner
 
 Member 2
+
+**Status:** Search, scoring, persistence, and save-to-tracker are **live** (`/jobs`, FastAPI `/api/v1/jobs/*`). Manual paste API exists without dedicated UI.
 
 ## Final Deliverable
 
@@ -489,6 +553,14 @@ Stores computed fit scores between a user resume and a job posting.
 | evidence_chunks | UUID[]       | No       | Resume chunk IDs used as evidence        |
 | created_at      | TIMESTAMPTZ  | Yes      | Match creation time                      |
 
+### Constraints
+
+- **Unique:** `(user_id, job_id, resume_id)` — backend upserts on conflict when re-scoring the same job for the same resume.
+
+### Fit score formula (application layer)
+
+`fit_score = round(100 × (0.6 × skills_overlap_ratio + 0.4 × mean_top5_chunk_similarity), 2)` — implemented in `backend/app/job_intelligence/services/job_scorer.py`.
+
 ---
 
 # Member 3 Module — Career Assistant & Tracker
@@ -496,6 +568,8 @@ Stores computed fit scores between a user resume and a job posting.
 ## Owner
 
 Member 3
+
+**Status:** Kanban, goals, tasks, calendar, and AI chat are **live**. Cover letters, roadmaps, and skill gap tables exist but are not written to by application code yet.
 
 ## Final Deliverable
 
@@ -600,9 +674,25 @@ Stores individual chat messages.
 | metadata           | JSONB             | No       | Extra LLM metadata                            |
 | created_at         | TIMESTAMPTZ       | Yes      | Message time                                  |
 
+### Typical `metadata` keys (assistant route)
+
+| Key | Description |
+| --- | --- |
+| `model` | Gemini model id used for the reply |
+| `streamed` | `true` when response was SSE-streamed |
+| `intent` | `readiness_check`, `skill_gap`, `roadmap_generation`, `cover_letter`, `general` |
+| `intent_confidence` | 0–1 from rule or classifier |
+| `intent_detection_method` | `rule`, `model`, or `fallback` |
+| `can_save_roadmap` | `true` when intent is `roadmap_generation` |
+| `can_save_cover_letter` | `true` when intent is `cover_letter` |
+
+**Writes:** `POST /api/assistant/chat` (Next.js) inserts user message before stream and assistant message after stream completes. No UPDATE policy on messages (append-only from client).
+
 ---
 
 # Table: cover_letters
+
+> **Implementation:** Schema + RLS only. Not populated by backend or chat route yet.
 
 ## Purpose
 
@@ -639,6 +729,8 @@ Stores generated cover letters.
 ---
 
 # Table: roadmaps
+
+> **Implementation:** Schema + RLS only. Chat sets `can_save_roadmap` in message metadata but does not INSERT here yet.
 
 ## Purpose
 
@@ -735,18 +827,29 @@ Stores application tracker/Kanban cards.
 
 ## Attributes
 
-| Column       | Type                    | Required | Description                               |
-| ------------ | ----------------------- | -------- | ----------------------------------------- |
-| id           | UUID                    | Yes      | Application ID                            |
-| user_id      | UUID                    | Yes      | Owner user                                |
-| job_id       | UUID                    | No       | Related job                               |
-| job_match_id | UUID                    | No       | Related fit score                         |
-| status       | application_status ENUM | Yes      | saved/applied/interviewing/offer/rejected |
-| notes        | TEXT                    | No       | User notes                                |
-| applied_at   | TIMESTAMPTZ             | No       | Application date                          |
-| deadline     | DATE                    | No       | Application deadline                      |
-| created_at   | TIMESTAMPTZ             | Yes      | Creation time                             |
-| updated_at   | TIMESTAMPTZ             | Yes      | Last update time                          |
+| Column            | Type                    | Required | Description                               |
+| ----------------- | ----------------------- | -------- | ----------------------------------------- |
+| id                | UUID                    | Yes      | Application ID                            |
+| user_id           | UUID                    | Yes      | Owner user                                |
+| job_id            | UUID                    | No       | Related job (from Job Hunter save)        |
+| job_match_id      | UUID                    | No       | Related fit score row                     |
+| manual_job_title  | TEXT                    | Cond.    | Title when no `job_id` (Kanban manual)    |
+| manual_company    | TEXT                    | No       | Company for manual applications           |
+| manual_location   | TEXT                    | No       | Location for manual applications          |
+| status            | application_status ENUM | Yes      | saved/applied/interviewing/offer/rejected |
+| notes             | TEXT                    | No       | User notes                                |
+| applied_at        | TIMESTAMPTZ             | No       | Set when status → `applied` (RPC)         |
+| deadline          | DATE                    | No       | Application deadline (calendar synthesis) |
+| created_at        | TIMESTAMPTZ             | Yes      | Creation time                             |
+| updated_at        | TIMESTAMPTZ             | Yes      | Last update time                          |
+
+### Constraints (migration `20250525153000`)
+
+`applications_has_job_or_manual_title`: at least one of `job_id IS NOT NULL` OR non-blank `manual_job_title`.
+
+### Status RPC
+
+`change_application_status(p_application_id, p_user_id, p_new_status, p_note)` — `SECURITY DEFINER`, row lock, updates status, sets `applied_at` on first transition to `applied`, inserts `application_history` when status changes.
 
 ---
 
@@ -850,7 +953,7 @@ Stores to-do items.
 | title           | TEXT             | Yes      | Task title                      |
 | description     | TEXT             | No       | Task details                    |
 | status          | task_status ENUM | Yes      | todo/in_progress/done/cancelled |
-| priority        | INTEGER          | Yes      | Priority level                  |
+| priority        | INTEGER          | Yes      | 1 (high) – 3 (low); check `tasks_priority_range` |
 | due_date        | DATE             | No       | Due date                        |
 | completed_at    | TIMESTAMPTZ      | No       | Completion time                 |
 | created_at      | TIMESTAMPTZ      | Yes      | Creation time                   |
@@ -900,6 +1003,8 @@ Stores calendar events and reminders.
 ---
 
 # Table: skill_gap_analysis
+
+> **Implementation:** Schema + RLS only. Chat intent `skill_gap` is detected but results are not persisted to this table yet.
 
 ## Purpose
 
@@ -1012,28 +1117,123 @@ Example metrics:
 
 ---
 
-# Feature-to-Owner Mapping
+# Feature-to-Owner Mapping (with implementation status)
 
-| Feature          | Owner    | Tables Used                                 |
-| ---------------- | -------- | ------------------------------------------- |
-| CV Upload        | Member 1 | resumes                                     |
-| PDF/DOCX Parsing | Member 1 | resumes, resume_sections                    |
-| Chunking         | Member 1 | resume_chunks                               |
-| Embeddings       | Member 1 | resume_chunks                               |
-| RAG Retrieval    | Member 1 | resume_chunks                               |
-| Skill Extraction | Member 1 | user_skills                                 |
-| Job Search       | Member 2 | job_searches, jobs                          |
-| Job Cards        | Member 2 | jobs                                        |
-| Fit Score        | Member 2 | job_matches, user_skills, resume_chunks     |
-| Ranking Logic    | Member 2 | job_matches                                 |
-| AI Chat          | Member 3 | assistant_conversations, assistant_messages |
-| Cover Letter     | Member 3 | cover_letters, resumes, jobs                |
-| Roadmap          | Member 3 | roadmaps, roadmap_items                     |
-| Calendar         | Member 3 | calendar_events                             |
-| Kanban Board     | Member 3 | applications, application_history           |
-| Dashboard        | Member 3 | applications, tasks, roadmaps, goals        |
-| AI Reminders     | Member 3 | calendar_events, tasks, goals               |
-| Evaluation Suite | Shared   | evaluation_tests                            |
+| Feature | Owner | Tables | Status |
+| --- | --- | --- | --- |
+| CV Upload | M1 | `resumes` | **Live** — FastAPI `POST /resumes/upload` |
+| PDF/DOCX Parsing | M1 | `resumes`, `resume_sections` | **Live** — pypdf / python-docx |
+| Chunking | M1 | `resume_chunks` | **Live** — 900 chars, 150 overlap |
+| Embeddings | M1 | `resume_chunks` | **Live** — Gemini provider, 768-dim target |
+| RAG Retrieval | M1 | `resume_chunks` | **Live** — RPC + numpy fallback |
+| AI CV Q&A | M1 | `resume_chunks` | **Live** — `/resumes/answer` + Gemini |
+| Skill Extraction | M1 | `user_skills` | **Live** — Gemini + regex fallback |
+| Job Search (JSearch) | M2 | `job_searches`, `jobs` | **Live** — RapidAPI |
+| Manual job paste | M2 | `jobs`, `job_matches` | **API only** — no `/jobs` form UI |
+| Fit Score | M2 | `job_matches`, `user_skills`, `resume_chunks` | **Live** — `job_scorer` |
+| Save to Kanban | M2→M3 | `applications` | **Live** — `POST …/matches/{id}/save` |
+| AI Chat | M3 | `assistant_*` | **Live** — Next.js route, Gemini stream |
+| Cover Letter | M3 | `cover_letters` | **Schema only** — chat intent metadata |
+| Roadmap | M3 | `roadmaps`, `roadmap_items` | **Schema only** |
+| Skill gap | M3 | `skill_gap_analysis` | **Schema only** |
+| Calendar | M3 | `calendar_events` | **Live** — Supabase client |
+| Kanban Board | M3 | `applications`, `application_history` | **Live** |
+| Goals & tasks | M3 | `goals`, `tasks` | **Live** — FastAPI + Supabase tasks |
+| Standalone tasks | M3 | `tasks` (`goal_id` null) | **Live** — Supabase only |
+| Evaluation Suite | Shared | `evaluation_tests` | **Schema** |
+
+---
+
+# Enums (Postgres types)
+
+| Enum | Values |
+| --- | --- |
+| `resume_status` | `uploaded`, `processing`, `processed`, `failed` |
+| `application_status` | `saved`, `applied`, `interviewing`, `offer`, `rejected` |
+| `task_status` | `todo`, `in_progress`, `done`, `cancelled` |
+| `goal_status` | `active`, `completed`, `paused`, `cancelled` |
+| `message_role` | `user`, `assistant`, `system` |
+| `event_type` | `deadline`, `interview`, `reminder`, `study`, `application`, `custom` |
+
+---
+
+# Migrations & Grants
+
+Applied in order under `supabase/migrations/`:
+
+| File | What it adds |
+| --- | --- |
+| `20250525000001_initial_schema.sql` | All tables, enums, indexes, RLS, `handle_new_user`, `update_updated_at_column` triggers |
+| `20250525153000_kanban_manual_applications.sql` | `manual_*` columns, check constraint, `change_application_status`, grants |
+| `20250525170000_goals_tasks_priority.sql` | `tasks_priority_range` check (1–3), grants |
+| `20250526001000_goals_tasks_grants.sql` | Duplicate-safe grants for goals/tasks |
+| `20250526003000_calendar_grants.sql` | `calendar_events` CRUD; `jobs` SELECT for linked display |
+| `20250526005000_assistant_conversation_grants.sql` | Assistant tables grants |
+| `20250526120000_resume_cv_grants.sql` | Resume module grants (fixes SQLSTATE `42501`) |
+| `20250527000000_match_resume_chunks_rpc.sql` | pgvector similarity functions |
+| `20260528000000_job_intelligence_grants.sql` | Job module grants |
+
+**Alembic** (direct `DATABASE_URL`, not Supabase CLI):
+
+| Revision | What it adds |
+| --- | --- |
+| `2b7f66d7a1b2_gemini_embedding_dimension_upgrade` | `resume_chunks.embedding_new vector(N)` + IVFFlat index |
+
+---
+
+# Database Functions & Triggers
+
+| Name | Type | Purpose |
+| --- | --- | --- |
+| `handle_new_user()` | trigger on `auth.users` | Inserts `profiles` row on signup |
+| `update_updated_at_column()` | trigger | Sets `updated_at = now()` on profiles, resumes, applications, assistant_conversations, cover_letters, roadmaps, goals, tasks, calendar_events |
+| `change_application_status(...)` | RPC | Atomic Kanban status + history |
+| `match_resume_chunks(...)` | RPC | Top-k chunk search by cosine similarity |
+| `match_resume_chunks_with_resume(...)` | RPC | Same, scoped to one `resume_id` |
+
+---
+
+# Row Level Security (summary)
+
+RLS is **enabled on all application tables**. Typical pattern:
+
+- **User-owned rows:** `auth.uid() = user_id` for SELECT/INSERT/UPDATE/DELETE
+- **`jobs`:** SELECT for any authenticated user; INSERT/UPDATE/DELETE for `service_role` only (backend ingests listings)
+- **`application_history`:** SELECT/INSERT allowed when parent `applications.user_id = auth.uid()`
+- **`evaluation_tests`:** SELECT for authenticated; full access for `service_role`
+
+Backend FastAPI uses the **service role** and must mirror ownership in Python (`.eq("user_id", user_id)`).
+
+---
+
+# Cross-Module Data Flows (as implemented)
+
+## CV → Job fit score
+
+```
+user_skills (names) + resume_chunks (semantic similarity to JD text)
+        ↓
+job_matches.fit_score, matched_skills[], missing_skills[], evidence_chunks[]
+```
+
+## Job match → Kanban
+
+```
+job_matches.id
+        ↓
+applications (status=saved, job_id, job_match_id)
+        ↓
+application_history (on status RPC)
+```
+
+## CV → Assistant (partial)
+
+```
+assistant_messages.used_resume_chunks[]  — populated from chat route metadata
+assistant_messages.metadata              — intent, model, can_save_* flags
+```
+
+**Gap:** `getResumeContext()` in the frontend still uses static `mockCV` instead of live `resume_chunks` / `raw_text`.
 
 ---
 
@@ -1198,12 +1398,18 @@ create table applications (
   user_id uuid not null references profiles(id) on delete cascade,
   job_id uuid references jobs(id) on delete set null,
   job_match_id uuid references job_matches(id) on delete set null,
+  manual_job_title text,
+  manual_company text,
+  manual_location text,
   status application_status default 'saved',
   notes text,
   applied_at timestamptz,
   deadline date,
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  constraint applications_has_job_or_manual_title check (
+    job_id is not null or nullif(btrim(manual_job_title), '') is not null
+  )
 );
 
 create table application_history (
@@ -1363,69 +1569,56 @@ create index idx_calendar_user_id on calendar_events(user_id);
 
 create index idx_resume_chunks_embedding
 on resume_chunks
-using ivfflat (embedding vector_cosine_ops)
-with (lists = 100);
+using ivfflat (embedding vector_cosine_ops);
+
+-- Alembic (optional Gemini 768-dim rollout):
+-- alter table resume_chunks add column embedding_new vector(768);
+-- create index idx_resume_chunks_embedding_new on resume_chunks
+--   using ivfflat (embedding_new vector_cosine_ops);
+```
+
+> **Note:** The SQL appendix above is a condensed reference. For the full deployed schema including RLS policies and all indexes, use `supabase/migrations/20250525000001_initial_schema.sql` plus subsequent migration files.
+
+---
+
+# Development Order (historical → current)
+
+All core tables from the initial migration are **created**. Recommended **remaining work** by dependency:
+
+```text
+1. Align embedding dimension: RPC vector(N) = active column = Gemini output
+2. Wire assistant getResumeContext() → live resume_chunks / raw_text
+3. Persist cover_letters, roadmaps, skill_gap_analysis from chat intents
+4. Optional: Supabase Storage for resumes.file_url
+5. Optional: unique (source, source_url) on jobs to dedupe JSearch repeats
+```
+
+### Module ownership (unchanged)
+
+```text
+Member 1 = CV Intelligence     (resumes, resume_sections, resume_chunks, user_skills)
+Member 2 = Job Intelligence    (job_searches, jobs, job_matches)
+Member 3 = Career Assistant    (applications, goals, tasks, calendar, assistant_*, roadmaps, cover_letters, skill_gap)
+Shared     = profiles, evaluation_tests
 ```
 
 ---
 
-# Final Recommended Development Order
+# Related Documentation
 
-## Member 1 First
-
-```text
-profiles
-resumes
-resume_sections
-resume_chunks
-user_skills
-```
-
-## Member 2 Next
-
-```text
-job_searches
-jobs
-job_matches
-```
-
-## Member 3 Next
-
-```text
-assistant_conversations
-assistant_messages
-cover_letters
-applications
-application_history
-roadmaps
-roadmap_items
-goals
-tasks
-calendar_events
-skill_gap_analysis
-```
-
-## Shared Bonus
-
-```text
-evaluation_tests
-```
+| Document | Purpose |
+| --- | --- |
+| [`present-state.md`](present-state.md) | Full-stack feature status, API list, env vars |
+| [`cv-intelligence-implementation.md`](cv-intelligence-implementation.md) | CV pipeline and retrieval details |
+| [`../supabase/migrations/`](../supabase/migrations/) | Applied DDL source of truth |
+| [`../backend/alembic/versions/`](../backend/alembic/versions/) | `embedding_new` column migration |
 
 ---
 
-# Final Design Principle
+# Design Principles
 
-The schema has many tables, but only 3 main team modules.
-
-Each member owns one domain.
-
-The tables are separated only because different features need clean data storage.
-
-The ownership remains simple:
-
-```text
-Member 1 = CV Intelligence
-Member 2 = Job Intelligence
-Member 3 = Career Assistant & Tracker
-Shared = Profiles + Evaluation
-```
+1. **One user row (`profiles`)** anchors all modules via `user_id` foreign keys.
+2. **Service role for ingestion** (CV parse, job search) — RLS alone is insufficient without table GRANTs.
+3. **Evidence arrays** (`job_matches.evidence_chunks`, `assistant_messages.used_resume_chunks`) reference `resume_chunks.id` for traceability.
+4. **Kanban history is append-only** — status changes go through RPC, not ad-hoc updates without history.
+5. **Schema-first placeholders** (`cover_letters`, `roadmaps`, `skill_gap_analysis`) allow parallel frontend/backend work without blocking MVP tables.
