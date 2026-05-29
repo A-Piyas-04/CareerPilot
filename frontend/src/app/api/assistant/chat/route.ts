@@ -10,11 +10,8 @@ import {
   createGeminiStream,
   extractGeminiTextFromSsePayload,
   GeminiApiError,
-  GEMINI_MODEL,
 } from "@/lib/gemini";
 import { createClient } from "@/lib/supabase/server";
-
-const MODEL = GEMINI_MODEL;
 
 export const runtime = "nodejs";
 
@@ -124,7 +121,7 @@ export async function POST(request: NextRequest) {
       return jsonError(userMessageError.message, 500);
     }
 
-    const geminiStream = await createGeminiStream({
+    const { body: geminiStream, model: geminiModel } = await createGeminiStream({
       currentMessage: message,
       memory,
       systemPrompt,
@@ -207,7 +204,7 @@ export async function POST(request: NextRequest) {
                 used_resume_chunks: validUuidArray(resumeContext.usedResumeChunks),
                 used_job_id: null,
                 metadata: {
-                  model: MODEL,
+                  model: geminiModel,
                   streamed: true,
                   intent,
                   intent_confidence: intentDetection.confidence,
