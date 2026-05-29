@@ -3,8 +3,17 @@
 import { BookOpen, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 
+import { ChunkEvidenceCard } from "@/components/resume/chunk-evidence-card";
+
 import { useAskCvQuestion } from "./hooks";
-import type { ResumeQueryChunk, ResumeStatus } from "./types";
+import {
+  resumeAiButton,
+  resumeAiTextarea,
+  resumeCard,
+  resumeCardHeader,
+  resumeCardSubtext,
+} from "./resume-ui";
+import type { ResumeStatus } from "./types";
 
 const SAMPLE_QUESTIONS = [
   "Summarize my professional background",
@@ -13,51 +22,6 @@ const SAMPLE_QUESTIONS = [
   "What projects have I built?",
   "What is my education background?",
 ];
-
-function SimilarityBar({ score }: { score: number }) {
-  const pct = Math.round(Math.max(0, Math.min(1, score)) * 100);
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-zinc-200">
-        <div
-          className="h-full rounded-full bg-indigo-500"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className="text-xs font-medium text-zinc-500">{pct}%</span>
-    </div>
-  );
-}
-
-function EvidenceCard({ chunk }: { chunk: ResumeQueryChunk }) {
-  const [expanded, setExpanded] = useState(false);
-  const preview = chunk.chunk_text.slice(0, 200);
-  const hasMore = chunk.chunk_text.length > 200;
-
-  return (
-    <article className="rounded-lg border border-zinc-100 bg-zinc-50 p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-xs font-semibold capitalize text-zinc-700">
-          {chunk.section_name ?? "General"}
-        </span>
-        <SimilarityBar score={chunk.similarity} />
-      </div>
-      <p className="mt-2 text-xs leading-relaxed text-zinc-600">
-        {expanded ? chunk.chunk_text : preview}
-        {hasMore && !expanded && "…"}
-      </p>
-      {hasMore && (
-        <button
-          className="mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-        >
-          {expanded ? "Show less" : "Show more"}
-        </button>
-      )}
-    </article>
-  );
-}
 
 type ResumeAnswerBoxProps = {
   resumeId?: string;
@@ -90,17 +54,18 @@ export function ResumeAnswerBox({ resumeId, resumeStatus }: ResumeAnswerBoxProps
   }
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm lg:sticky lg:top-[57px]">
-      {/* Header */}
-      <div className="flex items-start gap-2">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
-          <Sparkles className="h-4 w-4 text-indigo-700" />
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-zinc-950">Ask about your CV</h2>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            AI answers grounded in your resume — no hallucination.
-          </p>
+    <section className={`${resumeCard} overflow-hidden lg:sticky lg:top-[57px]`}>
+      <div className="-mx-5 -mt-5 mb-5 border-b border-indigo-100 bg-gradient-to-r from-indigo-50/90 to-white px-5 py-4">
+        <div className="flex items-start gap-2">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 shadow-sm">
+            <Sparkles className="h-4 w-4 text-indigo-700" />
+          </div>
+          <div>
+            <h2 className={resumeCardHeader}>Ask about your CV</h2>
+            <p className={resumeCardSubtext}>
+              AI answers grounded in your resume — no hallucination.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -133,7 +98,7 @@ export function ResumeAnswerBox({ resumeId, resumeStatus }: ResumeAnswerBoxProps
       </label>
       <textarea
         id="cv-question"
-        className="mt-1.5 w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-indigo-500/30 placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 disabled:bg-zinc-50 disabled:text-zinc-400"
+        className={`${resumeAiTextarea} mt-1.5`}
         disabled={!canAsk || answerMutation.isPending}
         rows={3}
         value={question}
@@ -149,7 +114,7 @@ export function ResumeAnswerBox({ resumeId, resumeStatus }: ResumeAnswerBoxProps
       )}
 
       <button
-        className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-55"
+        className={`${resumeAiButton} mt-3`}
         disabled={!canAsk || answerMutation.isPending || !question.trim()}
         type="button"
         onClick={handleAsk}
@@ -209,7 +174,11 @@ export function ResumeAnswerBox({ resumeId, resumeStatus }: ResumeAnswerBoxProps
               {showEvidence && (
                 <div className="mt-2 space-y-2">
                   {result.evidence_chunks.map((chunk) => (
-                    <EvidenceCard chunk={chunk} key={chunk.chunk_id} />
+                    <ChunkEvidenceCard
+                      chunk={chunk}
+                      key={chunk.chunk_id}
+                      variant="full"
+                    />
                   ))}
                   <p className="text-xs text-zinc-400">
                     The answer above was generated solely from these CV excerpts.

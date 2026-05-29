@@ -1,15 +1,41 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.career_assistant.routes.applications import router as applications_router
+from app.career_assistant.routes.career import router as career_router
 from app.career_assistant.routes.goals import router as goals_router
+from app.cv_intelligence.routes.rag import router as rag_router
 from app.cv_intelligence.routes.resumes import router as resumes_router
+from app.cv_intelligence.services.embedding_config_validator import (
+    get_embedding_config_summary,
+    validate_embedding_config_at_startup,
+)
 from app.cv_intelligence.services.reembedding_service import get_reembedding_status
 from app.job_intelligence.routes.jobs import router as jobs_router
 from app.core.config import settings
 
-app = FastAPI(title="CareerPilot API")
+logger = logging.getLogger(__name__)
+
+_embedding_config_cache: dict = {}
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Validate embedding configuration on startup."""
+    global _embedding_config_cache
+    try:
+        _embedding_config_cache = validate_embedding_config_at_startup(strict=True)
+    except Exception as exc:
+        logger.error("Embedding configuration validation failed: %s", exc)
+        raise
+    yield
+
+
+app = FastAPI(title="CareerPilot API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,11 +82,19 @@ app.include_router(
     prefix=settings.api_v1_prefix,
 )
 app.include_router(
+    career_router,
+    prefix=settings.api_v1_prefix,
+)
+app.include_router(
     goals_router,
     prefix=settings.api_v1_prefix,
 )
 app.include_router(
     resumes_router,
+    prefix=settings.api_v1_prefix,
+)
+app.include_router(
+    rag_router,
     prefix=settings.api_v1_prefix,
 )
 app.include_router(
@@ -76,7 +110,9 @@ def root():
 
 @app.get("/health")
 def health():
+    embedding_config = _embedding_config_cache or get_embedding_config_summary()
     return {
         "status": "ok",
+        "embedding_config": embedding_config,
         "embedding_migration": get_reembedding_status(),
     }

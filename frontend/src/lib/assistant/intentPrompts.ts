@@ -120,9 +120,8 @@ Rules:
 - If the user specifies 2 months, create 8 weeks.
 - If the user specifies 1 month, create 4 weeks.
 - If no duration is specified, default to 8 weeks.
-- Start from the user's actual CV: Python, React, FastAPI, PostgreSQL, Docker, backend internship, REST API project, and BSc CS only if present in the CV context.
+- Start only from skills and experience explicitly present in the CV context excerpts.
 - Make the roadmap realistic for the current background.
-- Do not say you saved the roadmap. Saving is not available until Phase 3.
 - Do not invent prior achievements or experience.`;
 }
 
@@ -142,7 +141,7 @@ Include:
 - Sign-off
 
 Rules:
-- Reference only actual CV evidence, such as Python, React, FastAPI, PostgreSQL, Docker, backend intern at StartupX, REST API project, and BSc CS if present in the CV context.
+- Reference only employers, projects, skills, and education explicitly present in the CV context excerpts.
 - Do not claim experience with tools that are only in the job description but not in the CV.
 - If PyTorch, TensorFlow, or other missing skills appear in the job description, frame them as interest, learning focus, or adjacent fit, not existing experience.
 - If company name is missing, use "[Company Name]".

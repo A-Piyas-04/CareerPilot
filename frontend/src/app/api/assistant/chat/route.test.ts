@@ -75,8 +75,9 @@ describe("POST /api/assistant/chat", () => {
     ]);
     supabase.setTable("profiles", [{ data: { full_name: "John Doe" } }]);
     const encoder = new TextEncoder();
-    vi.mocked(createGeminiStream).mockResolvedValue(
-      new ReadableStream({
+    vi.mocked(createGeminiStream).mockResolvedValue({
+      model: "gemini-test",
+      body: new ReadableStream({
         start(controller) {
           controller.enqueue(
             encoder.encode(
@@ -91,7 +92,7 @@ describe("POST /api/assistant/chat", () => {
           controller.close();
         },
       }),
-    );
+    });
 
     const response = await route.POST(
       new Request("http://localhost/api/assistant/chat", {

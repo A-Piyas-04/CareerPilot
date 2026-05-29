@@ -5,6 +5,7 @@ import {
   MAX_RESUME_FILE_BYTES,
 } from "./types";
 import type {
+  BuildResumeRequest,
   CvAnswerRequest,
   CvAnswerResponse,
   ManualResumePayload,
@@ -39,6 +40,20 @@ export function validateResumeFile(file: File): void {
   if (file.size === 0) {
     throw new Error("The selected file is empty.");
   }
+}
+
+export function buildResume(payload: BuildResumeRequest) {
+  return apiRequest<Resume>("/api/v1/resumes/build", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function rebuildResume(resumeId: string, payload: BuildResumeRequest) {
+  return apiRequest<Resume>(`/api/v1/resumes/${resumeId}/build`, {
+    method: "PUT",
+    body: payload,
+  });
 }
 
 export function uploadResume(file: File) {

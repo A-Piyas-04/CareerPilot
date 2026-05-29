@@ -6,9 +6,22 @@ export type AssistantProfile = {
   bio: string | null;
 };
 
+export type ResumeEvidenceChunk = {
+  chunk_id: string;
+  resume_id: string;
+  section_name: string | null;
+  chunk_text: string;
+  similarity: number;
+};
+
 export type ResumeContextResult = {
   text: string;
   usedResumeChunks: string[];
+  resumeId: string | null;
+  hasResume: boolean;
+  emptyReason: string | null;
+  evidenceChunks: ResumeEvidenceChunk[];
+  userSkills: string[];
 };
 
 export type ConversationMemoryMessage = {

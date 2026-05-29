@@ -10,7 +10,7 @@ from app.cv_intelligence.models.resume import Resume
 from app.cv_intelligence.models.resume_chunk import ResumeChunk
 from app.cv_intelligence.models.resume_section import ResumeSection
 from app.cv_intelligence.models.user_skill import UserSkill
-from app.cv_intelligence.services import resume_service, retrieval_service
+from app.cv_intelligence.services import rag_context_service, resume_service
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
 
@@ -119,9 +119,64 @@ class ChunkQueryResult(BaseModel):
     similarity: float
 
 
+class BuildSectionInput(BaseModel):
+    section_name: str = Field(..., min_length=1, max_length=64)
+    content: str = Field(..., min_length=1, max_length=20000)
+
+
+class BuildResumeRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    sections: list[BuildSectionInput] = Field(..., min_length=1, max_length=12)
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+@router.post(
+    "/build",
+    response_model=Resume,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create and index a CV from in-app builder sections",
+)
+def build_resume(
+    payload: BuildResumeRequest,
+    user_id: str = Depends(get_current_user),
+) -> Resume:
+    """Accept structured sections, chunk, embed, and mark the resume processed."""
+    section_dicts = [
+        {"section_name": s.section_name, "content": s.content}
+        for s in payload.sections
+    ]
+    return resume_service.process_resume_from_sections(
+        user_id=user_id,
+        title=payload.title,
+        sections=section_dicts,
+    )
+
+
+@router.put(
+    "/{resume_id}/build",
+    response_model=Resume,
+    summary="Rebuild an existing CV from in-app builder sections",
+)
+def rebuild_resume(
+    resume_id: str,
+    payload: BuildResumeRequest,
+    user_id: str = Depends(get_current_user),
+) -> Resume:
+    """Replace sections/chunks/skills for an owned resume and re-index."""
+    section_dicts = [
+        {"section_name": s.section_name, "content": s.content}
+        for s in payload.sections
+    ]
+    return resume_service.rebuild_resume_from_sections(
+        user_id=user_id,
+        resume_id=resume_id,
+        title=payload.title,
+        sections=section_dicts,
+    )
+
 
 @router.post(
     "/upload",
@@ -235,14 +290,15 @@ def query_resume_chunks(
     Uses pgvector RPC when available, falls back to numpy cosine similarity.
     """
     supabase = get_supabase_client()
-    results = retrieval_service.search_chunks(
+    rag = rag_context_service.retrieve_cv_context(
         user_id=user_id,
         query=payload.query,
         supabase=supabase,
         resume_id=payload.resume_id,
         top_k=payload.top_k,
+        intent="general",
     )
-    return [ChunkQueryResult(**r) for r in results]
+    return [ChunkQueryResult(**c) for c in rag.chunks]
 
 
 @router.post(
@@ -262,20 +318,21 @@ def answer_cv_question(
     from app.cv_intelligence.services import llm_service  # noqa: PLC0415
 
     supabase = get_supabase_client()
-    chunks = retrieval_service.search_chunks(
+    rag = rag_context_service.retrieve_cv_context(
         user_id=user_id,
         query=payload.question,
         supabase=supabase,
         resume_id=payload.resume_id,
         top_k=payload.top_k,
+        intent="general",
     )
     answer = llm_service.answer_from_chunks(
         question=payload.question,
-        chunks=chunks,
+        chunks=rag.chunks,
     )
     return AnswerResponse(
         answer=answer,
-        evidence_chunks=[ChunkQueryResult(**c) for c in chunks],
+        evidence_chunks=[ChunkQueryResult(**c) for c in rag.chunks],
     )
 
 

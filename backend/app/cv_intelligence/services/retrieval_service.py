@@ -40,9 +40,20 @@ def search_chunks(
         chunk_id, resume_id, section_name, chunk_text, similarity
     """
     query_embedding = embed_query_text(query)
+    expected_dim = settings.embedding_vector_dim
+    if len(query_embedding) != expected_dim:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                f"Query embedding dimension {len(query_embedding)} does not match "
+                f"configured EMBEDDING_VECTOR_DIM={expected_dim}."
+            ),
+        )
+
+    active_column = settings.embedding_active_column.strip() or "embedding"
 
     # --- Attempt pgvector RPC first (only when using canonical embedding column) ---
-    if (settings.embedding_active_column.strip() or "embedding") == "embedding":
+    if active_column == "embedding":
         rpc_name = "match_resume_chunks_with_resume" if resume_id else "match_resume_chunks"
         try:
             params: dict[str, Any] = {
@@ -57,7 +68,15 @@ def search_chunks(
             rows = _rows(response)
             if rows:
                 results = [_format_rpc_row(r) for r in rows]
-                return [r for r in results if r["similarity"] >= min_similarity]
+                filtered = [r for r in results if r["similarity"] >= min_similarity]
+                logger.info(
+                    "Retrieval strategy=rpc function=%s column=%s dim=%s results=%s",
+                    rpc_name,
+                    active_column,
+                    expected_dim,
+                    len(filtered),
+                )
+                return filtered
         except Exception as exc:
             logger.warning(
                 "pgvector RPC %s unavailable, using numpy fallback: %s",
@@ -66,6 +85,11 @@ def search_chunks(
             )
 
     # --- Python / numpy fallback ---
+    logger.info(
+        "Retrieval strategy=numpy_fallback column=%s dim=%s",
+        active_column,
+        expected_dim,
+    )
     return _python_cosine_search(
         user_id=user_id,
         query_embedding=query_embedding,

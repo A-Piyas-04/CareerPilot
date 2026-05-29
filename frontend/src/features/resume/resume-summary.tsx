@@ -5,15 +5,21 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
+  Layers,
   Loader2,
+  PenLine,
   RefreshCw,
+  Search,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import { useDeleteResume } from "./hooks";
-import type { ResumeDetail, ResumeSkill } from "./types";
+import { ResumeDeleteDialog } from "./resume-delete-dialog";
+import { ResumeSectionViewerDrawer } from "./resume-section-viewer-drawer";
+import { resumeCard, resumeSecondaryButton } from "./resume-ui";
+import type { ResumeDetail, ResumeSection, ResumeSkill } from "./types";
 import { formatResumeDate } from "./types";
 
 /* ─── Category color map ──────────────────────────────────────────────────── */
@@ -66,13 +72,19 @@ function ResumeSkeleton() {
 }
 
 /* ─── Expandable section card ─────────────────────────────────────────────── */
-function SectionCard({ section }: { section: ResumeDetail["sections"][number] }) {
+function SectionCard({
+  section,
+  onViewFull,
+}: {
+  section: ResumeDetail["sections"][number];
+  onViewFull: (section: ResumeSection) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const preview = section.content.slice(0, 160);
   const hasMore = section.content.length > 160;
 
   return (
-    <li className="rounded-lg border border-zinc-100 bg-zinc-50">
+    <li className="rounded-lg border border-zinc-100 bg-zinc-50 transition duration-200 hover:border-zinc-200 hover:bg-white">
       <button
         className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
         type="button"
@@ -107,6 +119,17 @@ function SectionCard({ section }: { section: ResumeDetail["sections"][number] })
           </p>
         </div>
       )}
+      {hasMore && (
+        <div className="border-t border-zinc-100 px-3 py-2">
+          <button
+            className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+            type="button"
+            onClick={() => onViewFull(section)}
+          >
+            View full
+          </button>
+        </div>
+      )}
     </li>
   );
 }
@@ -118,6 +141,8 @@ type ResumeSummaryProps = {
   error: Error | null;
   hasResumes: boolean;
   onRequestReupload?: () => void;
+  onEditInBuilder?: (detail: ResumeDetail) => void;
+  onEditInManual?: (detail: ResumeDetail) => void;
 };
 
 export function ResumeSummary({
@@ -126,6 +151,8 @@ export function ResumeSummary({
   error,
   hasResumes,
   onRequestReupload,
+  onEditInBuilder,
+  onEditInManual,
 }: ResumeSummaryProps) {
   const groupedSkills = useMemo(
     () => (detail ? groupSkillsByCategory(detail.skills) : new Map()),
@@ -133,12 +160,15 @@ export function ResumeSummary({
   );
 
   const deleteMutation = useDeleteResume();
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [viewingSection, setViewingSection] = useState<ResumeSection | null>(
+    null,
+  );
 
   function handleDelete() {
     if (!detail?.resume.id) return;
     deleteMutation.mutate(detail.resume.id, {
-      onSuccess: () => setConfirmingDelete(false),
+      onSuccess: () => setDeleteDialogOpen(false),
     });
   }
 
@@ -191,14 +221,21 @@ export function ResumeSummary({
       : "bg-amber-100 text-amber-900";
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+    <section className={resumeCard}>
       {/* Card header */}
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-base font-semibold text-zinc-950">Resume overview</h2>
-          <p className="mt-0.5 truncate text-sm text-zinc-500">{resume.file_name}</p>
+          <p className="mt-0.5 truncate text-sm text-zinc-500">
+            {resume.file_name}
+            {resume.file_type === "builder"
+              ? " · built in app"
+              : resume.file_type === "manual"
+                ? " · manual entry"
+                : ""}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {resume.is_active && (
             <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
               Active
@@ -210,25 +247,59 @@ export function ResumeSummary({
         </div>
       </div>
 
+      {isProcessed && onEditInBuilder && resume.file_type === "builder" && (
+        <button
+          className={`${resumeSecondaryButton} mt-4 w-full sm:w-auto`}
+          type="button"
+          onClick={() => onEditInBuilder(detail)}
+        >
+          <PenLine className="h-4 w-4" />
+          Edit in builder
+        </button>
+      )}
+
+      {isProcessed && onEditInManual && resume.file_type === "manual" && (
+        <button
+          className={`${resumeSecondaryButton} mt-4 w-full sm:w-auto`}
+          type="button"
+          onClick={() => onEditInManual(detail)}
+        >
+          <FileText className="h-4 w-4" />
+          Edit in manual editor
+        </button>
+      )}
+
       {/* Metadata grid */}
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-4">
-        <div>
-          <dt className="text-xs text-zinc-500">Uploaded</dt>
-          <dd className="mt-0.5 font-medium text-zinc-900">
+      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+        <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 p-3">
+          <dt className="flex items-center gap-1 text-xs text-zinc-500">
+            <FileText className="h-3 w-3" />
+            Added
+          </dt>
+          <dd className="mt-1 font-semibold text-zinc-900">
             {formatResumeDate(resume.created_at)}
           </dd>
         </div>
-        <div>
-          <dt className="text-xs text-zinc-500">Sections</dt>
-          <dd className="mt-0.5 font-medium text-zinc-900">{sections.length}</dd>
+        <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 p-3">
+          <dt className="flex items-center gap-1 text-xs text-zinc-500">
+            <Layers className="h-3 w-3" />
+            Sections
+          </dt>
+          <dd className="mt-1 font-semibold text-zinc-900">{sections.length}</dd>
         </div>
-        <div>
-          <dt className="text-xs text-zinc-500">Skills found</dt>
-          <dd className="mt-0.5 font-medium text-zinc-900">{skills.length}</dd>
+        <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 p-3">
+          <dt className="flex items-center gap-1 text-xs text-zinc-500">
+            <Sparkles className="h-3 w-3" />
+            Skills
+          </dt>
+          <dd className="mt-1 font-semibold text-zinc-900">{skills.length}</dd>
         </div>
-        <div>
-          <dt className="text-xs text-zinc-500">Search chunks</dt>
-          <dd className="mt-0.5 font-medium text-zinc-900">{chunk_count}</dd>
+        <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 p-3">
+          <dt className="flex items-center gap-1 text-xs text-zinc-500">
+            <Search className="h-3 w-3" />
+            Chunks
+          </dt>
+          <dd className="mt-1 font-semibold text-zinc-900">{chunk_count}</dd>
         </div>
       </dl>
 
@@ -269,7 +340,11 @@ export function ResumeSummary({
           </h3>
           <ul className="mt-2 space-y-1.5">
             {sections.map((section) => (
-              <SectionCard key={section.id} section={section} />
+              <SectionCard
+                key={section.id}
+                section={section}
+                onViewFull={setViewingSection}
+              />
             ))}
           </ul>
         </div>
@@ -310,40 +385,30 @@ export function ResumeSummary({
       {/* Delete */}
       {isProcessed && (
         <div className="mt-6 border-t border-zinc-100 pt-4">
-          {confirmingDelete ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm text-zinc-600">Delete this resume?</p>
-              <button
-                className="flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
-                type="button"
-                disabled={deleteMutation.isPending}
-                onClick={handleDelete}
-              >
-                {deleteMutation.isPending && (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                )}
-                Yes, delete
-              </button>
-              <button
-                className="rounded-md px-3 py-1.5 text-xs font-semibold text-zinc-600 transition hover:bg-zinc-100"
-                type="button"
-                onClick={() => setConfirmingDelete(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <button
-              className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 transition hover:text-red-600"
-              type="button"
-              onClick={() => setConfirmingDelete(true)}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Delete this resume
-            </button>
-          )}
+          <button
+            className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 transition hover:text-red-600"
+            type="button"
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete this resume
+          </button>
         </div>
       )}
+
+      <ResumeSectionViewerDrawer
+        isOpen={viewingSection !== null}
+        section={viewingSection}
+        onClose={() => setViewingSection(null)}
+      />
+
+      <ResumeDeleteDialog
+        fileName={resume.file_name}
+        isOpen={deleteDialogOpen}
+        isPending={deleteMutation.isPending}
+        onCancel={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDelete}
+      />
     </section>
   );
 }
