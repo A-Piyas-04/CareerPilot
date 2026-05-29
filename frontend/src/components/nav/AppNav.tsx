@@ -4,6 +4,7 @@ import {
   BriefcaseBusiness,
   FileText,
   LayoutDashboard,
+  Mail,
   Map,
   Sparkles,
   Target,
@@ -36,6 +37,11 @@ const NAV_ITEMS = [
     href: "/roadmap",
     label: "Roadmap",
     icon: Map,
+  },
+  {
+    href: "/cover-letters",
+    label: "Cover Letters",
+    icon: Mail,
   },
 ] as const;
 

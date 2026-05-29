@@ -7,6 +7,11 @@ from pydantic import BaseModel, Field
 class CoverLetterBase(BaseModel):
     """Base cover letter fields."""
     title: Optional[str] = None
+    job_title: Optional[str] = None
+    company_name: Optional[str] = None
+    job_description: Optional[str] = None
+    tone: Optional[str] = None
+    extra_notes: Optional[str] = None
     content: str
 
 
@@ -21,6 +26,11 @@ class CoverLetterCreate(CoverLetterBase):
 class CoverLetterUpdate(BaseModel):
     """Cover letter update schema."""
     title: Optional[str] = None
+    job_title: Optional[str] = None
+    company_name: Optional[str] = None
+    job_description: Optional[str] = None
+    tone: Optional[str] = None
+    extra_notes: Optional[str] = None
     content: Optional[str] = None
     version: Optional[int] = None
 

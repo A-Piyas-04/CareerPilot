@@ -217,6 +217,11 @@ class CoverLetter(Base, TimestampMixin):
         nullable=True,
     )
     title: Mapped[str | None] = mapped_column(Text, nullable=True)
+    job_title: Mapped[str | None] = mapped_column(Text, nullable=True)
+    company_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    job_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tone: Mapped[str | None] = mapped_column(Text, nullable=True)
+    extra_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     version: Mapped[int | None] = mapped_column(
         Integer, nullable=True, server_default=text("1")
