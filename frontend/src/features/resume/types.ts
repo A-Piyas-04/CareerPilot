@@ -87,6 +87,74 @@ export type CvAnswerResponse = {
   evidence_chunks: ResumeQueryChunk[];
 };
 
+export type ManualPersonalDetails = {
+  full_name: string;
+  email: string;
+  phone: string;
+  location: string;
+  website: string;
+  linkedin: string;
+  github: string;
+};
+
+export type ManualSkillInput = {
+  skill_name: string;
+  category?: string | null;
+  proficiency?: string | null;
+};
+
+export type ManualExperienceInput = {
+  role: string;
+  company: string;
+  location: string;
+  start_date: string;
+  end_date: string;
+  is_current: boolean;
+  description: string;
+  highlights: string[];
+};
+
+export type ManualEducationInput = {
+  degree: string;
+  institution: string;
+  location: string;
+  start_year: string;
+  end_year: string;
+  details: string;
+};
+
+export type ManualProjectInput = {
+  name: string;
+  description: string;
+  technologies: string;
+  link: string;
+  highlights: string[];
+};
+
+export type ManualCertificationInput = {
+  name: string;
+  issuer: string;
+  date: string;
+  details: string;
+};
+
+export type ManualLanguageInput = {
+  name: string;
+  proficiency: string;
+};
+
+export type ManualResumePayload = {
+  title: string;
+  personal: ManualPersonalDetails;
+  summary: string;
+  skills: ManualSkillInput[];
+  experience: ManualExperienceInput[];
+  education: ManualEducationInput[];
+  projects: ManualProjectInput[];
+  certifications: ManualCertificationInput[];
+  languages: ManualLanguageInput[];
+};
+
 export const MAX_RESUME_FILE_BYTES = 10 * 1024 * 1024;
 
 export const ALLOWED_RESUME_EXTENSIONS = [".pdf", ".docx"] as const;

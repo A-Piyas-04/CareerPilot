@@ -9,6 +9,7 @@ class RoadmapBase(BaseModel):
     target_role: str
     duration_weeks: Optional[int] = None
     overview: Optional[str] = None
+    resume_id: Optional[str] = None
 
 
 class RoadmapCreate(RoadmapBase):
@@ -22,6 +23,7 @@ class RoadmapUpdate(BaseModel):
     target_role: Optional[str] = None
     duration_weeks: Optional[int] = None
     overview: Optional[str] = None
+    resume_id: Optional[str] = None
     progress_percent: Optional[float] = None
 
 

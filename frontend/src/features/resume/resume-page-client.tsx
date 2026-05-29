@@ -14,6 +14,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 import { useResume, useResumes } from "./hooks";
+import { ManualResumeEditor } from "./manual-resume-editor";
 import { ResumeAnswerBox } from "./resume-answer-box";
 import { ResumeBuilderCard } from "./resume-builder-card";
 import { ResumeQueryBox } from "./resume-query-box";
@@ -33,7 +34,7 @@ import {
   pickPrimaryResume,
 } from "./types";
 
-type CvInputMode = "upload" | "build";
+type CvInputMode = "upload" | "build" | "manual";
 
 const BADGE_STYLES: Record<
   ReturnType<typeof getPageStatusBadge>,
@@ -55,12 +56,20 @@ const BADGE_ICONS: Record<
   rag_ready: Sparkles,
 };
 
+function resumeTypeLabel(fileType: string | null | undefined): string {
+  if (fileType === "builder") return " · built";
+  if (fileType === "manual") return " · manual";
+  return "";
+}
+
 function ResumeEmptyState({
   onUpload,
   onBuild,
+  onManual,
 }: {
   onUpload: () => void;
   onBuild: () => void;
+  onManual: () => void;
 }) {
   return (
     <section className={`${resumeCard} text-center`}>
@@ -71,8 +80,8 @@ function ResumeEmptyState({
         Start your career profile
       </h2>
       <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-500">
-        Upload an existing resume or build one in minutes. We&apos;ll index it
-        for AI answers, job matching, and your assistant.
+        Upload an existing resume, build section-by-section, or fill out a
+        structured form. We&apos;ll index it for AI answers and job matching.
       </p>
       <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
         <button className={resumePrimaryButton} type="button" onClick={onUpload}>
@@ -82,6 +91,10 @@ function ResumeEmptyState({
         <button className={resumeSecondaryButton} type="button" onClick={onBuild}>
           <PenLine className="h-4 w-4" />
           Build from scratch
+        </button>
+        <button className={resumeSecondaryButton} type="button" onClick={onManual}>
+          <FileText className="h-4 w-4" />
+          Manual editor
         </button>
       </div>
     </section>
@@ -131,6 +144,10 @@ export function ResumePageClient() {
     setBuilderEditDetail(null);
   }
 
+  function handleManualSaveSuccess(resumeId: string) {
+    setSelectedResumeId(resumeId);
+  }
+
   function handleRequestReupload() {
     setInputMode("upload");
     inputAreaRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -140,6 +157,12 @@ export function ResumePageClient() {
     setBuilderEditDetail(detail);
     setBuilderEditId(detail.resume.id);
     setInputMode("build");
+    inputAreaRef.current?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function handleEditInManual(detail: ResumeDetail) {
+    setSelectedResumeId(detail.resume.id);
+    setInputMode("manual");
     inputAreaRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
@@ -164,8 +187,8 @@ export function ResumePageClient() {
                   CV Intelligence
                 </h1>
                 <p className="mt-0.5 max-w-lg text-sm text-zinc-500">
-                  Upload or build your CV, then query it with AI grounded in your
-                  real experience.
+                  Upload, build, or edit your CV, then query it with AI grounded
+                  in your real experience.
                 </p>
               </div>
             </div>
@@ -215,7 +238,7 @@ export function ResumePageClient() {
                 <option key={resume.id} value={resume.id}>
                   {resume.file_name}
                   {resume.is_active ? " (active)" : ""}
-                  {resume.file_type === "builder" ? " · built" : ""}
+                  {resumeTypeLabel(resume.file_type)}
                 </option>
               ))}
             </select>
@@ -229,6 +252,7 @@ export function ResumePageClient() {
                 setInputMode("build");
                 handleClearBuilderEdit();
               }}
+              onManual={() => setInputMode("manual")}
               onUpload={() => setInputMode("upload")}
             />
           </div>
@@ -262,20 +286,38 @@ export function ResumePageClient() {
                   <PenLine className="h-4 w-4" />
                   Build CV
                 </button>
+                <button
+                  className={resumeSegmentTab(inputMode === "manual")}
+                  role="tab"
+                  type="button"
+                  aria-selected={inputMode === "manual"}
+                  onClick={() => setInputMode("manual")}
+                >
+                  <FileText className="h-4 w-4" />
+                  Manual
+                </button>
               </div>
 
-              {inputMode === "upload" ? (
+              {inputMode === "upload" && (
                 <ResumeUploadCard
                   onUploadSuccess={handleCvSuccess}
                   uploadDetail={detailQuery.data}
                 />
-              ) : (
+              )}
+              {inputMode === "build" && (
                 <ResumeBuilderCard
                   buildDetail={detailQuery.data}
                   editResumeId={builderEditId}
                   initialDetail={builderEditDetail}
                   onBuildSuccess={handleCvSuccess}
                   onClearEdit={handleClearBuilderEdit}
+                />
+              )}
+              {inputMode === "manual" && (
+                <ManualResumeEditor
+                  key={`${effectiveResumeId ?? "new"}-${detailQuery.data?.resume.updated_at ?? "loading"}`}
+                  detail={detailQuery.data}
+                  onSaveSuccess={handleManualSaveSuccess}
                 />
               )}
             </div>
@@ -287,6 +329,7 @@ export function ResumePageClient() {
                 hasResumes={resumes.length > 0}
                 isLoading={resumesQuery.isLoading || detailQuery.isLoading}
                 onEditInBuilder={handleEditInBuilder}
+                onEditInManual={handleEditInManual}
                 onRequestReupload={handleRequestReupload}
               />
             )}

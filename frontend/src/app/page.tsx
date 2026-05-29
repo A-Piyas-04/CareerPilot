@@ -71,6 +71,15 @@ const corePages = [
     accent: "bg-rose-50 text-rose-700",
     status: "Live",
   },
+  {
+    title: "Cover Letter Studio",
+    href: "/cover-letters",
+    description:
+      "Create, manage, copy, edit, and regenerate tailored cover letters from job descriptions.",
+    icon: Wand2,
+    accent: "bg-blue-50 text-blue-700",
+    status: "Live",
+  },
 ];
 
 const futureFeatures = [
@@ -85,12 +94,6 @@ const futureFeatures = [
     description:
       "Generate week-by-week learning plans and turn roadmap items into tasks or calendar events.",
     icon: Map,
-  },
-  {
-    title: "Cover Letter Studio",
-    description:
-      "Create tailored cover letters from job descriptions and verified resume evidence.",
-    icon: Wand2,
   },
   {
     title: "Progress Dashboard",

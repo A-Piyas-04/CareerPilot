@@ -4,16 +4,19 @@ import { toast } from "sonner";
 import {
   askCvQuestion,
   buildResume,
+  createManualResume,
   deleteResume,
   getResume,
   listResumes,
   queryResume,
   rebuildResume,
+  updateManualResume,
   uploadResume,
 } from "./api";
 import type {
   BuildResumeRequest,
   CvAnswerRequest,
+  ManualResumePayload,
   ResumeQueryRequest,
 } from "./types";
 
@@ -108,6 +111,42 @@ export function useDeleteResume() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to delete resume.");
+    },
+  });
+}
+
+export function useCreateManualResume() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: ManualResumePayload) => createManualResume(payload),
+    onSuccess: (resume) => {
+      queryClient.invalidateQueries({ queryKey: resumeKeys.list });
+      queryClient.invalidateQueries({
+        queryKey: resumeKeys.detail(resume.id),
+      });
+      toast.success(`"${resume.file_name}" saved.`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to save manual CV.");
+    },
+  });
+}
+
+export function useUpdateManualResume() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateManualResume,
+    onSuccess: (resume) => {
+      queryClient.invalidateQueries({ queryKey: resumeKeys.list });
+      queryClient.invalidateQueries({
+        queryKey: resumeKeys.detail(resume.id),
+      });
+      toast.success(`"${resume.file_name}" updated.`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update manual CV.");
     },
   });
 }

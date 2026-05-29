@@ -15,8 +15,7 @@ python-docx
 # scikit-learn removed: embeddings now use Gemini provider backend
 numpy
 google-generativeai
-
-
+pytest
 # sentence-transformers is NOT installed by default — it pulls in PyTorch + CUDA (~2 GB).
 # Only install it when you want semantic embeddings:
 #   pip install sentence-transformers

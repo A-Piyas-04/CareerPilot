@@ -1,4 +1,4 @@
-"""Resume service — orchestrates the full CV ingestion pipeline and read operations."""
+"""Resume service ? orchestrates the full CV ingestion pipeline and read operations."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -247,8 +247,8 @@ def _ingest_sections(
     raw_text: str,
 ) -> Resume:
     """
-    Shared pipeline: insert sections → chunk → embed → skills → deactivate others
-    → mark processed. Caller must ensure resume row exists and is processing.
+    Shared pipeline: insert sections ? chunk ? embed ? skills ? deactivate others
+    ? mark processed. Caller must ensure resume row exists and is processing.
     """
     section_rows = [
         {
@@ -489,6 +489,94 @@ def rebuild_resume_from_sections(
         raise_http_for_supabase(exc, context="rebuild resume")
 
 
+def create_manual_resume(user_id: str, payload: dict[str, Any]) -> Resume:
+    """Create a processed resume from manually entered structured fields."""
+    supabase = get_supabase_client()
+    file_name = _manual_title(payload)
+    raw_text, sections, skills = _manual_payload_to_resume_parts(payload)
+
+    if not raw_text.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Add at least one CV detail before saving.",
+        )
+
+    insert_resp = run_supabase(
+        "create manual resume",
+        lambda: (
+            supabase.table("resumes")
+            .insert(
+                {
+                    "user_id": user_id,
+                    "file_name": file_name,
+                    "file_type": "manual",
+                    "status": ResumeStatus.PROCESSING.value,
+                    "is_active": True,
+                }
+            )
+            .execute()
+        ),
+    )
+    created = _row(insert_resp)
+    if not created:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not create manual resume record.",
+        )
+
+    resume_id = created["id"]
+
+    try:
+        final = _replace_resume_generated_content(
+            supabase=supabase,
+            user_id=user_id,
+            resume_id=resume_id,
+            file_name=file_name,
+            raw_text=raw_text,
+            sections=sections,
+            skills=skills,
+        )
+        _deactivate_other_resumes(supabase, user_id, resume_id)
+        return Resume(**final)
+    except Exception as exc:
+        _mark_failed(supabase, resume_id, user_id, str(exc))
+        raise_http_for_supabase(exc, context="create manual resume")
+
+
+def update_manual_resume(
+    user_id: str,
+    resume_id: str,
+    payload: dict[str, Any],
+) -> Resume:
+    """Replace an owned resume with manually entered structured fields."""
+    _get_owned_resume(user_id, resume_id)
+    supabase = get_supabase_client()
+    file_name = _manual_title(payload)
+    raw_text, sections, skills = _manual_payload_to_resume_parts(payload)
+
+    if not raw_text.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Add at least one CV detail before saving.",
+        )
+
+    try:
+        final = _replace_resume_generated_content(
+            supabase=supabase,
+            user_id=user_id,
+            resume_id=resume_id,
+            file_name=file_name,
+            raw_text=raw_text,
+            sections=sections,
+            skills=skills,
+        )
+        _deactivate_other_resumes(supabase, user_id, resume_id)
+        return Resume(**final)
+    except Exception as exc:
+        _mark_failed(supabase, resume_id, user_id, str(exc))
+        raise_http_for_supabase(exc, context="update manual resume")
+
+
 # ---------------------------------------------------------------------------
 # Delete operation
 # ---------------------------------------------------------------------------
@@ -549,4 +637,385 @@ def _mark_failed(supabase: Any, resume_id: str, user_id: str, error_message: str
             }
         ).eq("id", resume_id).eq("user_id", user_id).execute()
     except Exception:
-        pass
+        pass  # do not obscure the original error
+
+
+def _replace_resume_generated_content(
+    *,
+    supabase: Any,
+    user_id: str,
+    resume_id: str,
+    file_name: str,
+    raw_text: str,
+    sections: list[dict[str, Any]],
+    skills: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Replace generated section, chunk, skill, and summary data for a resume."""
+    (
+        supabase.table("resume_chunks")
+        .delete()
+        .eq("resume_id", resume_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    (
+        supabase.table("resume_sections")
+        .delete()
+        .eq("resume_id", resume_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    (
+        supabase.table("user_skills")
+        .delete()
+        .eq("resume_id", resume_id)
+        .eq("user_id", user_id)
+        .eq("source", "manual")
+        .execute()
+    )
+
+    section_rows = [
+        {
+            "resume_id": resume_id,
+            "user_id": user_id,
+            "section_name": section["section_name"],
+            "section_order": section["section_order"],
+            "content": section["content"],
+            "metadata": section.get("metadata", {}),
+        }
+        for section in sections
+    ]
+    section_insert_resp = (
+        supabase.table("resume_sections").insert(section_rows).execute()
+        if section_rows
+        else None
+    )
+    inserted_sections = _rows(section_insert_resp) if section_insert_resp else []
+    section_id_map: dict[str, str] = {
+        r["section_name"]: r["id"] for r in inserted_sections
+    }
+
+    chunks = chunk_sections(sections)
+    embeddings = embed_batch([chunk["chunk_text"] for chunk in chunks])
+    embedding_column = settings.embedding_active_column.strip() or "embedding"
+    chunk_rows = [
+        {
+            "resume_id": resume_id,
+            "user_id": user_id,
+            "section_id": section_id_map.get(chunk["section_name"]),
+            "section_name": chunk["section_name"],
+            "chunk_index": chunk["chunk_index"],
+            "chunk_text": chunk["chunk_text"],
+            "token_count": chunk["token_count"],
+            embedding_column: embeddings[index],
+            "metadata": {"source": "manual"},
+        }
+        for index, chunk in enumerate(chunks)
+    ]
+    if chunk_rows:
+        supabase.table("resume_chunks").insert(chunk_rows).execute()
+
+    if skills:
+        skill_rows = [
+            {
+                "user_id": user_id,
+                "resume_id": resume_id,
+                "skill_name": skill["skill_name"],
+                "category": skill.get("category"),
+                "proficiency": skill.get("proficiency"),
+                "evidence": skill.get("evidence"),
+                "source": "manual",
+            }
+            for skill in skills
+        ]
+        supabase.table("user_skills").upsert(
+            skill_rows,
+            on_conflict="user_id,skill_name",
+        ).execute()
+
+    parsed_summary = {
+        "section_count": len(sections),
+        "chunk_count": len(chunks),
+        "skill_count": len(skills),
+        "section_names": [section["section_name"] for section in sections],
+        "source": "manual",
+    }
+    update_resp = (
+        supabase.table("resumes")
+        .update(
+            {
+                "file_name": file_name,
+                "file_type": "manual",
+                "status": ResumeStatus.PROCESSED.value,
+                "is_active": True,
+                "raw_text": raw_text,
+                "parsed_summary": parsed_summary,
+                "error_message": None,
+            }
+        )
+        .eq("id", resume_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    final = _row(update_resp)
+    if not final:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not save manual resume.",
+        )
+    return final
+
+
+def _deactivate_other_resumes(supabase: Any, user_id: str, resume_id: str) -> None:
+    (
+        supabase.table("resumes")
+        .update({"is_active": False})
+        .eq("user_id", user_id)
+        .neq("id", resume_id)
+        .execute()
+    )
+
+
+def _manual_title(payload: dict[str, Any]) -> str:
+    title = _clean(payload.get("title"))
+    return title or "Manual CV"
+
+
+def _manual_payload_to_resume_parts(
+    payload: dict[str, Any],
+) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
+    sections: list[dict[str, Any]] = []
+    personal = payload.get("personal") or {}
+    skills = _manual_skills(payload.get("skills") or [])
+
+    _append_section(
+        sections,
+        "personal",
+        _format_personal(personal),
+        {"form_data": personal},
+    )
+    _append_section(
+        sections,
+        "summary",
+        _clean(payload.get("summary")),
+        {"form_data": {"summary": _clean(payload.get("summary"))}},
+    )
+    _append_section(
+        sections,
+        "skills",
+        _format_skills(skills),
+        {"form_data": payload.get("skills") or []},
+    )
+    _append_section(
+        sections,
+        "experience",
+        _format_experience(payload.get("experience") or []),
+        {"form_data": payload.get("experience") or []},
+    )
+    _append_section(
+        sections,
+        "education",
+        _format_education(payload.get("education") or []),
+        {"form_data": payload.get("education") or []},
+    )
+    _append_section(
+        sections,
+        "projects",
+        _format_projects(payload.get("projects") or []),
+        {"form_data": payload.get("projects") or []},
+    )
+    _append_section(
+        sections,
+        "certifications",
+        _format_certifications(payload.get("certifications") or []),
+        {"form_data": payload.get("certifications") or []},
+    )
+    _append_section(
+        sections,
+        "languages",
+        _format_languages(payload.get("languages") or []),
+        {"form_data": payload.get("languages") or []},
+    )
+
+    raw_text = "\n\n".join(
+        f"{section['section_name'].upper()}\n{section['content']}"
+        for section in sections
+    )
+    return raw_text, sections, skills
+
+
+def _append_section(
+    sections: list[dict[str, Any]],
+    section_name: str,
+    content: str,
+    metadata: dict[str, Any],
+) -> None:
+    if not content.strip():
+        return
+    sections.append(
+        {
+            "section_name": section_name,
+            "section_order": len(sections),
+            "content": content.strip(),
+            "metadata": {"source": "manual", **metadata},
+        }
+    )
+
+
+def _manual_skills(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    skills: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in items:
+        skill_name = _clean(item.get("skill_name"))
+        key = skill_name.lower()
+        if not skill_name or key in seen:
+            continue
+        seen.add(key)
+        skills.append(
+            {
+                "skill_name": skill_name,
+                "category": _clean(item.get("category")) or None,
+                "proficiency": _clean(item.get("proficiency")) or None,
+                "evidence": f"Manually listed skill: {skill_name}",
+            }
+        )
+    return skills
+
+
+def _format_personal(personal: dict[str, Any]) -> str:
+    lines = [
+        _clean(personal.get("full_name")),
+        _clean(personal.get("email")),
+        _clean(personal.get("phone")),
+        _clean(personal.get("location")),
+        _clean(personal.get("website")),
+        _clean(personal.get("linkedin")),
+        _clean(personal.get("github")),
+    ]
+    return "\n".join(line for line in lines if line)
+
+
+def _format_skills(skills: list[dict[str, Any]]) -> str:
+    return ", ".join(skill["skill_name"] for skill in skills)
+
+
+def _format_experience(items: list[dict[str, Any]]) -> str:
+    blocks: list[str] = []
+    for item in items:
+        title = " - ".join(
+            part
+            for part in [_clean(item.get("role")), _clean(item.get("company"))]
+            if part
+        )
+        dates = _date_range(item)
+        header = " | ".join(
+            part
+            for part in [title, _clean(item.get("location")), dates]
+            if part
+        )
+        body = _clean(item.get("description"))
+        highlights = _format_bullets(item.get("highlights") or [])
+        block = "\n".join(part for part in [header, body, highlights] if part)
+        if block:
+            blocks.append(block)
+    return "\n\n".join(blocks)
+
+
+def _format_education(items: list[dict[str, Any]]) -> str:
+    blocks: list[str] = []
+    for item in items:
+        header = " - ".join(
+            part
+            for part in [_clean(item.get("degree")), _clean(item.get("institution"))]
+            if part
+        )
+        dates = " - ".join(
+            part
+            for part in [_clean(item.get("start_year")), _clean(item.get("end_year"))]
+            if part
+        )
+        block = "\n".join(
+            part
+            for part in [
+                " | ".join(
+                    value
+                    for value in [header, _clean(item.get("location")), dates]
+                    if value
+                ),
+                _clean(item.get("details")),
+            ]
+            if part
+        )
+        if block:
+            blocks.append(block)
+    return "\n\n".join(blocks)
+
+
+def _format_projects(items: list[dict[str, Any]]) -> str:
+    blocks: list[str] = []
+    for item in items:
+        header = " | ".join(
+            part
+            for part in [
+                _clean(item.get("name")),
+                _clean(item.get("technologies")),
+                _clean(item.get("link")),
+            ]
+            if part
+        )
+        block = "\n".join(
+            part
+            for part in [
+                header,
+                _clean(item.get("description")),
+                _format_bullets(item.get("highlights") or []),
+            ]
+            if part
+        )
+        if block:
+            blocks.append(block)
+    return "\n\n".join(blocks)
+
+
+def _format_certifications(items: list[dict[str, Any]]) -> str:
+    blocks: list[str] = []
+    for item in items:
+        header = " | ".join(
+            part
+            for part in [
+                _clean(item.get("name")),
+                _clean(item.get("issuer")),
+                _clean(item.get("date")),
+            ]
+            if part
+        )
+        block = "\n".join(part for part in [header, _clean(item.get("details"))] if part)
+        if block:
+            blocks.append(block)
+    return "\n\n".join(blocks)
+
+
+def _format_languages(items: list[dict[str, Any]]) -> str:
+    lines = []
+    for item in items:
+        name = _clean(item.get("name"))
+        proficiency = _clean(item.get("proficiency"))
+        if name and proficiency:
+            lines.append(f"{name} - {proficiency}")
+        elif name:
+            lines.append(name)
+    return "\n".join(lines)
+
+
+def _date_range(item: dict[str, Any]) -> str:
+    start = _clean(item.get("start_date"))
+    end = "Present" if item.get("is_current") else _clean(item.get("end_date"))
+    return " - ".join(part for part in [start, end] if part)
+
+
+def _format_bullets(values: list[Any]) -> str:
+    return "\n".join(f"- {_clean(value)}" for value in values if _clean(value))
+
+
+def _clean(value: Any) -> str:
+    return str(value or "").strip()  # do not obscure the original error

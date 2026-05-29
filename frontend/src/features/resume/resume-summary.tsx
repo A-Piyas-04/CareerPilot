@@ -142,6 +142,7 @@ type ResumeSummaryProps = {
   hasResumes: boolean;
   onRequestReupload?: () => void;
   onEditInBuilder?: (detail: ResumeDetail) => void;
+  onEditInManual?: (detail: ResumeDetail) => void;
 };
 
 export function ResumeSummary({
@@ -151,6 +152,7 @@ export function ResumeSummary({
   hasResumes,
   onRequestReupload,
   onEditInBuilder,
+  onEditInManual,
 }: ResumeSummaryProps) {
   const groupedSkills = useMemo(
     () => (detail ? groupSkillsByCategory(detail.skills) : new Map()),
@@ -226,7 +228,11 @@ export function ResumeSummary({
           <h2 className="text-base font-semibold text-zinc-950">Resume overview</h2>
           <p className="mt-0.5 truncate text-sm text-zinc-500">
             {resume.file_name}
-            {resume.file_type === "builder" ? " · built in app" : ""}
+            {resume.file_type === "builder"
+              ? " · built in app"
+              : resume.file_type === "manual"
+                ? " · manual entry"
+                : ""}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -241,7 +247,7 @@ export function ResumeSummary({
         </div>
       </div>
 
-      {isProcessed && onEditInBuilder && (
+      {isProcessed && onEditInBuilder && resume.file_type === "builder" && (
         <button
           className={`${resumeSecondaryButton} mt-4 w-full sm:w-auto`}
           type="button"
@@ -249,6 +255,17 @@ export function ResumeSummary({
         >
           <PenLine className="h-4 w-4" />
           Edit in builder
+        </button>
+      )}
+
+      {isProcessed && onEditInManual && resume.file_type === "manual" && (
+        <button
+          className={`${resumeSecondaryButton} mt-4 w-full sm:w-auto`}
+          type="button"
+          onClick={() => onEditInManual(detail)}
+        >
+          <FileText className="h-4 w-4" />
+          Edit in manual editor
         </button>
       )}
 

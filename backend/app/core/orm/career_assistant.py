@@ -217,6 +217,11 @@ class CoverLetter(Base, TimestampMixin):
         nullable=True,
     )
     title: Mapped[str | None] = mapped_column(Text, nullable=True)
+    job_title: Mapped[str | None] = mapped_column(Text, nullable=True)
+    company_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    job_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tone: Mapped[str | None] = mapped_column(Text, nullable=True)
+    extra_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     version: Mapped[int | None] = mapped_column(
         Integer, nullable=True, server_default=text("1")
@@ -227,6 +232,7 @@ class Roadmap(Base, TimestampMixin):
     __tablename__ = "roadmaps"
     __table_args__ = (
         Index("idx_roadmaps_user_id", "user_id"),
+        Index("idx_roadmaps_resume_id", "resume_id"),
         Index("idx_roadmaps_target_role", "target_role"),
     )
 
@@ -240,6 +246,11 @@ class Roadmap(Base, TimestampMixin):
         ForeignKey("profiles.id", ondelete="CASCADE"),
         nullable=False,
     )
+    resume_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("resumes.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     target_role: Mapped[str] = mapped_column(Text, nullable=False)
     duration_weeks: Mapped[int | None] = mapped_column(Integer, nullable=True)
     overview: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -248,7 +259,7 @@ class Roadmap(Base, TimestampMixin):
     )
 
 
-class RoadmapItem(Base, CreatedAtMixin):
+class RoadmapItem(Base, TimestampMixin):
     __tablename__ = "roadmap_items"
     __table_args__ = (
         Index("idx_roadmap_items_roadmap_id", "roadmap_id"),
