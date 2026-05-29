@@ -14,6 +14,7 @@ from app.cv_intelligence.models.resume_chunk import ResumeChunk
 from app.cv_intelligence.models.resume_section import ResumeSection
 from app.cv_intelligence.models.user_skill import UserSkill
 from app.cv_intelligence.services._helpers import _row, _rows
+from app.core.config import settings
 from app.cv_intelligence.services.chunker import chunk_sections
 from app.cv_intelligence.services.embedding_service import embed_batch
 from app.cv_intelligence.services.resume_parser import extract_text, validate_file
@@ -31,6 +32,28 @@ def _not_found(resource: str = "Resume") -> HTTPException:
 # ---------------------------------------------------------------------------
 # Read operations
 # ---------------------------------------------------------------------------
+
+def get_active_resume_id(user_id: str) -> Optional[str]:
+    """Return the active processed resume id for the user, if any."""
+    response = run_supabase(
+        "get active resume",
+        lambda: (
+            get_supabase_client()
+            .table("resumes")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("is_active", True)
+            .eq("status", ResumeStatus.PROCESSED.value)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        ),
+    )
+    rows = _rows(response)
+    if not rows:
+        return None
+    return str(rows[0]["id"])
+
 
 def list_resumes(user_id: str) -> list[Resume]:
     """Return all resumes for the user, newest first."""
@@ -210,7 +233,8 @@ def process_resume(user_id: str, filename: str, file_bytes: bytes) -> Resume:
         chunk_texts = [c["chunk_text"] for c in chunks]
         embeddings = embed_batch(chunk_texts)
 
-        # 8. Insert resume_chunks
+        # 8. Insert resume_chunks (writes to configured active embedding column)
+        embedding_column = settings.embedding_active_column.strip() or "embedding"
         chunk_rows = [
             {
                 "resume_id": resume_id,
@@ -220,7 +244,7 @@ def process_resume(user_id: str, filename: str, file_bytes: bytes) -> Resume:
                 "chunk_index": c["chunk_index"],
                 "chunk_text": c["chunk_text"],
                 "token_count": c["token_count"],
-                "embedding": embeddings[i],
+                embedding_column: embeddings[i],
                 "metadata": {},
             }
             for i, c in enumerate(chunks)

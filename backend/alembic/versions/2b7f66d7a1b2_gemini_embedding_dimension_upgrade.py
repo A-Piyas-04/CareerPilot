@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    dim = int(os.getenv("EMBEDDING_VECTOR_DIM", "768"))
+    dim = int(os.getenv("EMBEDDING_VECTOR_DIM", "384"))
     op.execute(f"ALTER TABLE resume_chunks ADD COLUMN IF NOT EXISTS embedding_new vector({dim});")
     op.execute(
         "CREATE INDEX IF NOT EXISTS idx_resume_chunks_embedding_new ON resume_chunks "

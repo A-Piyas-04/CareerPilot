@@ -10,7 +10,7 @@ from app.cv_intelligence.models.resume import Resume
 from app.cv_intelligence.models.resume_chunk import ResumeChunk
 from app.cv_intelligence.models.resume_section import ResumeSection
 from app.cv_intelligence.models.user_skill import UserSkill
-from app.cv_intelligence.services import resume_service, retrieval_service
+from app.cv_intelligence.services import rag_context_service, resume_service
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
 
@@ -132,14 +132,15 @@ def query_resume_chunks(
     Uses pgvector RPC when available, falls back to numpy cosine similarity.
     """
     supabase = get_supabase_client()
-    results = retrieval_service.search_chunks(
+    rag = rag_context_service.retrieve_cv_context(
         user_id=user_id,
         query=payload.query,
         supabase=supabase,
         resume_id=payload.resume_id,
         top_k=payload.top_k,
+        intent="general",
     )
-    return [ChunkQueryResult(**r) for r in results]
+    return [ChunkQueryResult(**c) for c in rag.chunks]
 
 
 @router.post(
@@ -159,20 +160,21 @@ def answer_cv_question(
     from app.cv_intelligence.services import llm_service  # noqa: PLC0415
 
     supabase = get_supabase_client()
-    chunks = retrieval_service.search_chunks(
+    rag = rag_context_service.retrieve_cv_context(
         user_id=user_id,
         query=payload.question,
         supabase=supabase,
         resume_id=payload.resume_id,
         top_k=payload.top_k,
+        intent="general",
     )
     answer = llm_service.answer_from_chunks(
         question=payload.question,
-        chunks=chunks,
+        chunks=rag.chunks,
     )
     return AnswerResponse(
         answer=answer,
-        evidence_chunks=[ChunkQueryResult(**c) for c in chunks],
+        evidence_chunks=[ChunkQueryResult(**c) for c in rag.chunks],
     )
 
 

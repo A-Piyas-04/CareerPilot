@@ -61,9 +61,25 @@ export async function POST(request: NextRequest) {
       return jsonError("Conversation not found", 404);
     }
 
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      return jsonError("User not authenticated", 401);
+    }
+
+    const intentDetection = await detectAssistantIntent(message);
+    const intent = intentDetection.intent;
+
     const [profile, resumeContext, memory] = await Promise.all([
       loadProfile(user.id),
-      getResumeContext(user.id),
+      getResumeContext({
+        userId: user.id,
+        accessToken: session.access_token,
+        query: message,
+        intent,
+      }),
       loadConversationMemory({
         supabase,
         conversationId,
@@ -72,8 +88,12 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    const intentDetection = await detectAssistantIntent(message);
-    const intent = intentDetection.intent;
+    const noResumeGuard =
+      !resumeContext.hasResume
+        ? "\n\nIMPORTANT: The user has no processed CV on file. Do not invent skills, jobs, education, or projects. Tell them to upload a CV at /resume."
+        : resumeContext.usedResumeChunks.length === 0
+          ? "\n\nIMPORTANT: No relevant CV excerpts were retrieved. Only answer from what is explicitly in the CV context above; do not invent background."
+          : "";
     const baseSystemPrompt = buildSystemPrompt({
       profile,
       resumeContext: resumeContext.text,
@@ -84,7 +104,7 @@ export async function POST(request: NextRequest) {
       resumeContext: resumeContext.text,
       userMessage: message,
     });
-    const systemPrompt = `${baseSystemPrompt}\n\n${intentPrompt}`;
+    const systemPrompt = `${baseSystemPrompt}\n\n${intentPrompt}${noResumeGuard}`;
     const nextTitle = shouldGenerateTitle(conversation.title)
       ? titleFromMessage(message)
       : conversation.title;
@@ -194,10 +214,18 @@ export async function POST(request: NextRequest) {
                   intent_detection_method: intentDetection.method,
                   intent_reason: intentDetection.reason,
                   matched_pattern: intentDetection.matchedPattern,
-                  source: "phase-2.3-benchmark-query-handlers",
-                  can_save_roadmap: intent === "roadmap_generation",
-                  can_save_cover_letter: intent === "cover_letter",
-                  mock_resume_chunk_ids: resumeContext.usedResumeChunks,
+                  rag_used: true,
+                  has_resume: resumeContext.hasResume,
+                  resume_id: resumeContext.resumeId,
+                  chunk_count: resumeContext.usedResumeChunks.length,
+                  evidence_chunks: resumeContext.evidenceChunks,
+                  user_skills: resumeContext.userSkills,
+                  empty_reason: resumeContext.emptyReason,
+                  source_user_message: message,
+                  can_save_roadmap:
+                    intent === "roadmap_generation" && resumeContext.hasResume,
+                  can_save_cover_letter:
+                    intent === "cover_letter" && resumeContext.hasResume,
                 },
               });
 
