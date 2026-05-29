@@ -1018,4 +1018,4 @@ def _format_bullets(values: list[Any]) -> str:
 
 
 def _clean(value: Any) -> str:
-    return str(value or "").strip()  # do not obscure the original error
+    return str(value or "").strip()

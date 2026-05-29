@@ -20,6 +20,10 @@
 | `/tracker` | `app/tracker/page.tsx` | ✅ `?next=` | ✅ |
 | `/jobs` | `app/jobs/page.tsx` | ✅ | ✅ |
 | `/resume` | `app/resume/page.tsx` | ✅ | ✅ |
+| `/cover-letters` | `app/cover-letters/page.tsx` | ✅ | ✅ |
+| `/cover-letters/[id]` | `app/cover-letters/[id]/page.tsx` | ✅ | ✅ |
+| `/roadmap` | `app/roadmap/page.tsx` | ✅ | ✅ |
+| `/roadmap/[id]` | `app/roadmap/[id]/page.tsx` | ✅ | ✅ |
 | `/goals` | `app/goals/page.tsx` | ✅ | ✅ |
 | `/calendar` | `app/calendar/page.tsx` | ✅ | ❌ |
 | `/chat` | `app/chat/page.tsx` | ✅ | ❌ |
@@ -43,7 +47,7 @@
 | Root layout (`app/layout.tsx`) | ✅ | Geist fonts, `Providers` wrapper |
 | React Query provider | ✅ | 20s default `staleTime` |
 | Sonner toasts | ✅ | Global success/error feedback |
-| Global `AppNav` | ⚠️ | Only on `/tracker`, `/jobs`, `/resume`, `/goals` — **not** on `/chat`, `/calendar`, landing |
+| Global `AppNav` | ⚠️ | On tracker, jobs, resume, goals, **roadmap**, **cover-letters** — **not** on `/chat`, `/calendar`, landing |
 | Per-page headers | ✅ | Custom headers on chat, calendar, resume, jobs, tracker, goals |
 | Sign out | ⚠️ | On resume, tracker, goals, calendar headers — **not** on jobs page header |
 | Responsive layout | ⚠️ | Mobile-friendly grids; chat sidebar stacks on `lg` |
@@ -73,8 +77,8 @@
 | Section | Status | Notes |
 |---------|--------|-------|
 | Hero + CTAs | ✅ | Links to `/login`, `/login?next=/tracker` |
-| Live module cards (`corePages`) | ⚠️ | Chat, Tracker, Goals, Calendar, Tasks (`/goals#tasks`), Resume — **no Job Hunter card** |
-| “Coming next” cards | ✅ | Skill gap, roadmap, cover letter studio, dashboard, AI nudges (non-clickable) |
+| Live module cards (`corePages`) | ⚠️ | Chat, Tracker, Goals, Calendar, Tasks, Resume, **Cover Letter Studio** — **no Job Hunter or Roadmap card** |
+| “Coming next” cards | ⚠️ | Skill gap, **roadmap** (page exists at `/roadmap` but landing still lists as future), dashboard, AI nudges |
 | Proof points strip | ✅ | Static feature bullets |
 
 ---
@@ -130,7 +134,7 @@
 | Page | Path | Status | Notes |
 |------|------|--------|-------|
 | CV Intelligence | `/resume` | ✅ | `ResumePageClient` + `AppNav`; polished hero + layout |
-| In-app CV builder | ✅ | Upload \| Build tabs; `resume-builder-card.tsx`; create + edit/rebuild |
+| In-app CV builder | ✅ | Upload \| Build \| **Manual** tabs; `resume-builder-card.tsx` + `manual-resume-editor.tsx` |
 
 ### Panels & components
 
@@ -151,6 +155,8 @@
 | Section full-screen viewer | `resume-section-viewer-drawer.tsx` | ✅ | “View full” on long sections; metadata block |
 | Delete confirm dialog | `resume-delete-dialog.tsx` | ✅ | Centered modal with resume name + warning |
 | CV builder card | `resume-builder-card.tsx` | ✅ | Section rows, create + edit, preview drawer on success |
+| Manual CV editor | `manual-resume-editor.tsx` | ✅ | Structured form (personal, experience, education, etc.); create + update |
+| Manual resume hooks | `hooks.ts` | ✅ | `useCreateManualResume`, `useUpdateManualResume` → `POST/PUT /api/v1/resumes/manual` |
 | Shared UI tokens | `resume-ui.ts` | ✅ | Cards, buttons, tabs, inputs — consistent polish |
 | Sign out | `resume-page-client.tsx` | ✅ | Header button |
 
@@ -176,6 +182,8 @@
 | Raw semantic chunk search | ✅ | Advanced panel → query → chunks with scores + expand |
 | Build CV in browser | ✅ | Build tab → sections → Save & index; Edit in builder on overview |
 | Edit CV in builder | ✅ | Overview → Edit in builder → Update & re-index |
+| Create CV via manual form | ✅ | Manual tab → fill sections → Save → indexed as `file_type: manual` |
+| Edit manual CV | ✅ | Overview → Edit in manual editor (manual resumes) → Update |
 
 ---
 
@@ -186,9 +194,11 @@
 | Page | Path | Status | Notes |
 |------|------|--------|-------|
 | AI Career Assistant | `/chat` | ✅ | `ChatWorkspace` — sidebar + thread |
-| Skill Gap Analysis page | ❌ | Landing “coming next” only |
-| Cover Letter Studio page | ❌ | Chat + save action only |
-| Roadmap viewer page | ❌ | Chat + save action only |
+| Skill Gap Analysis page | ❌ | Landing “coming next” only; chat intent only |
+| Cover Letter Studio | `/cover-letters` | ✅ | List, generate form, detail view, edit, regenerate, delete |
+| Cover Letter detail | `/cover-letters/[id]` | ✅ | `CoverLetterDetailClient` |
+| Roadmap hub | `/roadmap` | ✅ | List saved roadmaps + `RoadmapGenerateForm` |
+| Roadmap detail | `/roadmap/[id]` | ✅ | `RoadmapDetailClient` + week timeline |
 
 ### Panels & components
 
@@ -224,9 +234,10 @@
 | Multi-turn memory in session | ✅ | Last 12 messages loaded server-side |
 | Readiness check (“Am I ready for…”) | ⚠️ | Works via free-text + intent routing; no guided form |
 | Skill gap analysis | ⚠️ | Chat response only; **no dedicated results page** or save-from-chat for gap |
-| Roadmap generation | ⚠️ | Chat markdown plan → optional **Save Roadmap** → backend persist; **no viewer** |
-| Cover letter draft | ⚠️ | Chat letter → optional **Save Cover Letter**; **no studio/editor** |
-| View saved cover letters / roadmaps | ❌ | No list/history UI |
+| Roadmap generation | ✅ | `/roadmap` generate form (Gemini) or chat **Save Roadmap** → list + detail timeline |
+| Cover letter draft | ✅ | `/cover-letters` generate form or chat save → list + detail editor |
+| View saved cover letters / roadmaps | ✅ | `/cover-letters`, `/roadmap` list pages + detail routes |
+| Regenerate cover letter | ✅ | `RegenerateCoverLetterDialog` on detail page |
 | Delete conversation | ✅ | Sidebar delete + confirm |
 | Chat without CV | ⚠️ | Allowed with warning banner; grounded quality limited |
 
@@ -311,7 +322,7 @@
 | Complete / edit / delete goal task | ✅ | `TaskRow` actions |
 | Standalone task CRUD | ✅ | Right column on `/goals` |
 | Jump to tasks from landing | ✅ | `/goals#tasks` scrolls to `TaskList` |
-| Link task to roadmap item | ❌ | DB field exists; no UI |
+| Link task to roadmap item | ⚠️ | `POST /api/roadmap/items/[itemId]/create-task` from roadmap detail; not from goals UI |
 | Link task to application | ❌ | DB field exists; limited UI |
 
 ### Panels & components — Calendar
@@ -344,7 +355,7 @@
 | See application deadlines on calendar | ✅ | Auto-imported from applications |
 | Set reminder time on event | ✅ | Field in `EventModal` — **no push notification delivery** |
 | Link event to task or application | ⚠️ | Fields in modal if exposed — optional linking |
-| Create event from roadmap item | ❌ | No UI |
+| Create event from roadmap item | ✅ | `AddToCalendarModal` on roadmap timeline → `add-to-calendar` API |
 
 ### Dashboard & nudges (Pillar 4 — missing)
 
@@ -367,9 +378,12 @@
 | Item | Status | Notes |
 |------|--------|-------|
 | `AppNav` includes Job Hunter | ✅ | `/jobs` link present |
+| `AppNav` includes Roadmap | ✅ | `/roadmap` link present |
+| `AppNav` includes Cover Letters | ✅ | `/cover-letters` link present |
 | `AppNav` includes Chat | ❌ | Chat only via landing / direct URL |
 | `AppNav` includes Calendar | ❌ | Calendar via goals header or direct URL |
 | Landing lists Job Hunter | ❌ | Missing from `corePages` |
+| Landing lists Roadmap | ❌ | Built at `/roadmap` but still under “Coming next” on `/` |
 | Brand logo target | ⚠️ | `AppNav` logo → `/tracker` not `/` |
 
 ### Shared UX patterns
@@ -389,8 +403,8 @@
 | Feature | Dedicated page | In-chat only | Status |
 |---------|----------------|--------------|--------|
 | Skill Gap Analysis | ❌ | ⚠️ intent | ❌ / ⚠️ |
-| Roadmap Generator | ❌ | ⚠️ + save btn | ❌ / ⚠️ |
-| Cover Letter Studio | ❌ | ⚠️ + save btn | ❌ / ⚠️ |
+| Roadmap Generator | ✅ `/roadmap` | ⚠️ + save btn | ✅ / ⚠️ |
+| Cover Letter Studio | ✅ `/cover-letters` | ⚠️ + save btn | ✅ / ⚠️ |
 | Progress Dashboard | ❌ | — | ❌ |
 | AI Nudges | ❌ | — | ❌ |
 
@@ -399,6 +413,8 @@
 | Route | Status | Notes |
 |-------|--------|-------|
 | `POST /api/assistant/chat` | ✅ | Next.js Route Handler — streaming; not visible as UI route |
+| `POST /api/cover-letter/*` | ✅ | Generate, list, get, update, regenerate (BFF → Supabase + Gemini) |
+| `POST /api/roadmap/*` | ✅ | Generate, list, get, item patch, create-task, add-to-calendar |
 
 ---
 
@@ -410,7 +426,8 @@
 | 2. Job search | `/jobs` → search form → match cards | ✅ |
 | 3. Fit score visible | Match card badge + explanation | ✅ |
 | 4. AI assistant query | `/chat` → message | ✅ |
-| 5. Cover letter draft | `/chat` (cover letter intent) → optional Save | ⚠️ |
+| 5. Cover letter draft | `/cover-letters` generate or `/chat` → save → detail | ✅ |
+| 5b. Roadmap | `/roadmap` generate → timeline → task/calendar | ✅ |
 | 6. Tracker update | `/tracker` → drag card or edit drawer | ✅ |
 
 ---
@@ -419,13 +436,14 @@
 
 1. ❌ **Progress dashboard** page + nav entry  
 2. ❌ **AI nudges** surface (banner, toast, or inbox)  
-3. ⚠️ **Job Hunter on landing** + link Chat/Calendar in `AppNav`  
+3. ⚠️ **Landing parity** — add Job Hunter + Roadmap to `corePages`; move roadmap off “Coming next”  
 4. ⚠️ **Match card** — show `salary_range` and deadline when available  
 5. ❌ **Manual job paste** drawer on `/jobs`  
-6. ❌ **Dedicated pages** — skill gap, cover letters list, roadmap viewer  
+6. ❌ **Skill gap** dedicated page (chat intent only today)  
 7. ⚠️ **Chat suggested prompts** — benchmark queries (readiness, gap, roadmap, letter)  
-8. ❌ **Shared confirm modal** (tracker/chat/goals still use `window.confirm`; CV delete uses dedicated dialog)  
-9. ⚠️ **Unify sign-out** on all authenticated pages (add to `/jobs` header)
+8. ❌ **Shared confirm modal** (tracker/chat/goals still use `window.confirm`; CV/cover-letter delete use dedicated dialogs)  
+9. ⚠️ **Unify sign-out** on all authenticated pages (add to `/jobs`, `/cover-letters`, `/roadmap` headers)  
+10. ⚠️ **`AppNav` on chat/calendar** for consistent cross-module navigation
 
 ---
 

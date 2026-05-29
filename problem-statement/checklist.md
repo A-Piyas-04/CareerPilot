@@ -51,6 +51,7 @@
 |------|------------------------|--------|-------|
 | Upload | PDF/DOCX CV upload | ✅ | `POST /api/v1/resumes/upload`; max 10 MB; pypdf + python-docx |
 | In-app builder | Build CV directly inside platform | ✅ | `POST /api/v1/resumes/build`, `PUT .../build`; frontend builder + edit |
+| Manual CV entry | Structured form → chunk → embed | ✅ | `POST /api/v1/resumes/manual`, `PUT .../manual`; `file_type: manual` |
 | Chunking | CV chunked by section (experience, education, skills, projects) | ✅ | `section_detector.py` + `chunker.py` (900 char / 150 overlap) |
 | Embedding | Chunks embedded and stored in vector DB | ✅ | Gemini embeddings → `resume_chunks` (pgvector) |
 | Downstream RAG | Job matching, cover letters, gap analysis use this store | ✅ | Scorer, assistant, `career_generation_service` use RAG context |
@@ -76,9 +77,11 @@
 | Memory | Conversational memory within a session | ✅ | `loadConversationMemory` — last 12 messages per conversation |
 | Persistence | Conversations & messages saved | ✅ | `assistant_conversations`, `assistant_messages` |
 | Query | “Am I ready for this data engineer role?” → verdict + reasoning | ✅ | `readiness_check` intent + grounded prompts |
-| Query | “What skills am I missing for a Google internship?” → skill gap | ⚠️ | Chat intent + `POST /api/v1/career/skill-gap/analyze`; **no dedicated UI page**; save-to-DB via API not wired from chat |
-| Query | “Build me a 3-month roadmap…” → weekly plan + resources | ⚠️ | Chat generates roadmap; **Save Roadmap** in chat → `career/roadmaps/generate`; no standalone roadmap viewer UI |
-| Query | “Draft a cover letter…” → personalized from real experience | ⚠️ | Chat + **Save Cover Letter** → `career/cover-letters/generate`; no Cover Letter Studio page |
+| Query | “What skills am I missing for a Google internship?” → skill gap | ⚠️ | Chat intent + `POST /api/v1/career/skill-gap/analyze`; **no dedicated UI page** |
+| Query | “Build me a 3-month roadmap…” → weekly plan + resources | ✅ | `/roadmap` generate + detail timeline; chat **Save Roadmap**; items → task/calendar APIs |
+| Query | “Draft a cover letter…” → personalized from real experience | ✅ | `/cover-letters` studio (generate, edit, regenerate) + chat save path |
+| Cover letter metadata | Job title, company, tone, JD stored on letter | ✅ | `cover_letters` columns + Pydantic models; migration `20260529000000` |
+| Roadmap ↔ resume | Roadmap linked to active CV | ✅ | `roadmaps.resume_id` FK; generate form can pass resume |
 | RAG grounding | Responses grounded in actual CV chunks | ✅ | RAG context in system prompt; `ChunkEvidenceCard` in chat when chunks used |
 | Hallucination guard | No CV → explicit warning, no invented background | ✅ | Banners + system prompt guards in `route.ts` |
 | LLM | Uses external LLM (Gemini) | ✅ | `createGeminiStream` in Next.js route handler |
@@ -104,6 +107,8 @@
 | Dashboard | Streak counter | ❌ | Not implemented |
 | AI nudges | Proactive agent reminders (e.g. “3 openings matching profile”) | ❌ | Not implemented |
 | Calendar ↔ goals | Deadlines linked to goals | ⚠️ | Tasks/events can link `goal_id`, `application_id`; not fully automated from goals |
+| Roadmap → task | Create task from roadmap item | ✅ | `POST /api/roadmap/items/[itemId]/create-task` (Next.js BFF) |
+| Roadmap → calendar | Add study event from roadmap item | ✅ | `POST /api/roadmap/items/[itemId]/add-to-calendar` + `AddToCalendarModal` |
 
 ---
 
@@ -127,7 +132,7 @@
 | 2 | CV upload pipeline: PDF/DOCX → chunk → embed → vector DB | ✅ | End-to-end in `resume_service.process_resume()` |
 | 3 | Job Hunter with live search + structured cards | ⚠️ | Live search ✅; cards missing salary/deadline display |
 | 4 | Fit score: % match + explanation for a posting | ✅ | Score + `explanation` + skills on match cards |
-| 5 | AI Assistant chat with RAG across benchmark query types | ⚠️ | All intents in chat ✅; skill gap / roadmap / cover letter lack full product UI |
+| 5 | AI Assistant chat with RAG across benchmark query types | ⚠️ | Chat intents ✅; roadmap + cover letter have dedicated pages; **skill gap page still missing** |
 | 6 | Calendar + to-do with deadline tracking linked to goals | ✅ | Calendar + goal tasks + standalone tasks |
 | 7 | Kanban application tracker (4+ statuses) | ✅ | saved → applied → interviewing → offer → rejected |
 | 8 | Progress dashboard with real data | ❌ | Not built |
@@ -144,7 +149,7 @@
 | **4.2 Repository** | README: setup, env vars, how to run | ⚠️ | `README.md` present but **outdated** (Anthropic, hashing embeddings, “routes pending”) vs actual Gemini/JSearch stack |
 | **4.2 Repository** | Architecture diagram: CV upload → agent response | ⚠️ | Text architecture in README + `Docs/cv-intelligence-implementation.md`; **no single diagram in README** as required |
 | **4.3 Demo** | 5-minute recorded video | ❌ | No video file in repo (organizer deliverable) |
-| **4.3 Demo** | Full flow: CV → search → fit → assistant → cover letter → tracker | ⚠️ | Flow possible manually; cover letter via chat save, not dedicated studio |
+| **4.3 Demo** | Full flow: CV → search → fit → assistant → cover letter → tracker | ⚠️ | Full path supported; cover letter via `/cover-letters` or chat; roadmap via `/roadmap` |
 
 ---
 
@@ -155,7 +160,7 @@
 | Live deployment | Public URL; stable during judging | ❌ | No deployment URL documented in repo |
 | System design doc | Data flow, scale to 10k users, cost/user, bottlenecks | ⚠️ | `Docs/db-design.md` (1625 lines) + `present-state.md` — strong schema/flow docs; **missing explicit cost/scaling analysis** per bonus rubric |
 | Evaluation suite | ≥5 documented test cases (input, expected, actual, pass/fail) | ❌ | `evaluation_tests` table + Pydantic models only; **no populated cases or verdict doc** |
-| Automated tests | (Supporting) | ⚠️ | **137 pytest** tests (CV + job intelligence + career generation); not the same as hackathon “evaluation suite” bonus |
+| Automated tests | (Supporting) | ⚠️ | pytest: CV + job intelligence + career generation + **career-assistant service/model** tests; Vitest on cover-letter/roadmap/chat API routes |
 
 ---
 
@@ -184,9 +189,9 @@
 | Area | Done ✅ | Partial ⚠️ | Missing ❌ |
 |------|---------|------------|------------|
 | Pillar 1 — Job Hunter | 6 | 4 | 1 |
-| Pillar 2 — RAG / CV | 7 | 1 | 3 |
-| Pillar 3 — AI Assistant | 8 | 3 | 0 |
-| Pillar 4 — Productivity | 6 | 3 | 5 |
+| Pillar 2 — RAG / CV | 8 | 1 | 2 |
+| Pillar 3 — AI Assistant | 10 | 2 | 0 |
+| Pillar 4 — Productivity | 8 | 3 | 3 |
 | Required features (§3) | 4 | 4 | 1 |
 | Deliverables | 1 | 4 | 1 |
 | Bonus | 0 | 2 | 2 |
@@ -204,7 +209,8 @@
 7. ❌ **Live deployment** — Vercel + Railway/Render with env vars (bonus).
 8. ⚠️ **pgvector dimension** — align RPC/column with 768-dim Gemini before judging.
 9. ⚠️ **Manual job paste UI** on `/jobs` for fit score without JSearch.
-10. ⚠️ **Dedicated pages** for skill gap, roadmaps, cover letters (or document chat as primary UX).
+10. ❌ **Skill gap dedicated page** — chat/API only; roadmaps + cover letters now have full UI.
+11. ⚠️ **Landing page** — list Job Hunter + Roadmap alongside Cover Letter Studio on `/`.
 
 ---
 
