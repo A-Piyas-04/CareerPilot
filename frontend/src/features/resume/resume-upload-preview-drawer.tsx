@@ -4,11 +4,13 @@ import {
   AlertCircle,
   CheckCircle2,
   FileText,
-  Loader2,
   Upload,
   X,
 } from "lucide-react";
 import { useEffect } from "react";
+
+import { DrawerSkeleton, SpinnerButton, SubmissionProgress } from "@/components/ui";
+import { RESUME_UPLOAD_STEPS } from "@/lib/progress/resume-upload-progress";
 
 import { resumeDrawer, resumeOverlay } from "./resume-ui";
 import type { ResumeDetail } from "./types";
@@ -28,6 +30,7 @@ type ResumeUploadPreviewDrawerProps = {
   onClose: () => void;
   onUpload?: () => void;
   isUploading?: boolean;
+  uploadStepIndex?: number;
   source?: "upload" | "builder";
 };
 
@@ -63,6 +66,7 @@ export function ResumeUploadPreviewDrawer({
   onClose,
   onUpload,
   isUploading = false,
+  uploadStepIndex = 0,
   source = "upload",
 }: ResumeUploadPreviewDrawerProps) {
   const isBuilder = source === "builder";
@@ -125,6 +129,19 @@ export function ResumeUploadPreviewDrawer({
         </header>
 
         <div className="flex-1 overflow-y-auto p-5">
+          {phase === "uploading" && !detail ? (
+            <>
+              <DrawerSkeleton />
+              <SubmissionProgress
+                isActive
+                mode="steps"
+                steps={[...RESUME_UPLOAD_STEPS]}
+                activeStepIndex={uploadStepIndex}
+                className="mt-4"
+              />
+            </>
+          ) : (
+          <>
           {/* Status badge */}
           <div className="flex items-center gap-2">
             {phase === "success" ? (
@@ -132,7 +149,7 @@ export function ResumeUploadPreviewDrawer({
             ) : phase === "error" ? (
               <AlertCircle className="h-5 w-5 text-red-600" />
             ) : phase === "uploading" ? (
-              <Loader2 className="h-5 w-5 animate-spin text-amber-600" />
+              <FileText className="h-5 w-5 text-amber-600" />
             ) : (
               <FileText className="h-5 w-5 text-zinc-500" />
             )}
@@ -186,19 +203,15 @@ export function ResumeUploadPreviewDrawer({
             </dl>
           )}
 
-          {/* Uploading */}
-          {phase === "uploading" && (
-            <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-              <p className="text-sm font-medium text-amber-900">
-                {isBuilder ? "Saving and indexing…" : "Uploading and processing…"}
-              </p>
-              <p className="mt-1 text-xs text-amber-700">
-                {isBuilder
-                  ? "Storing sections → chunking → building search index…"
-                  : "Extracting text → detecting sections → building search index…"}
-              </p>
-            </div>
-          )}
+          {phase === "uploading" && detail ? (
+            <SubmissionProgress
+              isActive
+              mode="steps"
+              steps={[...RESUME_UPLOAD_STEPS]}
+              activeStepIndex={uploadStepIndex}
+              className="mt-5"
+            />
+          ) : null}
 
           {/* Error */}
           {phase === "error" && errorMessage && (
@@ -262,29 +275,26 @@ export function ResumeUploadPreviewDrawer({
               )}
             </div>
           )}
+          </>
+          )}
         </div>
 
         {/* Footer actions */}
         <footer className="shrink-0 border-t border-zinc-200 p-5">
           {phase === "selected" && onUpload && (
-            <button
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-55"
-              disabled={isUploading}
+            <SpinnerButton
               type="button"
+              variant="emerald"
+              fullWidth
+              loading={isUploading}
+              loadingLabel="Processing…"
+              disabled={isUploading}
               onClick={onUpload}
+              icon={<Upload className="h-4 w-4" />}
+              className="h-11 rounded-lg"
             >
-              {isUploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Processing…
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4" />
-                  Upload &amp; Process
-                </>
-              )}
-            </button>
+              Upload &amp; Process
+            </SpinnerButton>
           )}
 
           {(phase === "success" || phase === "error") && (

@@ -1,8 +1,9 @@
 "use client";
 
-import { Loader2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { FormEvent, useState } from "react";
 
+import { SpinnerButton } from "@/components/ui";
 import { useCreateStandaloneTask } from "@/lib/hooks/useTasks";
 
 export function TaskQuickAdd() {
@@ -41,19 +42,18 @@ export function TaskQuickAdd() {
         onChange={(event) => setTitle(event.target.value)}
         placeholder="Add a task..."
       />
-      <button
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-emerald-700 text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400"
+      <SpinnerButton
         type="submit"
+        variant="emerald"
+        loading={createMutation.isPending}
         disabled={createMutation.isPending || !title.trim()}
+        icon={<Plus className="h-4 w-4" />}
+        className="h-8 w-8 shrink-0 p-0"
         title="Add task"
         aria-label="Add task"
       >
-        {createMutation.isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Plus className="h-4 w-4" />
-        )}
-      </button>
+        <span className="sr-only">Add task</span>
+      </SpinnerButton>
     </form>
   );
 }

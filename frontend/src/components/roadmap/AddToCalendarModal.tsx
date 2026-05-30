@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 
+import { SpinnerButton } from "@/components/ui";
 import type { RoadmapItem } from "@/lib/roadmap/types";
 
 type AddToCalendarModalProps = {
@@ -86,13 +87,14 @@ export function AddToCalendarModal({
           >
             Cancel
           </button>
-          <button
+          <SpinnerButton
             type="submit"
-            disabled={isSaving}
-            className="h-9 rounded-md bg-[#1A56DB] px-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-zinc-300"
+            loading={isSaving}
+            loadingLabel="Adding…"
+            className="h-9 px-3"
           >
-            {isSaving ? "Adding..." : "Add Event"}
-          </button>
+            Add Event
+          </SpinnerButton>
         </div>
       </form>
     </div>

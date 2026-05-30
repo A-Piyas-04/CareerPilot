@@ -1,7 +1,9 @@
 "use client";
 
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 import { FormEvent, useState } from "react";
+
+import { SpinnerButton, SubmissionProgress } from "@/components/ui";
 
 import { useCreateApplication } from "./hooks";
 
@@ -126,6 +128,13 @@ export function AddApplicationDrawer({ isOpen, onClose }: Props) {
             ) : null}
           </div>
 
+          <SubmissionProgress
+            isActive={mutation.isPending}
+            mode="indeterminate"
+            label="Adding application to tracker"
+            className="mx-5 mb-3"
+          />
+
           <footer className="flex items-center justify-end gap-3 border-t border-zinc-200 p-5">
             <button
               className="h-10 rounded-md border border-zinc-300 px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
@@ -134,16 +143,14 @@ export function AddApplicationDrawer({ isOpen, onClose }: Props) {
             >
               Cancel
             </button>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400"
+            <SpinnerButton
               type="submit"
-              disabled={mutation.isPending}
+              variant="emerald"
+              loading={mutation.isPending}
+              loadingLabel="Adding…"
             >
-              {mutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : null}
               Add card
-            </button>
+            </SpinnerButton>
           </footer>
         </form>
       </aside>

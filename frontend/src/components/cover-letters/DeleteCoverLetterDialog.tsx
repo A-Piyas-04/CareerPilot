@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerButton } from "@/components/ui";
+
 type DeleteCoverLetterDialogProps = {
   isDeleting: boolean;
   isOpen: boolean;
@@ -34,14 +36,16 @@ export function DeleteCoverLetterDialog({
           >
             Cancel
           </button>
-          <button
+          <SpinnerButton
             type="button"
-            disabled={isDeleting}
+            variant="danger"
+            loading={isDeleting}
+            loadingLabel="Deleting…"
             onClick={onConfirm}
-            className="h-9 rounded-md bg-red-600 px-3 text-sm font-semibold text-white hover:bg-red-700 disabled:bg-zinc-300"
+            className="h-9 px-3"
           >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </button>
+            Delete
+          </SpinnerButton>
         </div>
       </div>
     </div>

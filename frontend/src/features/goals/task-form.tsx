@@ -1,7 +1,8 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { FormEvent, useState } from "react";
+
+import { SpinnerButton } from "@/components/ui";
 
 import type {
   CreateGoalTaskInput,
@@ -167,14 +168,15 @@ export function TaskForm({
             Cancel
           </button>
         ) : null}
-        <button
-          className="flex h-9 items-center gap-2 rounded-md bg-emerald-700 px-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400"
+        <SpinnerButton
           type="submit"
-          disabled={isPending}
+          variant="emerald"
+          loading={isPending}
+          loadingLabel="Saving…"
+          className="h-9 px-3"
         >
-          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {submitLabel}
-        </button>
+        </SpinnerButton>
       </div>
     </form>
   );

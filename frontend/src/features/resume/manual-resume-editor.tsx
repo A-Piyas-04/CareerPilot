@@ -1,7 +1,9 @@
 "use client";
 
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
+
+import { SpinnerButton } from "@/components/ui";
 
 import { useCreateManualResume, useUpdateManualResume } from "./hooks";
 import type {
@@ -124,19 +126,16 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
             sections, skills, and the search index.
           </p>
         </div>
-        <button
-          className="flex h-10 items-center gap-2 rounded-lg bg-[#1A56DB] px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+        <SpinnerButton
           type="button"
+          loading={isSaving}
+          loadingLabel="Saving…"
           onClick={handleSave}
-          disabled={isSaving}
+          icon={<Save className="h-4 w-4" />}
+          className="rounded-lg"
         >
-          {isSaving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
           Save CV
-        </button>
+        </SpinnerButton>
       </div>
 
       <div className="mt-5 space-y-6">

@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   Clipboard,
   Edit3,
-  Loader2,
   RefreshCw,
   Save,
   Trash2,
@@ -17,6 +16,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { DeleteCoverLetterDialog } from "@/components/cover-letters/DeleteCoverLetterDialog";
+import { DetailPageSkeleton, SpinnerButton, SubmissionProgress } from "@/components/ui";
+import { COVER_LETTER_REGENERATE_STEPS } from "@/lib/progress/cover-letter-progress";
 import { RegenerateCoverLetterDialog } from "@/components/cover-letters/RegenerateCoverLetterDialog";
 import {
   useCoverLetterDetail,
@@ -57,13 +58,7 @@ export function CoverLetterDetailClient({
   });
 
   if (isLoading) {
-    return (
-      <main className="min-h-[calc(100vh-49px)] bg-zinc-50 px-6 py-6">
-        <div className="mx-auto max-w-5xl">
-          <div className="h-[520px] animate-pulse rounded-lg border border-zinc-200 bg-white" />
-        </div>
-      </main>
-    );
+    return <DetailPageSkeleton />;
   }
 
   if (error || !data) {
@@ -143,6 +138,13 @@ export function CoverLetterDetailClient({
         </Link>
 
         <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+          <SubmissionProgress
+            isActive={regenerateCoverLetter.isPending}
+            mode="simulated"
+            steps={[...COVER_LETTER_REGENERATE_STEPS]}
+            tone="blue"
+            className="mb-4"
+          />
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               {isEditing ? (
@@ -208,19 +210,16 @@ export function CoverLetterDetailClient({
                     <X className="h-4 w-4" />
                     Cancel
                   </button>
-                  <button
+                  <SpinnerButton
                     type="button"
+                    loading={updateCoverLetter.isPending}
+                    loadingLabel="Saving…"
                     onClick={handleSave}
-                    disabled={updateCoverLetter.isPending}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-md bg-[#1A56DB] px-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-zinc-300"
+                    icon={<Save className="h-4 w-4" />}
+                    className="h-9 px-3"
                   >
-                    {updateCoverLetter.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
                     Save
-                  </button>
+                  </SpinnerButton>
                 </>
               ) : (
                 <>

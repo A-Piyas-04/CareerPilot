@@ -3,6 +3,7 @@
 import { Map } from "lucide-react";
 
 import { RoadmapCard } from "@/components/roadmap/RoadmapCard";
+import { ListCardSkeleton } from "@/components/ui";
 import type { RoadmapListItem } from "@/lib/roadmap/types";
 
 type RoadmapListProps = {
@@ -13,16 +14,7 @@ type RoadmapListProps = {
 
 export function RoadmapList({ error, isLoading, roadmaps }: RoadmapListProps) {
   if (isLoading) {
-    return (
-      <div className="grid gap-3">
-        {[1, 2, 3].map((item) => (
-          <div
-            key={item}
-            className="h-36 animate-pulse rounded-lg border border-zinc-200 bg-white"
-          />
-        ))}
-      </div>
-    );
+    return <ListCardSkeleton count={3} />;
   }
 
   if (error) {

@@ -1,7 +1,9 @@
 "use client";
 
-import { Loader2, SendHorizonal } from "lucide-react";
+import { SendHorizonal } from "lucide-react";
 import { KeyboardEvent, useState } from "react";
+
+import { SpinnerButton } from "@/components/ui";
 
 type Props = {
   disabled?: boolean;
@@ -53,20 +55,18 @@ export function MessageComposer({ disabled, isSending, onSend }: Props) {
           disabled={disabled}
           rows={1}
         />
-        <button
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#1A56DB] text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+        <SpinnerButton
           type="button"
+          loading={isSending}
           onClick={handleSend}
           disabled={!canSend}
+          icon={<SendHorizonal className="h-4 w-4" />}
+          className="h-10 w-10 shrink-0 p-0"
           aria-label="Send message"
           title="Send message"
         >
-          {isSending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <SendHorizonal className="h-4 w-4" />
-          )}
-        </button>
+          <span className="sr-only">Send message</span>
+        </SpinnerButton>
       </div>
       <p className="mx-auto mt-2 max-w-4xl text-xs text-zinc-500">
         Enter to send, Shift+Enter for a new line. Responses stream from

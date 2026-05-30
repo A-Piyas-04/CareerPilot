@@ -11,6 +11,8 @@ import { createClient } from "@/lib/supabase/client";
 
 import { AddApplicationDrawer } from "./add-application-drawer";
 import { ApplicationDetailDrawer } from "./application-detail-drawer";
+import { Skeleton } from "@/components/ui";
+
 import { KanbanColumn } from "./kanban-column";
 import {
   trackerKeys,
@@ -156,10 +158,10 @@ export function TrackerBoard() {
         ) : null}
 
         {applicationsQuery.isLoading ? (
-          <div className="grid grid-cols-5 gap-4 overflow-x-auto">
+          <div className="flex gap-4 overflow-x-auto pb-2" aria-busy="true">
             {APPLICATION_STATUSES.map((status) => (
-              <div
-                className="h-[520px] w-72 shrink-0 animate-pulse rounded-lg bg-zinc-200"
+              <Skeleton
+                className="h-[520px] w-72 shrink-0 rounded-lg"
                 key={status}
               />
             ))}

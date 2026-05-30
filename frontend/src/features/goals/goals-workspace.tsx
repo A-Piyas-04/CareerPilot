@@ -8,6 +8,8 @@ import { useMemo, useState } from "react";
 import { TaskList } from "@/components/tasks/TaskList";
 import { createClient } from "@/lib/supabase/client";
 
+import { ListCardSkeleton } from "@/components/ui";
+
 import { GoalCard } from "./goal-card";
 import { GoalFormDrawer } from "./goal-form-drawer";
 import { useGoals } from "./hooks";
@@ -107,14 +109,7 @@ export function GoalsWorkspace() {
           </div>
 
           {goalsQuery.isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((item) => (
-                <div
-                  className="h-44 animate-pulse rounded-lg bg-zinc-200"
-                  key={item}
-                />
-              ))}
-            </div>
+            <ListCardSkeleton count={3} cardClassName="h-44" className="space-y-3" />
           ) : goalsQuery.error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               {goalsQuery.error.message}

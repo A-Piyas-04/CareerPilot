@@ -1,6 +1,8 @@
 "use client";
 
 import { Search } from "lucide-react";
+
+import { SpinnerButton } from "@/components/ui";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -94,14 +96,15 @@ export function JobSearchForm({ resumes, selectedResumeId, onResumeChange }: Pro
             </option>
           ))}
         </select>
-        <button
+        <SpinnerButton
           type="submit"
-          disabled={search.isPending}
-          className="flex h-10 items-center justify-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400"
+          variant="emerald"
+          loading={search.isPending}
+          loadingLabel="Searching…"
+          icon={<Search className="h-4 w-4" />}
         >
-          <Search className="h-4 w-4" />
-          {search.isPending ? "Searching…" : "Search jobs"}
-        </button>
+          Search jobs
+        </SpinnerButton>
       </div>
     </form>
   );

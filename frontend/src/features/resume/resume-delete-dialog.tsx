@@ -1,7 +1,9 @@
 "use client";
 
-import { AlertTriangle, Loader2, X } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { useEffect } from "react";
+
+import { SpinnerButton } from "@/components/ui";
 
 type ResumeDeleteDialogProps = {
   isOpen: boolean;
@@ -90,15 +92,16 @@ export function ResumeDeleteDialog({
           >
             Cancel
           </button>
-          <button
-            className="flex h-10 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+          <SpinnerButton
             type="button"
-            disabled={isPending}
+            variant="danger"
+            loading={isPending}
+            loadingLabel="Deleting…"
             onClick={onConfirm}
+            className="rounded-lg"
           >
-            {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             Delete resume
-          </button>
+          </SpinnerButton>
         </div>
       </div>
     </div>

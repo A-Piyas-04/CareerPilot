@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef } from "react";
 import { useAssistantMessages, useSendAssistantMessage } from "@/lib/hooks/useAssistantMessages";
 import type { AssistantConversation } from "@/lib/types/assistant";
 
+import { ListCardSkeleton } from "@/components/ui";
+
 import { ChatMessage } from "./ChatMessage";
 import { MessageComposer } from "./MessageComposer";
 
@@ -67,14 +69,11 @@ export function ChatThread({ conversation }: Props) {
             description="Your saved career chats will appear here once you choose a thread from the sidebar."
           />
         ) : messagesQuery.isLoading ? (
-          <div className="mx-auto max-w-4xl space-y-4">
-            {[1, 2, 3].map((item) => (
-              <div
-                className="h-20 animate-pulse rounded-lg bg-zinc-200"
-                key={item}
-              />
-            ))}
-          </div>
+          <ListCardSkeleton
+            count={3}
+            cardClassName="h-20 rounded-lg"
+            className="mx-auto max-w-4xl space-y-4"
+          />
         ) : messagesQuery.error ? (
           <p className="mx-auto max-w-4xl rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {messagesQuery.error.message}
