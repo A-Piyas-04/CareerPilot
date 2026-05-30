@@ -1,13 +1,9 @@
 "use client";
 
-import {
-  CalendarDays,
-  Loader2,
-  Save,
-  Trash2,
-  X,
-} from "lucide-react";
+import { CalendarDays, Save, Trash2, X } from "lucide-react";
 import { FormEvent, useState } from "react";
+
+import { DrawerSkeleton, SpinnerButton } from "@/components/ui";
 
 import {
   useApplicationDetail,
@@ -62,22 +58,19 @@ export function ApplicationDetailDrawer({ application, onClose }: Props) {
 
         <div className="flex-1 overflow-y-auto">
           {detailQuery.isLoading ? (
-            <div className="flex items-center gap-2 p-5 text-sm text-zinc-600">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading application
-            </div>
-          ) : null}
+            <DrawerSkeleton />
+          ) : (
+            <>
+              <ApplicationDetailForm
+                key={`${source.id}-${source.updated_at}`}
+                application={application}
+                source={source}
+                onClose={onClose}
+              />
 
-          <ApplicationDetailForm
-            key={`${source.id}-${source.updated_at}`}
-            application={application}
-            source={source}
-            onClose={onClose}
-          />
-
-          <section className="border-t border-zinc-200 p-5">
-            <h3 className="text-sm font-semibold text-zinc-950">History</h3>
-            {detail?.history.length ? (
+              <section className="border-t border-zinc-200 p-5">
+                <h3 className="text-sm font-semibold text-zinc-950">History</h3>
+                {detail?.history.length ? (
               <ol className="mt-3 space-y-3">
                 {detail.history.map((item) => (
                   <li
@@ -103,7 +96,9 @@ export function ApplicationDetailDrawer({ application, onClose }: Props) {
                 No status changes recorded yet
               </p>
             )}
-          </section>
+              </section>
+            </>
+          )}
         </div>
       </aside>
     </div>
@@ -228,18 +223,15 @@ function ApplicationDetailForm({
           Delete
         </button>
 
-        <button
-          className="flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:bg-emerald-400"
+        <SpinnerButton
           type="submit"
-          disabled={updateMutation.isPending}
+          variant="emerald"
+          loading={updateMutation.isPending}
+          loadingLabel="Saving…"
+          icon={<Save className="h-4 w-4" />}
         >
-          {updateMutation.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
           Save
-        </button>
+        </SpinnerButton>
       </div>
     </form>
   );

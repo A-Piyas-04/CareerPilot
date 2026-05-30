@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { ListCardSkeleton, Skeleton } from "@/components/ui";
 import { useResumes } from "@/features/resume/hooks";
 import { pickPrimaryResume } from "@/features/resume/types";
 
@@ -38,7 +39,7 @@ export function JobsPageClient() {
 
       <section className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-5 px-5 py-5">
         {resumesQuery.isLoading ? (
-          <div className="h-24 animate-pulse rounded-lg bg-zinc-200" />
+          <Skeleton className="h-24 rounded-lg" />
         ) : resumes.length === 0 ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             Upload a CV on the{" "}
@@ -61,11 +62,7 @@ export function JobsPageClient() {
           </h2>
 
           {matchesQuery.isLoading ? (
-            <div className="space-y-3">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="h-32 animate-pulse rounded-lg bg-zinc-200" />
-              ))}
-            </div>
+            <ListCardSkeleton count={3} cardClassName="h-32" className="space-y-3" />
           ) : matchesQuery.error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               {matchesQuery.error.message}

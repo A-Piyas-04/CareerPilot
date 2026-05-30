@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 
 import { CoverLetterGenerateForm } from "@/components/cover-letters/CoverLetterGenerateForm";
 import { CoverLetterList } from "@/components/cover-letters/CoverLetterList";
+import { SubmissionProgress } from "@/components/ui";
+import { COVER_LETTER_GENERATE_STEPS } from "@/lib/progress/cover-letter-progress";
 import {
   useCoverLetters,
   useGenerateCoverLetter,
@@ -26,10 +28,18 @@ export function CoverLettersPageClient() {
   return (
     <main className="min-h-[calc(100vh-49px)] bg-zinc-50 px-6 py-6">
       <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <CoverLetterGenerateForm
-          isGenerating={generateCoverLetter.isPending}
-          onGenerate={handleGenerate}
-        />
+        <div className="space-y-4">
+          <CoverLetterGenerateForm
+            isGenerating={generateCoverLetter.isPending}
+            onGenerate={handleGenerate}
+          />
+          <SubmissionProgress
+            isActive={generateCoverLetter.isPending}
+            mode="simulated"
+            steps={[...COVER_LETTER_GENERATE_STEPS]}
+            tone="blue"
+          />
+        </div>
 
         <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
           <div className="mb-4">

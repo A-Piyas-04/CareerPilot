@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 import { RoadmapTimeline } from "@/components/roadmap/RoadmapTimeline";
+import { DetailPageSkeleton } from "@/components/ui";
 import { useRoadmapDetail } from "@/lib/hooks/useRoadmaps";
 
 type RoadmapDetailClientProps = {
@@ -16,19 +17,7 @@ export function RoadmapDetailClient({ roadmapId }: RoadmapDetailClientProps) {
 
   if (isLoading) {
     return (
-      <main className="min-h-[calc(100vh-49px)] bg-zinc-50 px-6 py-6">
-        <div className="mx-auto max-w-5xl">
-          <div className="h-48 animate-pulse rounded-lg border border-zinc-200 bg-white" />
-          <div className="mt-4 grid gap-3">
-            {[1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="h-44 animate-pulse rounded-lg border border-zinc-200 bg-white"
-              />
-            ))}
-          </div>
-        </div>
-      </main>
+      <DetailPageSkeleton contentHeight="h-48" timelineCount={3} />
     );
   }
 

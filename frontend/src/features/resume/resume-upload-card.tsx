@@ -1,7 +1,11 @@
 "use client";
 
-import { CheckCircle2, FileText, FileUp, Loader2, Upload, X } from "lucide-react";
+import { CheckCircle2, FileText, FileUp, Upload, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
+
+import { SpinnerButton, SubmissionProgress } from "@/components/ui";
+import { useSimulatedProgress } from "@/hooks/useSimulatedProgress";
+import { RESUME_UPLOAD_STEPS } from "@/lib/progress/resume-upload-progress";
 
 import { validateResumeFile } from "./api";
 import { useUploadResume } from "./hooks";
@@ -24,13 +28,6 @@ type ResumeUploadCardProps = {
 
 type UploadStep = "idle" | "uploading" | "done" | "error";
 
-const STEP_LABELS: Record<UploadStep, string> = {
-  idle: "",
-  uploading: "Uploading and processing…",
-  done: "Done",
-  error: "Failed",
-};
-
 export function ResumeUploadCard({
   onUploadSuccess,
   uploadDetail,
@@ -47,6 +44,11 @@ export function ResumeUploadCard({
   );
 
   const uploadMutation = useUploadResume();
+  const isUploading = uploadStep === "uploading";
+  const { activeIndex: uploadStepIndex } = useSimulatedProgress({
+    isActive: isUploading,
+    steps: [...RESUME_UPLOAD_STEPS],
+  });
 
   const handleFile = useCallback((file: File | null) => {
     setLocalError(null);
@@ -121,7 +123,6 @@ export function ResumeUploadCard({
     });
   }
 
-  const isUploading = uploadStep === "uploading";
   const isDone = uploadStep === "done";
 
   const previewDetail: ResumeDetail | null =
@@ -232,39 +233,30 @@ export function ResumeUploadCard({
           </div>
         )}
 
-        {/* Upload step progress */}
-        {isUploading && (
-          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
-            <div className="flex items-center gap-2 text-sm font-medium text-amber-900">
-              <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-              {STEP_LABELS.uploading}
-            </div>
-            <p className="mt-1 text-xs text-amber-700">
-              Extracting text → detecting sections → building search index…
-            </p>
-          </div>
-        )}
+        {isUploading ? (
+          <SubmissionProgress
+            isActive
+            mode="steps"
+            steps={[...RESUME_UPLOAD_STEPS]}
+            activeStepIndex={uploadStepIndex}
+            className="mt-3"
+          />
+        ) : null}
 
         {/* Actions */}
         <div className="mt-4 flex items-center gap-2">
-        <button
-          className={`${resumePrimaryButton} flex-1`}
-          disabled={isUploading || !selectedFile}
-          type="button"
-          onClick={handleUpload}
-        >
-            {isUploading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Processing…
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4" />
-                Upload &amp; Process
-              </>
-            )}
-          </button>
+          <SpinnerButton
+            className={`${resumePrimaryButton} flex-1`}
+            loading={isUploading}
+            loadingLabel="Processing…"
+            disabled={isUploading || !selectedFile}
+            type="button"
+            onClick={handleUpload}
+            icon={<Upload className="h-4 w-4" />}
+            fullWidth
+          >
+            Upload &amp; Process
+          </SpinnerButton>
 
           {selectedFile && !isUploading && (
             <button
@@ -285,6 +277,7 @@ export function ResumeUploadCard({
         file={selectedFile}
         isOpen={previewOpen}
         isUploading={isUploading}
+        uploadStepIndex={uploadStepIndex}
         phase={previewPhase}
         onClose={handleClosePreview}
         onUpload={handleUpload}

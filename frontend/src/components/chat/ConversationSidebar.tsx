@@ -9,6 +9,7 @@ import {
 } from "date-fns";
 import { MessageSquarePlus, Trash2 } from "lucide-react";
 
+import { ListCardSkeleton } from "@/components/ui";
 import { isTemporaryAssistantConversationId } from "@/lib/hooks/useAssistantConversations";
 import type { AssistantConversation } from "@/lib/types/assistant";
 
@@ -77,14 +78,7 @@ export function ConversationSidebar({
 
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
         {isLoading ? (
-          <div className="space-y-2">
-            {[1, 2, 3, 4].map((item) => (
-              <div
-                className="h-16 animate-pulse rounded-md bg-zinc-100"
-                key={item}
-              />
-            ))}
-          </div>
+          <ListCardSkeleton count={4} cardClassName="h-16 rounded-md" className="space-y-2" />
         ) : conversations.length ? (
           <div className="space-y-5">
             {(Object.keys(GROUP_LABELS) as GroupKey[]).map((group) =>

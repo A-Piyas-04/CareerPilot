@@ -3,6 +3,8 @@
 import { Bookmark, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
+import { SpinnerButton } from "@/components/ui";
+
 import { useSaveMatchToTracker } from "./hooks";
 import type { MatchSummary } from "./types";
 
@@ -89,15 +91,18 @@ export function MatchCard({ match }: Props) {
             View posting
           </a>
         ) : null}
-        <button
+        <SpinnerButton
           type="button"
+          variant="emerald"
+          loading={save.isPending}
+          loadingLabel="Saving…"
           onClick={handleSave}
           disabled={save.isPending || !match.match_id}
-          className="flex h-9 items-center gap-1.5 rounded-md bg-emerald-700 px-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400"
+          icon={<Bookmark className="h-4 w-4" />}
+          className="h-9 px-3"
         >
-          <Bookmark className="h-4 w-4" />
-          {save.isPending ? "Saving…" : "Save to Tracker"}
-        </button>
+          Save to Tracker
+        </SpinnerButton>
       </footer>
     </article>
   );

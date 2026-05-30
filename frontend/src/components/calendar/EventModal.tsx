@@ -1,9 +1,10 @@
 "use client";
 
 import { format, parseISO } from "date-fns";
-import { Loader2, Save, X } from "lucide-react";
+import { Save, X } from "lucide-react";
 import { FormEvent, useState } from "react";
 
+import { SpinnerButton } from "@/components/ui";
 import type {
   CalendarDisplayEvent,
   CalendarEventInput,
@@ -254,18 +255,15 @@ function EventModalContent({
             >
               Cancel
             </button>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:bg-emerald-400"
+            <SpinnerButton
               type="submit"
-              disabled={mutation.isPending}
+              variant="emerald"
+              loading={mutation.isPending}
+              loadingLabel="Saving…"
+              icon={<Save className="h-4 w-4" />}
             >
-              {mutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
               Save
-            </button>
+            </SpinnerButton>
           </footer>
         </form>
       </div>

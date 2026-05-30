@@ -3,6 +3,7 @@
 import { Mail } from "lucide-react";
 
 import { CoverLetterCard } from "@/components/cover-letters/CoverLetterCard";
+import { ListCardSkeleton } from "@/components/ui";
 import type { CoverLetter } from "@/lib/cover-letter/types";
 
 type CoverLetterListProps = {
@@ -17,16 +18,7 @@ export function CoverLetterList({
   isLoading,
 }: CoverLetterListProps) {
   if (isLoading) {
-    return (
-      <div className="grid gap-3">
-        {[1, 2, 3].map((item) => (
-          <div
-            key={item}
-            className="h-36 animate-pulse rounded-lg border border-zinc-200 bg-white"
-          />
-        ))}
-      </div>
-    );
+    return <ListCardSkeleton count={3} />;
   }
 
   if (error) {

@@ -1,9 +1,9 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
+import { SpinnerButton } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 
 type AuthMode = "signin" | "signup";
@@ -127,14 +127,16 @@ export function LoginForm() {
           </p>
         ) : null}
 
-        <button
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400"
+        <SpinnerButton
           type="submit"
-          disabled={isSubmitting}
+          variant="emerald"
+          fullWidth
+          loading={isSubmitting}
+          loadingLabel={mode === "signin" ? "Signing in…" : "Creating account…"}
+          className="h-11"
         >
-          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {mode === "signin" ? "Sign in" : "Create account"}
-        </button>
+        </SpinnerButton>
       </form>
 
       <button

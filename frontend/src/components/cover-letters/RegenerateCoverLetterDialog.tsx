@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerButton } from "@/components/ui";
+
 type RegenerateCoverLetterDialogProps = {
   isOpen: boolean;
   isRegenerating: boolean;
@@ -34,14 +36,15 @@ export function RegenerateCoverLetterDialog({
           >
             Cancel
           </button>
-          <button
+          <SpinnerButton
             type="button"
-            disabled={isRegenerating}
+            loading={isRegenerating}
+            loadingLabel="Regenerating…"
             onClick={onConfirm}
-            className="h-9 rounded-md bg-[#1A56DB] px-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-zinc-300"
+            className="h-9 px-3"
           >
-            {isRegenerating ? "Regenerating..." : "Regenerate"}
-          </button>
+            Regenerate
+          </SpinnerButton>
         </div>
       </div>
     </div>

@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 
 import { RoadmapGenerateForm } from "@/components/roadmap/RoadmapGenerateForm";
 import { RoadmapList } from "@/components/roadmap/RoadmapList";
+import { SubmissionProgress } from "@/components/ui";
+import { ROADMAP_GENERATE_STEPS } from "@/lib/progress/roadmap-progress";
 import { useGenerateRoadmap, useRoadmaps } from "@/lib/hooks/useRoadmaps";
 import type { GenerateRoadmapRequest } from "@/lib/roadmap/types";
 
@@ -23,10 +25,18 @@ export function RoadmapPageClient() {
   return (
     <main className="min-h-[calc(100vh-49px)] bg-zinc-50 px-6 py-6">
       <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <RoadmapGenerateForm
-          isGenerating={generateRoadmap.isPending}
-          onGenerate={handleGenerate}
-        />
+        <div className="space-y-4">
+          <RoadmapGenerateForm
+            isGenerating={generateRoadmap.isPending}
+            onGenerate={handleGenerate}
+          />
+          <SubmissionProgress
+            isActive={generateRoadmap.isPending}
+            mode="simulated"
+            steps={[...ROADMAP_GENERATE_STEPS]}
+            tone="blue"
+          />
+        </div>
 
         <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
           <div className="mb-4">

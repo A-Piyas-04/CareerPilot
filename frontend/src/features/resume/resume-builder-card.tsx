@@ -1,7 +1,11 @@
 "use client";
 
-import { Loader2, PenLine, Plus, Save, Trash2 } from "lucide-react";
+import { PenLine, Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
+
+import { SpinnerButton, SubmissionProgress } from "@/components/ui";
+import { useSimulatedProgress } from "@/hooks/useSimulatedProgress";
+import { RESUME_UPLOAD_STEPS } from "@/lib/progress/resume-upload-progress";
 
 import { useBuildResume, useRebuildResume } from "./hooks";
 import {
@@ -87,6 +91,10 @@ export function ResumeBuilderCard({
   const buildMutation = useBuildResume();
   const rebuildMutation = useRebuildResume();
   const isPending = buildMutation.isPending || rebuildMutation.isPending;
+  const { activeIndex: uploadStepIndex } = useSimulatedProgress({
+    isActive: isPending,
+    steps: [...RESUME_UPLOAD_STEPS],
+  });
 
   useEffect(() => {
     if (initialDetail) {
@@ -301,24 +309,28 @@ export function ResumeBuilderCard({
           </p>
         )}
 
-        <button
+        {isPending ? (
+          <SubmissionProgress
+            isActive
+            mode="steps"
+            steps={[...RESUME_UPLOAD_STEPS]}
+            activeStepIndex={uploadStepIndex}
+            className="mt-5"
+          />
+        ) : null}
+
+        <SpinnerButton
           className={`${resumePrimaryButton} mt-5 w-full`}
+          loading={isPending}
+          loadingLabel="Indexing…"
           disabled={isPending}
           type="button"
           onClick={handleSubmit}
+          icon={<Save className="h-4 w-4" />}
+          fullWidth
         >
-          {isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Indexing…
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              {isEdit ? "Update & re-index" : "Save & index CV"}
-            </>
-          )}
-        </button>
+          {isEdit ? "Update & re-index" : "Save & index CV"}
+        </SpinnerButton>
       </section>
 
       <ResumeUploadPreviewDrawer
@@ -327,6 +339,7 @@ export function ResumeBuilderCard({
         file={null}
         isOpen={previewOpen}
         isUploading={isPending}
+        uploadStepIndex={uploadStepIndex}
         phase={previewPhase}
         source="builder"
         onClose={() => {

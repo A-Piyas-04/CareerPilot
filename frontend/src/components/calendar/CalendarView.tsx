@@ -22,6 +22,8 @@ import type {
 } from "@/lib/hooks/useCalendarEvents";
 import { useCalendarEvents } from "@/lib/hooks/useCalendarEvents";
 
+import { Skeleton } from "@/components/ui";
+
 import { EventModal } from "./EventModal";
 import { EventPopover } from "./EventPopover";
 import { UpcomingSidebar } from "./UpcomingSidebar";
@@ -151,11 +153,7 @@ export function CalendarView() {
               </button>
             </div>
 
-            {eventsQuery.isLoading ? (
-              <p className="text-sm font-medium text-zinc-500">
-                Loading calendar...
-              </p>
-            ) : eventsQuery.error ? (
+            {eventsQuery.error ? (
               <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {eventsQuery.error.message}
               </p>
@@ -163,6 +161,9 @@ export function CalendarView() {
           </div>
 
           <div className="relative min-h-[680px]">
+            {eventsQuery.isLoading ? (
+              <Skeleton className="absolute inset-0 rounded-lg" aria-label="Loading calendar" />
+            ) : null}
             <Calendar<CalendarDisplayEvent>
               localizer={localizer}
               events={events}

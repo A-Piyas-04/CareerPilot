@@ -1,8 +1,9 @@
 "use client";
 
-import { FileText, Loader2 } from "lucide-react";
+import { FileText } from "lucide-react";
 import { FormEvent, useState } from "react";
 
+import { SpinnerButton } from "@/components/ui";
 import type {
   CoverLetterTone,
   GenerateCoverLetterRequest,
@@ -134,23 +135,20 @@ export function CoverLetterGenerateForm({
       </div>
 
       <div className="mt-5 flex justify-end">
-        <button
+        <SpinnerButton
           type="submit"
+          loading={isGenerating}
+          loadingLabel="Generating…"
           disabled={
             isGenerating ||
             !jobTitle.trim() ||
             !companyName.trim() ||
             !jobDescription.trim()
           }
-          className="inline-flex h-10 items-center gap-2 rounded-md bg-[#1A56DB] px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-zinc-300"
+          icon={<FileText className="h-4 w-4" />}
         >
-          {isGenerating ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <FileText className="h-4 w-4" />
-          )}
           Generate Cover Letter
-        </button>
+        </SpinnerButton>
       </div>
     </form>
   );

@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { ResumeSummarySkeleton } from "@/components/ui";
+
 import { useDeleteResume } from "./hooks";
 import { ResumeDeleteDialog } from "./resume-delete-dialog";
 import { ResumeSectionViewerDrawer } from "./resume-section-viewer-drawer";
@@ -46,29 +48,6 @@ function groupSkillsByCategory(
     map.set(key, [...(map.get(key) ?? []), skill]);
   }
   return map;
-}
-
-/* ─── Skeleton ───────────────────────────────────────────────────────────── */
-function ResumeSkeleton() {
-  return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm animate-pulse">
-      <div className="h-5 w-36 rounded bg-zinc-200" />
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {[...Array(4)].map((_, i) => (
-          <div key={i}>
-            <div className="h-3 w-16 rounded bg-zinc-100" />
-            <div className="mt-1 h-4 w-32 rounded bg-zinc-200" />
-          </div>
-        ))}
-      </div>
-      <div className="mt-6 h-4 w-32 rounded bg-zinc-200" />
-      <div className="mt-3 space-y-2">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-14 rounded-lg bg-zinc-100" />
-        ))}
-      </div>
-    </section>
-  );
 }
 
 /* ─── Expandable section card ─────────────────────────────────────────────── */
@@ -193,7 +172,7 @@ export function ResumeSummary({
     );
   }
 
-  if (isLoading) return <ResumeSkeleton />;
+  if (isLoading) return <ResumeSummarySkeleton />;
 
   if (error) {
     return (
