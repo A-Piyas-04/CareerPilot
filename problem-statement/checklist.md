@@ -1,7 +1,7 @@
 # CareerPilot — Hackathon Checklist
 
 > Derived from [`Problem-statement.md`](./Problem-statement.md)  
-> Codebase audit: **May 29, 2026** (monorepo: Next.js 16 + FastAPI + Supabase + Gemini + JSearch)
+> Codebase audit: **May 30, 2026** (monorepo: Next.js 16 + FastAPI + Supabase + Gemini + JSearch)
 
 ## Legend
 
@@ -19,9 +19,9 @@
 |------|------------------------|--------|-------|
 | Core idea | RAG over user's CV is single source of truth for all agents | ✅ | `resume_chunks` + pgvector; shared `rag_context_service` + `/api/v1/rag/context` |
 | Core idea | No agent hallucinates user background | ⚠️ | Guardrails in assistant + CV answer prompts; quality depends on retrieval + user having uploaded CV |
-| Platform | End-to-end agentic career co-pilot in one platform | ⚠️ | Four pillars largely present; Pillar 4 dashboard/nudges missing |
+| Platform | End-to-end agentic career co-pilot in one platform | ⚠️ | Four pillars largely present; Pillar 4 dashboard live, nudges partial |
 | Platform | Working web or mobile app | ✅ | Next.js web app; Docker Compose runnable |
-| Platform | All four pillars implemented or prototyped | ⚠️ | Pillars 1–3 strong; Pillar 4 missing dashboard + AI nudges |
+| Platform | All four pillars implemented or prototyped | ⚠️ | Pillars 1–3 strong; Pillar 4 dashboard ✅; AI nudges on dashboard ⚠️ |
 
 ---
 
@@ -36,8 +36,10 @@
 | Output | Location on card | ✅ | Shown on match cards |
 | Output | Fit score on card | ✅ | Programmatic badge (0–100) |
 | Reasoning | Agent explains WHY each result matches (or doesn't), grounded in CV | ⚠️ | `explanation` + matched/missing skills from `job_scorer.py`; not a conversational agent narrative |
-| Live search | At least one live search (job board API / scraping) | ✅ | JSearch via RapidAPI (`JSearchAdapter`) |
-| External tools | Agent uses external tool calls (search API) | ✅ | `httpx` → JSearch; satisfies core technical requirement |
+| Config | JSearch credentials via environment | ✅ | `JSEARCH_API_KEY`, `JSEARCH_API_HOST`, `JSEARCH_BASE_URL` in `backend/.env`; legacy `RAPIDAPI_*` aliases in `config.py` |
+| Live search | At least one live search (job board API / scraping) | ✅ | JSearch via RapidAPI (`JSearchAdapter`); **verified E2E** on `/jobs` with subscribed RapidAPI key |
+| External tools | Agent uses external tool calls (search API) | ✅ | `httpx` → `{JSEARCH_BASE_URL}/search`; satisfies core technical requirement |
+| Error handling | Actionable JSearch / RapidAPI failures | ✅ | `JSearchError` maps 403 (not subscribed), 401/403 (bad key), 429 (quota) to clear API responses |
 | Fit score | Computed programmatically (not LLM-only) | ✅ | `0.6 × skills_overlap + 0.4 × chunk_similarity` in `job_scorer.py` |
 | Persistence | Search results stored | ✅ | `job_searches`, `jobs`, `job_matches` |
 | Tracker link | Save match → application tracker | ✅ | `POST /matches/{id}/save` → Kanban `saved` |
@@ -102,10 +104,10 @@
 | Goals | Per-goal progress % | ⚠️ | Task completion % on goal cards only; not platform-wide |
 | Application tracker | Kanban: Applied / Interviewing / Offer / Rejected | ✅ | `/tracker` + DnD; includes `saved` column |
 | Application tracker | Full application history | ✅ | `application_history` + timeline in detail drawer |
-| Dashboard | Progress dashboard (weekly stats) | ❌ | Listed “coming next” on landing; no `/dashboard` route |
-| Dashboard | Applications sent, skills added, roadmap % complete | ❌ | No aggregated stats UI |
-| Dashboard | Streak counter | ❌ | Not implemented |
-| AI nudges | Proactive agent reminders (e.g. “3 openings matching profile”) | ❌ | Not implemented |
+| Dashboard | Progress dashboard (weekly stats) | ✅ | `/dashboard` — `DashboardPageClient` + `GET /api/dashboard/metrics` |
+| Dashboard | Applications sent, skills added, roadmap % complete | ⚠️ | Jobs applied, active apps, roadmap %, tasks/week, pipeline chart ✅; **skills-added count not on dashboard** |
+| Dashboard | Streak counter | ✅ | `calculateWeeklyStreak` — weeks with ≥1 completed task |
+| AI nudges | Proactive agent reminders (e.g. “3 openings matching profile”) | ⚠️ | `AiNudges` on `/dashboard` via `POST /api/reminders/generate`; **not on-login / push; job-match nudges not explicit** |
 | Calendar ↔ goals | Deadlines linked to goals | ⚠️ | Tasks/events can link `goal_id`, `application_id`; not fully automated from goals |
 | Roadmap → task | Create task from roadmap item | ✅ | `POST /api/roadmap/items/[itemId]/create-task` (Next.js BFF) |
 | Roadmap → calendar | Add study event from roadmap item | ✅ | `POST /api/roadmap/items/[itemId]/add-to-calendar` + `AddToCalendarModal` |
@@ -128,14 +130,14 @@
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Working app with all four pillars implemented or prototyped | ⚠️ | Pillar 4 incomplete (no dashboard/nudges) |
+| 1 | Working app with all four pillars implemented or prototyped | ⚠️ | Pillar 4 dashboard ✅; AI nudges partial |
 | 2 | CV upload pipeline: PDF/DOCX → chunk → embed → vector DB | ✅ | End-to-end in `resume_service.process_resume()` |
-| 3 | Job Hunter with live search + structured cards | ⚠️ | Live search ✅; cards missing salary/deadline display |
+| 3 | Job Hunter with live search + structured cards | ⚠️ | Live JSearch search **verified E2E** ✅; cards missing salary/deadline display |
 | 4 | Fit score: % match + explanation for a posting | ✅ | Score + `explanation` + skills on match cards |
 | 5 | AI Assistant chat with RAG across benchmark query types | ⚠️ | Chat intents ✅; roadmap + cover letter have dedicated pages; **skill gap page still missing** |
 | 6 | Calendar + to-do with deadline tracking linked to goals | ✅ | Calendar + goal tasks + standalone tasks |
 | 7 | Kanban application tracker (4+ statuses) | ✅ | saved → applied → interviewing → offer → rejected |
-| 8 | Progress dashboard with real data | ❌ | Not built |
+| 8 | Progress dashboard with real data | ⚠️ | `/dashboard` with real Supabase metrics; skills-added widget still missing |
 
 ---
 
@@ -149,7 +151,7 @@
 | **4.2 Repository** | README: setup, env vars, how to run | ⚠️ | `README.md` present but **outdated** (Anthropic, hashing embeddings, “routes pending”) vs actual Gemini/JSearch stack |
 | **4.2 Repository** | Architecture diagram: CV upload → agent response | ⚠️ | Text architecture in README + `Docs/cv-intelligence-implementation.md`; **no single diagram in README** as required |
 | **4.3 Demo** | 5-minute recorded video | ❌ | No video file in repo (organizer deliverable) |
-| **4.3 Demo** | Full flow: CV → search → fit → assistant → cover letter → tracker | ⚠️ | Full path supported; cover letter via `/cover-letters` or chat; roadmap via `/roadmap` |
+| **4.3 Demo** | Full flow: CV → search → fit → assistant → cover letter → tracker | ✅ | Full path supported including live JSearch on `/jobs`; cover letter via `/cover-letters` or chat; roadmap via `/roadmap` |
 
 ---
 
@@ -171,7 +173,7 @@
 | Rule | Status | Notes |
 |------|--------|-------|
 | Open-source libraries & UI components | ✅ | Next.js, FastAPI, Supabase, etc. |
-| Public APIs & third-party LLMs | ✅ | Gemini, JSearch/RapidAPI, Supabase |
+| Public APIs & third-party LLMs | ✅ | Gemini, JSearch/RapidAPI (`JSEARCH_API_KEY` / `JSEARCH_BASE_URL`), Supabase |
 | Boilerplate starters allowed; core built during hackathon | ⚠️ | Next.js starter assumed; **team attestation required** |
 
 ### Not permitted (must avoid)
@@ -179,7 +181,7 @@
 | Rule | Status | Notes |
 |------|--------|-------|
 | Pre-hackathon project / purchased software | ⚠️ | Cannot verify from code — team responsibility |
-| Hardcoded AI responses or faked live agents | ✅ | Real Gemini + JSearch integrations |
+| Hardcoded AI responses or faked live agents | ✅ | Real Gemini + live JSearch (RapidAPI) integrations |
 | Sharing solutions with other teams | ⚠️ | Process rule — team responsibility |
 
 ---
@@ -188,11 +190,11 @@
 
 | Area | Done ✅ | Partial ⚠️ | Missing ❌ |
 |------|---------|------------|------------|
-| Pillar 1 — Job Hunter | 6 | 4 | 1 |
+| Pillar 1 — Job Hunter | 9 | 4 | 1 |
 | Pillar 2 — RAG / CV | 8 | 1 | 2 |
 | Pillar 3 — AI Assistant | 10 | 2 | 0 |
-| Pillar 4 — Productivity | 8 | 3 | 3 |
-| Required features (§3) | 4 | 4 | 1 |
+| Pillar 4 — Productivity | 10 | 4 | 1 |
+| Required features (§3) | 4 | 5 | 0 |
 | Deliverables | 1 | 4 | 1 |
 | Bonus | 0 | 2 | 2 |
 
@@ -200,8 +202,8 @@
 
 ## Recommended Next Actions (priority)
 
-1. ❌ **Progress dashboard** — applications/week, skills count, roadmap %, streak (Pillar 4 + required feature #8).
-2. ❌ **AI nudges** — cron or on-login prompt using recent matches + application gap (Pillar 4).
+1. ⚠️ **Dashboard polish** — add skills-added metric; surface job-match nudges (Pillar 4).
+2. ⚠️ **AI nudges** — expand beyond dashboard card (on-login, job-match prompts).
 3. ⚠️ **Job cards** — display `salary_range`; map/show deadline when API provides it.
 4. ⚠️ **README + architecture diagram** — update stack/env vars; add one diagram for judges (deliverable 4.2).
 5. ❌ **Evaluation suite bonus** — seed 5+ rows in `evaluation_tests` or markdown doc with pass/fail.

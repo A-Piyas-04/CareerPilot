@@ -84,11 +84,18 @@ class Settings(BaseSettings):
             raise ValueError("EMBEDDING_VECTOR_DIM must be between 1 and 4096.")
         return value
 
-    # ─── External job-search providers ───────────────────────────────────────
-    rapidapi_key: str = Field(default="", validation_alias="RAPIDAPI_KEY")
-    rapidapi_host: str = Field(
+    # ─── External job-search providers (JSearch via RapidAPI) ────────────────
+    jsearch_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("JSEARCH_API_KEY", "RAPIDAPI_KEY"),
+    )
+    jsearch_api_host: str = Field(
         default="jsearch.p.rapidapi.com",
-        validation_alias="RAPIDAPI_HOST",
+        validation_alias=AliasChoices("JSEARCH_API_HOST", "RAPIDAPI_HOST"),
+    )
+    jsearch_base_url: str = Field(
+        default="https://jsearch.p.rapidapi.com",
+        validation_alias="JSEARCH_BASE_URL",
     )
 
     # CORS

@@ -1,6 +1,6 @@
 # CareerPilot — Frontend GUI Checklist
 
-> UI audit of `frontend/src` — **May 29, 2026**  
+> UI audit of `frontend/src` — **May 30, 2026**  
 > Companion: [`checklist.md`](./checklist.md) (full product requirements)
 
 ## Legend
@@ -18,6 +18,7 @@
 | `/` | `app/page.tsx` | Public | ❌ |
 | `/login` | `app/login/page.tsx` | Public | ❌ |
 | `/tracker` | `app/tracker/page.tsx` | ✅ `?next=` | ✅ |
+| `/dashboard` | `app/dashboard/page.tsx` | ✅ | ✅ |
 | `/jobs` | `app/jobs/page.tsx` | ✅ | ✅ |
 | `/resume` | `app/resume/page.tsx` | ✅ | ✅ |
 | `/cover-letters` | `app/cover-letters/page.tsx` | ✅ | ✅ |
@@ -38,7 +39,7 @@
 |------|------|--------|-------|
 | Landing / marketing hub | `/` | ✅ | Hero, workspace cards, “Coming next” section |
 | Sign in / sign up | `/login` | ✅ | Email + password; `?next=` redirect after auth |
-| — | — | — | No `/dashboard`, `/settings`, or `/profile` pages |
+| — | — | — | No `/settings` or `/profile` pages |
 
 ### Layout & global UI
 
@@ -68,8 +69,8 @@
 | First visit → sign up | ✅ | `/` → Sign in → Sign up tab → redirect `?next=` (default `/tracker`) |
 | Return visit → sign in | ✅ | `/login` auto-redirect if session exists |
 | Protected route without session | ✅ | Server `getUser()` → `/login?next=<path>` |
-| Discover modules from landing | ⚠️ | 6 live module cards; **Job Hunter (`/jobs`) not listed** on landing |
-| Cross-module navigation via `AppNav` | ⚠️ | Tracker, Job Hunter, CV, Goals only |
+| Discover modules from landing | ⚠️ | 8 live module cards incl. **Progress Dashboard**; **Job Hunter (`/jobs`) not listed** on landing |
+| Cross-module navigation via `AppNav` | ✅ | Tracker, Job Hunter, CV, Goals, Roadmap, Cover Letters, **Dashboard** |
 | Cross-module via page headers | ✅ | Calendar ↔ Goals ↔ Tracker links; resume/jobs link in empty states |
 
 ### Landing page sections (`app/page.tsx`)
@@ -77,8 +78,8 @@
 | Section | Status | Notes |
 |---------|--------|-------|
 | Hero + CTAs | ✅ | Links to `/login`, `/login?next=/tracker` |
-| Live module cards (`corePages`) | ⚠️ | Chat, Tracker, Goals, Calendar, Tasks, Resume, **Cover Letter Studio** — **no Job Hunter or Roadmap card** |
-| “Coming next” cards | ⚠️ | Skill gap, **roadmap** (page exists at `/roadmap` but landing still lists as future), dashboard, AI nudges |
+| Live module cards (`corePages`) | ⚠️ | Chat, Tracker, Goals, Calendar, Tasks, Resume, Cover Letter Studio, **Progress Dashboard** — **no Job Hunter or Roadmap card** |
+| “Coming next” cards | ⚠️ | Skill gap, **roadmap** (page exists at `/roadmap` but landing still lists as future), **AI nudges** (partial on `/dashboard`) |
 | Proof points strip | ✅ | Static feature bullets |
 
 ---
@@ -97,10 +98,12 @@
 |-----------|------|--------|-------|
 | Page header | `jobs-page-client.tsx` | ✅ | Title “Job Hunter” |
 | No-CV empty state | `jobs-page-client.tsx` | ✅ | Link to `/resume` |
-| Job search form | `search-form.tsx` | ✅ | Query, location, resume picker, submit |
+| Job search form | `search-form.tsx` | ✅ | Query, location, resume picker, JSearch source, `SpinnerButton` submit |
+| JSearch live search | `search-form.tsx` → `POST /api/v1/jobs/search` | ✅ | Wired to backend `JSearchAdapter`; **verified E2E** with `JSEARCH_API_KEY` + RapidAPI subscription |
+| JSearch error feedback | `search-form.tsx` + toasts | ✅ | Subscription/key/quota errors surfaced via `JSearchError` → Sonner toast |
 | Source selector | `search-form.tsx` | ⚠️ | Type supports `manual`; UI only lists **JSearch** |
-| Match list | `jobs-page-client.tsx` | ✅ | Loading skeletons, empty state, error state |
-| Match card | `match-card.tsx` | ⚠️ | Title, company, location, fit %, explanation, matched/missing skills, external link, save — **no salary or deadline row** |
+| Match list | `jobs-page-client.tsx` | ✅ | `ListCardSkeleton` loading, empty state, error state |
+| Match card | `match-card.tsx` | ⚠️ | Title, company, location, fit %, explanation, matched/missing skills, external link, `SpinnerButton` save — **no salary or deadline row** |
 | Fit score badge | `match-card.tsx` | ✅ | Color by score tier |
 | Resume selector | `search-form.tsx` | ✅ | Dropdown of user resumes |
 
@@ -116,7 +119,7 @@
 
 | Flow | Status | Steps |
 |------|--------|-------|
-| Search jobs with NL query | ✅ | Pick resume → enter query (+ location) → Search → toast with count → match cards |
+| Search jobs with NL query | ✅ | Pick resume → enter query (+ location) → Search → toast with count → match cards (**live JSearch verified**) |
 | View fit & reasoning | ⚠️ | Read `explanation` + skill chips on card; no dedicated “why” panel |
 | Save job to tracker | ✅ | “Save to Tracker” on `MatchCard` → Kanban `saved` column |
 | Open original posting | ✅ | “View posting” when `source_url` present |
@@ -253,8 +256,8 @@
 | Goals | `/goals` | ✅ | `GoalsWorkspace` + `AppNav` |
 | Standalone tasks (section) | `/goals#tasks` | ✅ | `TaskList` has `id="tasks"` (right column) |
 | Calendar | `/calendar` | ✅ | `CalendarView` — own header, no `AppNav` |
-| Progress dashboard | ❌ | Landing placeholder only |
-| AI nudges UI | ❌ | Not built |
+| Progress dashboard | `/dashboard` | ✅ | `DashboardPageClient` + `AppNav` |
+| AI nudges UI | `/dashboard` (`AiNudges`) | ⚠️ | Gemini-generated nudges card + refresh; **not global/on-login** |
 
 ### Panels & components — Tracker
 
@@ -357,17 +360,24 @@
 | Link event to task or application | ⚠️ | Fields in modal if exposed — optional linking |
 | Create event from roadmap item | ✅ | `AddToCalendarModal` on roadmap timeline → `add-to-calendar` API |
 
-### Dashboard & nudges (Pillar 4 — missing)
+### Dashboard (`/dashboard`)
+
+| Component | File | Status | Notes |
+|-----------|------|--------|-------|
+| Metric cards | `MetricCard.tsx` | ✅ | Jobs applied, active apps, roadmap %, tasks/week, streak, roadmap items done |
+| Pipeline chart | `ApplicationPipelineChart.tsx` | ✅ | Kanban status breakdown |
+| Upcoming deadlines | `UpcomingDeadlines.tsx` | ✅ | Next calendar events |
+| AI nudges panel | `AiNudges.tsx` | ⚠️ | `POST /api/reminders/generate`; cached daily |
+| Recent activity | `RecentActivityFeed.tsx` | ✅ | Application history feed |
+| Loading skeleton | `DashboardSkeleton.tsx` | ✅ | Full-page skeleton |
+
+### Dashboard & nudges (remaining gaps)
 
 | UI | Status | Notes |
 |----|--------|-------|
-| `/dashboard` page | ❌ | — |
-| Weekly applications chart | ❌ | — |
-| Skills added widget | ❌ | — |
-| Roadmap % complete widget | ❌ | — |
-| Streak counter | ❌ | — |
-| AI nudge toast / banner / inbox | ❌ | — |
-| “3 jobs matching your profile” prompt | ❌ | — |
+| Skills-added widget | ❌ | Not on dashboard |
+| Global nudge toast / on-login banner | ❌ | Dashboard section only |
+| “3 jobs matching your profile” prompt | ❌ | Not tied to `job_matches` yet |
 
 ---
 
@@ -380,6 +390,7 @@
 | `AppNav` includes Job Hunter | ✅ | `/jobs` link present |
 | `AppNav` includes Roadmap | ✅ | `/roadmap` link present |
 | `AppNav` includes Cover Letters | ✅ | `/cover-letters` link present |
+| `AppNav` includes Dashboard | ✅ | `/dashboard` link present |
 | `AppNav` includes Chat | ❌ | Chat only via landing / direct URL |
 | `AppNav` includes Calendar | ❌ | Calendar via goals header or direct URL |
 | Landing lists Job Hunter | ❌ | Missing from `corePages` |
@@ -390,7 +401,9 @@
 
 | Pattern | Status | Notes |
 |---------|--------|-------|
-| Loading skeletons | ✅ | Jobs, goals, chat, resume |
+| Loading skeletons | ✅ | Shared `Skeleton`, `ListCardSkeleton`, `DetailPageSkeleton`; jobs, goals, chat, resume, dashboard |
+| Spinner buttons | ✅ | Shared `SpinnerButton` on forms/actions (jobs search, save match, login, etc.) |
+| Submission progress | ✅ | `SubmissionProgress` on cover-letter/roadmap/resume long operations |
 | Inline error panels | ✅ | Red bordered messages per feature |
 | Empty states with CTA | ✅ | Most lists |
 | Sonner success/error toasts | ✅ | Upload, search, save match, etc. |
@@ -405,8 +418,8 @@
 | Skill Gap Analysis | ❌ | ⚠️ intent | ❌ / ⚠️ |
 | Roadmap Generator | ✅ `/roadmap` | ⚠️ + save btn | ✅ / ⚠️ |
 | Cover Letter Studio | ✅ `/cover-letters` | ⚠️ + save btn | ✅ / ⚠️ |
-| Progress Dashboard | ❌ | — | ❌ |
-| AI Nudges | ❌ | — | ❌ |
+| Progress Dashboard | ✅ `/dashboard` | — | ✅ |
+| AI Nudges | ⚠️ `/dashboard` | — | ⚠️ |
 
 ### API route (not a page)
 
@@ -423,7 +436,7 @@
 | Demo step | UI path | Status |
 |-----------|---------|--------|
 | 1. CV upload | `/resume` → upload card | ✅ |
-| 2. Job search | `/jobs` → search form → match cards | ✅ |
+| 2. Job search | `/jobs` → search form → live JSearch → match cards | ✅ |
 | 3. Fit score visible | Match card badge + explanation | ✅ |
 | 4. AI assistant query | `/chat` → message | ✅ |
 | 5. Cover letter draft | `/cover-letters` generate or `/chat` → save → detail | ✅ |
@@ -434,8 +447,8 @@
 
 ## Frontend priority backlog
 
-1. ❌ **Progress dashboard** page + nav entry  
-2. ❌ **AI nudges** surface (banner, toast, or inbox)  
+1. ⚠️ **Dashboard polish** — skills-added metric; job-match nudges from `/jobs` matches  
+2. ⚠️ **AI nudges** — on-login or global surface beyond `/dashboard` card  
 3. ⚠️ **Landing parity** — add Job Hunter + Roadmap to `corePages`; move roadmap off “Coming next”  
 4. ⚠️ **Match card** — show `salary_range` and deadline when available  
 5. ❌ **Manual job paste** drawer on `/jobs`  

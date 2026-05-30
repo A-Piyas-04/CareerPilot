@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.job_intelligence.services.sources.jsearch import JSearchAdapter
+from app.job_intelligence.services.sources.jsearch_errors import JSearchError
 
 
 _SAMPLE_RESPONSE = {
@@ -51,11 +52,27 @@ class TestJSearchAdapter:
         assert adapter.name == "jsearch"
 
     def test_missing_api_key_raises(self):
-        with pytest.raises(ValueError, match="RAPIDAPI_KEY"):
+        with pytest.raises(ValueError, match="JSEARCH_API_KEY"):
             JSearchAdapter(api_key="", host="jsearch.p.rapidapi.com").search("python")
 
+    def test_search_uses_custom_base_url(self):
+        adapter = JSearchAdapter(
+            api_key="k",
+            host="jsearch.p.rapidapi.com",
+            base_url="https://custom.example.com/v1",
+        )
+        with patch("app.job_intelligence.services.sources.jsearch.httpx.Client") as client_cls:
+            client = client_cls.return_value.__enter__.return_value
+            client.get.return_value = _make_response()
+            adapter.search("python")
+        assert client.get.call_args.args[0] == "https://custom.example.com/v1/search"
+
     def test_search_calls_correct_url_and_headers(self):
-        adapter = JSearchAdapter(api_key="k", host="jsearch.p.rapidapi.com")
+        adapter = JSearchAdapter(
+            api_key="k",
+            host="jsearch.p.rapidapi.com",
+            base_url="https://jsearch.p.rapidapi.com",
+        )
         with patch("app.job_intelligence.services.sources.jsearch.httpx.Client") as client_cls:
             client = client_cls.return_value.__enter__.return_value
             client.get.return_value = _make_response()
@@ -120,8 +137,21 @@ class TestJSearchAdapter:
         with patch("app.job_intelligence.services.sources.jsearch.httpx.Client") as client_cls:
             client = client_cls.return_value.__enter__.return_value
             client.get.return_value = _make_response(status_code=503, json_data={})
-            with pytest.raises(RuntimeError, match="JSearch upstream"):
+            with pytest.raises(JSearchError, match="JSearch upstream returned 503"):
                 adapter.search("python")
+
+    def test_search_raises_subscription_error_on_403(self):
+        adapter = JSearchAdapter(api_key="k", host="jsearch.p.rapidapi.com")
+        with patch("app.job_intelligence.services.sources.jsearch.httpx.Client") as client_cls:
+            client = client_cls.return_value.__enter__.return_value
+            client.get.return_value = _make_response(
+                status_code=403,
+                json_data={"message": "You are not subscribed to this API."},
+            )
+            with pytest.raises(JSearchError) as exc_info:
+                adapter.search("python")
+        assert exc_info.value.status_code == 403
+        assert "not subscribed" in exc_info.value.message.lower()
 
     def test_search_returns_empty_when_data_missing(self):
         adapter = JSearchAdapter(api_key="k", host="jsearch.p.rapidapi.com")

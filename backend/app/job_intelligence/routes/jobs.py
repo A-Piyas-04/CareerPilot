@@ -12,6 +12,7 @@ from app.core.database import get_supabase_client
 from app.job_intelligence.services import job_service
 from app.job_intelligence.services._helpers import _rows
 from app.job_intelligence.services.sources.jsearch import JSearchAdapter
+from app.job_intelligence.services.sources.jsearch_errors import JSearchError
 from app.job_intelligence.services.sources.manual_paste import ManualPasteAdapter
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -55,8 +56,9 @@ class JobSearchResponse(BaseModel):
 def _resolve_source(source_name: str):
     if source_name == "jsearch":
         return JSearchAdapter(
-            api_key=settings.rapidapi_key,
-            host=settings.rapidapi_host,
+            api_key=settings.jsearch_api_key,
+            host=settings.jsearch_api_host,
+            base_url=settings.jsearch_base_url,
         )
     if source_name == "manual":
         raise HTTPException(
@@ -90,6 +92,11 @@ def search_jobs(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
+        ) from exc
+    except JSearchError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail=exc.message,
         ) from exc
     except RuntimeError as exc:
         raise HTTPException(
