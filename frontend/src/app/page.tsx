@@ -24,7 +24,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { LandingBrandLogo } from "@/components/landing/landing-brand-logo";
+import { LandingMobileNavLinks } from "@/components/landing/landing-mobile-nav-links";
 import { LandingSectionNav } from "@/components/landing/landing-section-nav";
+
+const LANDING_SECTION_SCROLL_MARGIN = "scroll-mt-[88px]";
 
 const LANDING_MAX = "mx-auto w-full max-w-[1560px] px-5";
 
@@ -290,36 +294,7 @@ const sectionBgFaq = "bg-zinc-100/90";
 const sectionBgCta = "bg-gradient-to-b from-emerald-100/40 to-emerald-50/30";
 
 function BrandLogo({ compact = false }: { compact?: boolean }) {
-  return (
-    <Link
-      className="group flex shrink-0 items-center gap-3 rounded-xl py-1.5 pr-2 transition hover:bg-zinc-100/90"
-      href="/"
-    >
-      <span className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 shadow-md shadow-emerald-900/20 ring-1 ring-emerald-800/25 transition duration-200 group-hover:shadow-lg group-hover:shadow-emerald-900/25">
-        <Sparkles className="h-5 w-5 text-white" aria-hidden />
-      </span>
-      {!compact && (
-        <span className="hidden min-w-0 sm:block">
-          <span className="flex items-center gap-2">
-            <span className="text-lg font-semibold tracking-tight text-zinc-900">
-              CareerPilot
-            </span>
-            <span className="rounded-md bg-emerald-100/90 px-2 py-0.5 text-[11px] font-bold uppercase tracking-widest text-emerald-800">
-              Platform
-            </span>
-          </span>
-          <span className="mt-0.5 block text-sm font-medium text-zinc-500">
-            Career intelligence workspace
-          </span>
-        </span>
-      )}
-      {compact && (
-        <span className="text-base font-semibold tracking-tight text-zinc-900">
-          CareerPilot
-        </span>
-      )}
-    </Link>
-  );
+  return <LandingBrandLogo compact={compact} />;
 }
 
 function LandingNavbar() {
@@ -353,16 +328,7 @@ function LandingNavbar() {
                   </p>
                 </div>
                 <div className="p-2">
-                  {NAV_ANCHORS.map((item) => (
-                    <a
-                      key={item.href}
-                      className="flex items-center justify-between rounded-xl px-3 py-2.5 text-base font-medium text-zinc-700 transition hover:bg-emerald-50 hover:text-emerald-900"
-                      href={item.href}
-                    >
-                      {item.label}
-                      <ChevronRight className="h-4 w-4 text-zinc-400" aria-hidden />
-                    </a>
-                  ))}
+                  <LandingMobileNavLinks items={NAV_ANCHORS} />
                 </div>
                 <div className="space-y-2 border-t border-zinc-100 bg-zinc-50/50 p-3">
                   <Link
@@ -908,7 +874,7 @@ export default function Home() {
       {/* Hero */}
       <section
         id="features"
-        className="relative overflow-hidden border-b border-emerald-900/10"
+        className={`relative overflow-hidden border-b border-emerald-900/10 ${LANDING_SECTION_SCROLL_MARGIN}`}
         aria-labelledby="hero-heading"
       >
         <div
@@ -966,7 +932,7 @@ export default function Home() {
       {/* Workflow */}
       <section
         id="workflow"
-        className={`${sectionShell} ${sectionBgWorkflow}`}
+        className={`${sectionShell} ${sectionBgWorkflow} ${LANDING_SECTION_SCROLL_MARGIN}`}
         aria-labelledby="workflow-heading"
       >
         <div className={LANDING_MAX}>
@@ -985,7 +951,7 @@ export default function Home() {
       {/* Modules */}
       <section
         id="modules"
-        className={`${sectionShell} ${sectionBgModules}`}
+        className={`${sectionShell} ${sectionBgModules} ${LANDING_SECTION_SCROLL_MARGIN}`}
         aria-labelledby="modules-heading"
       >
         <div className={LANDING_MAX}>
@@ -1006,7 +972,7 @@ export default function Home() {
       {/* Demo */}
       <section
         id="demo"
-        className={`${sectionShell} ${sectionBgDemo}`}
+        className={`${sectionShell} ${sectionBgDemo} ${LANDING_SECTION_SCROLL_MARGIN}`}
         aria-labelledby="demo-heading"
       >
         <div className={LANDING_MAX}>
@@ -1045,7 +1011,7 @@ export default function Home() {
       {/* FAQ */}
       <section
         id="faq"
-        className={`${sectionShell} ${sectionBgFaq}`}
+        className={`${sectionShell} ${sectionBgFaq} ${LANDING_SECTION_SCROLL_MARGIN}`}
         aria-labelledby="faq-heading"
       >
         <div className={LANDING_MAX}>
