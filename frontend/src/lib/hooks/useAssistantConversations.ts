@@ -83,6 +83,71 @@ export function useCreateAssistantConversation() {
   });
 }
 
+export function useUpdateAssistantConversation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      title,
+    }: {
+      conversationId: string;
+      title: string;
+    }) => {
+      const trimmed = title.trim();
+      if (!trimmed) {
+        throw new Error("Title cannot be empty.");
+      }
+      if (trimmed.length > 80) {
+        throw new Error("Title must be 80 characters or fewer.");
+      }
+
+      try {
+        return await updateAssistantConversation(conversationId, trimmed);
+      } catch (error) {
+        showErrorToast(getErrorMessage(error));
+        throw error;
+      }
+    },
+    onMutate: async ({ conversationId, title }) => {
+      await queryClient.cancelQueries({
+        queryKey: assistantConversationKeys.all,
+      });
+      const previous = queryClient.getQueryData<AssistantConversation[]>(
+        assistantConversationKeys.all,
+      );
+      const trimmed = title.trim();
+
+      queryClient.setQueryData<AssistantConversation[]>(
+        assistantConversationKeys.all,
+        (current) =>
+          current?.map((conversation) =>
+            conversation.id === conversationId
+              ? {
+                  ...conversation,
+                  title: trimmed,
+                  updated_at: new Date().toISOString(),
+                }
+              : conversation,
+          ) ?? [],
+      );
+
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      queryClient.setQueryData(
+        assistantConversationKeys.all,
+        context?.previous ?? [],
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: assistantConversationKeys.all,
+      });
+    },
+  });
+}
+
 export function useDeleteAssistantConversation() {
   const queryClient = useQueryClient();
 
@@ -177,6 +242,28 @@ async function deleteAssistantConversation(conversationId: string) {
   if (error) {
     throw new Error(error.message);
   }
+}
+
+async function updateAssistantConversation(
+  conversationId: string,
+  title: string,
+) {
+  const supabase = createClient();
+  const userId = await getCurrentUserId();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("assistant_conversations")
+    .update({ title, updated_at: now })
+    .eq("id", conversationId)
+    .eq("user_id", userId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data as AssistantConversation;
 }
 
 export async function getCurrentAssistantUserId() {

@@ -5,7 +5,12 @@ import { FormEvent, useEffect, useState } from "react";
 
 import { SpinnerButton } from "@/components/ui";
 import type { GenerateRoadmapRequest } from "@/lib/roadmap/types";
-import { surfaceCard } from "@/lib/ui-theme";
+import {
+  formHintPanel,
+  inputFieldSky,
+  surfaceCard,
+  textareaFieldSky,
+} from "@/lib/ui-theme";
 
 type RoadmapGenerateFormProps = {
   isGenerating: boolean;
@@ -68,7 +73,7 @@ export function RoadmapGenerateForm({
       </div>
 
       {prefillLabel ? (
-        <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        <p className={`mt-4 ${formHintPanel}`}>
           Prefilled from Job Hunter — {prefillLabel}
         </p>
       ) : null}
@@ -80,7 +85,7 @@ export function RoadmapGenerateForm({
             value={targetRole}
             onChange={(event) => setTargetRole(event.target.value)}
             placeholder="ML Engineer"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+            className={inputFieldSky}
             required
           />
         </label>
@@ -92,7 +97,7 @@ export function RoadmapGenerateForm({
             onChange={(event) =>
               setDurationWeeks(Number(event.target.value) as 4 | 8 | 12)
             }
-            className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+            className={inputFieldSky}
           >
             {DURATIONS.map((duration) => (
               <option key={duration} value={duration}>
@@ -111,13 +116,14 @@ export function RoadmapGenerateForm({
           value={jobDescription}
           onChange={(event) => setJobDescription(event.target.value)}
           placeholder="Paste an optional job description to tailor the roadmap."
-          className="min-h-28 resize-y rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+          className={`min-h-28 ${textareaFieldSky}`}
         />
       </label>
 
       <div className="mt-5 flex justify-end">
         <SpinnerButton
           type="submit"
+          variant="sky"
           loading={isGenerating}
           loadingLabel="Generating…"
           disabled={isGenerating || !targetRole.trim()}

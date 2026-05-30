@@ -10,7 +10,10 @@ import {
 import { useMemo, useRef, useState } from "react";
 
 import { PageHeader, PageShell } from "@/components/layout";
+import { Badge, EmptyState } from "@/components/ui";
+import type { BadgeTone } from "@/components/ui";
 import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
+import { btnPrimary, btnSecondary } from "@/lib/ui-theme";
 
 import { useResume, useResumes } from "./hooks";
 import { ManualResumeEditor } from "./manual-resume-editor";
@@ -19,13 +22,7 @@ import { ResumeBuilderCard } from "./resume-builder-card";
 import { ResumeQueryBox } from "./resume-query-box";
 import { ResumeSummary } from "./resume-summary";
 import { ResumeUploadCard } from "./resume-upload-card";
-import {
-  resumeCard,
-  resumePrimaryButton,
-  resumeSecondaryButton,
-  resumeSegmentGroup,
-  resumeSegmentTab,
-} from "./resume-ui";
+import { resumeSegmentGroup, resumeSegmentTab } from "./resume-ui";
 import type { ResumeDetail } from "./types";
 import {
   getPageStatusBadge,
@@ -35,14 +32,11 @@ import {
 
 type CvInputMode = "upload" | "build" | "manual";
 
-const BADGE_STYLES: Record<
-  ReturnType<typeof getPageStatusBadge>,
-  string
-> = {
-  no_cv: "bg-zinc-100 text-zinc-600",
-  processing: "bg-amber-100 text-amber-900",
-  failed: "bg-red-100 text-red-800",
-  rag_ready: "bg-emerald-100 text-emerald-800",
+const BADGE_TONES: Record<ReturnType<typeof getPageStatusBadge>, BadgeTone> = {
+  no_cv: "neutral",
+  processing: "inProgress",
+  failed: "amber",
+  rag_ready: "rag",
 };
 
 const BADGE_ICONS: Record<
@@ -71,32 +65,28 @@ function ResumeEmptyState({
   onManual: () => void;
 }) {
   return (
-    <section className={`${resumeCard} text-center`}>
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-indigo-100">
-        <FileText className="h-7 w-7 text-emerald-700" />
-      </div>
-      <h2 className="mt-4 text-lg font-semibold text-zinc-950">
-        Start your career profile
-      </h2>
-      <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-500">
-        Upload an existing resume, build section-by-section, or fill out a
-        structured form. We&apos;ll index it for AI answers and job matching.
-      </p>
-      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <button className={resumePrimaryButton} type="button" onClick={onUpload}>
-          <Upload className="h-4 w-4" />
-          Upload file
-        </button>
-        <button className={resumeSecondaryButton} type="button" onClick={onBuild}>
-          <PenLine className="h-4 w-4" />
-          Build from scratch
-        </button>
-        <button className={resumeSecondaryButton} type="button" onClick={onManual}>
-          <FileText className="h-4 w-4" />
-          Manual editor
-        </button>
-      </div>
-    </section>
+    <EmptyState
+      accent="emerald"
+      icon={FileText}
+      title="Start your career profile"
+      description="Upload an existing resume, build section-by-section, or fill out a structured form. We'll index it for AI answers and job matching."
+      actions={
+        <>
+          <button className={btnPrimary} type="button" onClick={onUpload}>
+            <Upload className="h-4 w-4" />
+            Upload file
+          </button>
+          <button className={btnSecondary} type="button" onClick={onBuild}>
+            <PenLine className="h-4 w-4" />
+            Build from scratch
+          </button>
+          <button className={btnSecondary} type="button" onClick={onManual}>
+            <FileText className="h-4 w-4" />
+            Manual editor
+          </button>
+        </>
+      }
+    />
   );
 }
 
@@ -162,17 +152,19 @@ export function ResumePageClient() {
   return (
     <PageShell>
       <PageHeader
+        accent="emerald"
+        eyebrowText="Discover"
         icon={FileText}
         title="CV Intelligence"
         description="Upload, build, or edit your CV, then query it with AI grounded in your real experience."
         relatedLinks={PAGE_RELATED_LINKS["/resume"]}
         actions={
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${BADGE_STYLES[pageBadge]}`}
+          <Badge
+            tone={BADGE_TONES[pageBadge]}
+            icon={<BadgeIcon className="h-3.5 w-3.5" />}
           >
-            <BadgeIcon className="h-3.5 w-3.5" />
             {PAGE_STATUS_LABELS[pageBadge]}
-          </span>
+          </Badge>
         }
       />
 

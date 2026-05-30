@@ -3,7 +3,8 @@
 import { PenLine, Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 
-import { SpinnerButton, SubmissionProgress } from "@/components/ui";
+import { SpinnerButton, SubmissionProgress, SurfaceCard } from "@/components/ui";
+import { alertError, iconTile } from "@/lib/ui-theme";
 import { useSimulatedProgress } from "@/hooks/useSimulatedProgress";
 import { RESUME_UPLOAD_STEPS } from "@/lib/progress/resume-upload-progress";
 
@@ -13,7 +14,7 @@ import {
   type UploadPreviewPhase,
 } from "./resume-upload-preview-drawer";
 import {
-  resumeCard,
+  resumeCardBody,
   resumeCardHeader,
   resumeCardSubtext,
   resumeInput,
@@ -172,12 +173,14 @@ export function ResumeBuilderCard({
 
   return (
     <>
-      <section className={resumeCard}>
-        <div className="flex items-start justify-between gap-3">
-          <div>
+      <SurfaceCard
+        accent="sky"
+        premium
+        header={
+          <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100">
-                <PenLine className="h-4 w-4 text-emerald-700" />
+              <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${iconTile("sky")}`}>
+                <PenLine className="h-4 w-4" />
               </div>
               <div>
                 <h2 className={resumeCardHeader}>
@@ -190,17 +193,19 @@ export function ResumeBuilderCard({
                 </p>
               </div>
             </div>
+            {isEdit && onClearEdit && (
+              <button
+                className="shrink-0 text-xs font-medium text-zinc-500 transition hover:text-zinc-800"
+                type="button"
+                onClick={onClearEdit}
+              >
+                New CV
+              </button>
+            )}
           </div>
-          {isEdit && onClearEdit && (
-            <button
-              className="shrink-0 text-xs font-medium text-zinc-500 transition hover:text-zinc-800"
-              type="button"
-              onClick={onClearEdit}
-            >
-              New CV
-            </button>
-          )}
-        </div>
+        }
+        bodyClassName={resumeCardBody}
+      >
 
         <div className="mt-5">
           <label
@@ -304,9 +309,7 @@ export function ResumeBuilderCard({
         )}
 
         {localError && (
-          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-            {localError}
-          </p>
+          <p className={`${alertError} mt-3`}>{localError}</p>
         )}
 
         {isPending ? (
@@ -331,7 +334,7 @@ export function ResumeBuilderCard({
         >
           {isEdit ? "Update & re-index" : "Save & index CV"}
         </SpinnerButton>
-      </section>
+      </SurfaceCard>
 
       <ResumeUploadPreviewDrawer
         detail={previewDetail}

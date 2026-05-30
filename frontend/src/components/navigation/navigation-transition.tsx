@@ -112,7 +112,7 @@ export function NavigationTransitionShell({
   const { pendingHref } = useNavigationTransition();
 
   const showOverlay =
-    Boolean(pendingHref) && !routesMatch(pathname, pendingHref);
+    pendingHref != null && !routesMatch(pathname, pendingHref);
   const variant = pendingHref
     ? getSkeletonVariantForHref(pendingHref)
     : "singleColumn";

@@ -6,9 +6,10 @@ import { BriefcaseBusiness, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { PageHeader, PageShell } from "@/components/layout";
-import { Skeleton } from "@/components/ui";
+import { TransitionLink } from "@/components/navigation/navigation-transition";
+import { EmptyState, Skeleton } from "@/components/ui";
 import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
-import { alertError, btnPrimary } from "@/lib/ui-theme";
+import { alertError, btnPrimary, btnSecondary } from "@/lib/ui-theme";
 
 import { AddApplicationDrawer } from "./add-application-drawer";
 import { ApplicationDetailDrawer } from "./application-detail-drawer";
@@ -104,6 +105,8 @@ export function TrackerBoard() {
   return (
     <PageShell width="wide">
       <PageHeader
+        accent="violet"
+        eyebrowText="Track"
         icon={BriefcaseBusiness}
         title="Application Tracker"
         description="Drag applications across stages, open details for fit scores, and jump to cover letters or the assistant."
@@ -129,7 +132,7 @@ export function TrackerBoard() {
           <div className="flex gap-4 overflow-x-auto pb-2" aria-busy="true">
             {APPLICATION_STATUSES.map((status) => (
               <Skeleton
-                className="h-[520px] w-72 shrink-0 rounded-lg"
+                className="h-[520px] w-72 shrink-0 rounded-2xl"
                 key={status}
               />
             ))}
@@ -138,6 +141,24 @@ export function TrackerBoard() {
           <div className={`${alertError} p-4`}>
             {applicationsQuery.error.message}
           </div>
+        ) : (applicationsQuery.data?.length ?? 0) === 0 ? (
+          <EmptyState
+            accent="violet"
+            icon={BriefcaseBusiness}
+            title="No applications yet"
+            description="Save jobs from Job Hunter or add an application manually to start tracking your pipeline."
+            actions={
+              <>
+                <TransitionLink href="/jobs" className={btnPrimary}>
+                  Browse jobs
+                </TransitionLink>
+                <button className={btnSecondary} type="button" onClick={() => setIsAddOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Add manually
+                </button>
+              </>
+            }
+          />
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
             <div className="flex gap-4 overflow-x-auto pb-2">

@@ -4,7 +4,12 @@ import { LineChart } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
 import { SpinnerButton } from "@/components/ui";
-import { surfaceCard } from "@/lib/ui-theme";
+import {
+  formHintPanel,
+  inputFieldSky,
+  surfaceCard,
+  textareaFieldSky,
+} from "@/lib/ui-theme";
 
 export type SkillGapFormValues = {
   targetRole: string;
@@ -68,7 +73,7 @@ export function SkillGapAnalyzeForm({
       </div>
 
       {prefillLabel ? (
-        <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        <p className={`mt-4 ${formHintPanel}`}>
           Prefilled from Job Hunter — {prefillLabel}
         </p>
       ) : null}
@@ -98,7 +103,7 @@ export function SkillGapAnalyzeForm({
             value={targetRole}
             onChange={(event) => setTargetRole(event.target.value)}
             placeholder="ML Engineer Intern"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            className={inputFieldSky}
             required
           />
         </label>
@@ -111,14 +116,14 @@ export function SkillGapAnalyzeForm({
             value={jobDescription}
             onChange={(event) => setJobDescription(event.target.value)}
             placeholder="Paste a job description for more precise gap analysis…"
-            className="min-h-40 w-full resize-y rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            className={`min-h-40 ${textareaFieldSky}`}
           />
         </label>
       </div>
 
       <SpinnerButton
         type="submit"
-        variant="emerald"
+        variant="sky"
         loading={isAnalyzing}
         loadingLabel="Analyzing…"
         disabled={isAnalyzing || !targetRole.trim()}

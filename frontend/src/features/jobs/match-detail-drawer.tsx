@@ -5,7 +5,15 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { DrawerSkeleton, SpinnerButton } from "@/components/ui";
+import { Badge, DrawerSkeleton, SpinnerButton } from "@/components/ui";
+import { resumeOverlay } from "@/features/resume/resume-ui";
+import {
+  chipAmber,
+  chipEmerald,
+  fitScoreBadge,
+  premiumCard,
+  surfaceCardHeader,
+} from "@/lib/ui-theme";
 
 import { useMatchDetail, useSaveMatchToTracker } from "./hooks";
 import { MatchJobActions } from "./match-job-actions";
@@ -35,6 +43,8 @@ export function MatchDetailDrawer({ match, onClose, onSaved }: Props) {
 
   const source = detailQuery.data ?? match;
   const tier = getFitTier(source.fit_score);
+  const fitTierKey =
+    source.fit_score >= 75 ? "high" : source.fit_score >= 50 ? "medium" : "low";
   const isSaved = Boolean(savedApplicationId ?? source.tracker_application_id);
   const description = source.job.description ?? "No description available.";
   const jdPreview =
@@ -57,9 +67,9 @@ export function MatchDetailDrawer({ match, onClose, onSaved }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-zinc-950/30">
-      <aside className="ml-auto flex h-full w-full max-w-2xl flex-col bg-white shadow-xl">
-        <header className="flex h-16 items-center justify-between border-b border-zinc-200 px-5">
+    <div className={resumeOverlay}>
+      <aside className="ml-auto flex h-full w-full max-w-2xl flex-col bg-gradient-to-b from-white via-white to-emerald-50/30 shadow-2xl shadow-emerald-950/10 ring-1 ring-emerald-900/[0.06]">
+        <header className={`flex h-auto min-h-16 items-center justify-between px-5 py-4 ${surfaceCardHeader("emerald")}`}>
           <div className="min-w-0 pr-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
               Match details
@@ -71,7 +81,7 @@ export function MatchDetailDrawer({ match, onClose, onSaved }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-zinc-500 hover:bg-zinc-100"
+            className="rounded-lg p-2 text-zinc-500 transition hover:bg-white/80 hover:text-zinc-800"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -85,13 +95,23 @@ export function MatchDetailDrawer({ match, onClose, onSaved }: Props) {
             <div className="space-y-5">
               <div className="flex flex-wrap items-center gap-3">
                 <div
-                  className={`flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 ${tier.className}`}
+                  className={`flex h-14 w-14 flex-col items-center justify-center rounded-full ${fitScoreBadge(fitTierKey)}`}
                 >
                   <span className="text-lg font-bold">{source.fit_score.toFixed(0)}</span>
                 </div>
                 <div>
-                  <p className="font-medium text-zinc-900">{tier.label}</p>
-                  <p className="text-sm text-zinc-600">{source.explanation}</p>
+                  <Badge
+                    tone={
+                      fitTierKey === "high"
+                        ? "fitScore"
+                        : fitTierKey === "medium"
+                          ? "sky"
+                          : "amber"
+                    }
+                  >
+                    {tier.label}
+                  </Badge>
+                  <p className="mt-1 text-sm text-zinc-600">{source.explanation}</p>
                 </div>
               </div>
 
@@ -114,7 +134,7 @@ export function MatchDetailDrawer({ match, onClose, onSaved }: Props) {
                     {source.evidence_chunks.map((chunk) => (
                       <div
                         key={chunk.chunk_id ?? chunk.snippet.slice(0, 24)}
-                        className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm"
+                        className={`${premiumCard} p-3 text-sm`}
                       >
                         <p className="font-medium text-zinc-900">
                           {chunk.section_name}
@@ -148,7 +168,7 @@ export function MatchDetailDrawer({ match, onClose, onSaved }: Props) {
           )}
         </div>
 
-        <footer className="space-y-3 border-t border-zinc-200 p-5">
+        <footer className="space-y-3 border-t border-emerald-100/80 bg-white/80 p-5 backdrop-blur-sm">
           <MatchJobActions
             match={source}
             applicationId={savedApplicationId ?? source.tracker_application_id}
@@ -204,7 +224,7 @@ function MetaBlock({ job }: { job: MatchSummary["job"] }) {
   ];
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+    <div className={`${premiumCard} p-4`}>
       <dl className="grid gap-2 sm:grid-cols-2">
         {rows.map(([label, value]) => (
           <div key={label}>
@@ -228,21 +248,17 @@ function ChipList({
   items: string[];
   tone: "green" | "amber";
 }) {
-  const chipClass =
-    tone === "green" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900";
+  const chipClass = tone === "green" ? chipEmerald : chipAmber;
 
   return (
-    <div className="rounded-lg border border-zinc-200 p-3">
+    <div className="rounded-xl border border-zinc-200/80 bg-white/80 p-3 ring-1 ring-zinc-950/[0.02]">
       <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
         {title}
       </p>
       {items.length ? (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {items.map((item) => (
-            <span
-              key={item}
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${chipClass}`}
-            >
+            <span key={item} className={chipClass}>
               {item}
             </span>
           ))}

@@ -5,6 +5,7 @@ import { ArrowRight, FileText } from "lucide-react";
 import Link from "next/link";
 
 import type { CoverLetter } from "@/lib/cover-letter/types";
+import { surfaceCard } from "@/lib/ui-theme";
 
 type CoverLetterCardProps = {
   coverLetter: CoverLetter;
@@ -12,7 +13,7 @@ type CoverLetterCardProps = {
 
 export function CoverLetterCard({ coverLetter }: CoverLetterCardProps) {
   return (
-    <article className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+    <article className={`p-4 transition hover:border-sky-200 hover:shadow-md ${surfaceCard}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
@@ -29,7 +30,7 @@ export function CoverLetterCard({ coverLetter }: CoverLetterCardProps) {
         </div>
         <Link
           href={`/cover-letters/${coverLetter.id}`}
-          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 transition hover:border-[#1A56DB] hover:text-[#1A56DB]"
+          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
         >
           View
           <ArrowRight className="h-4 w-4" />

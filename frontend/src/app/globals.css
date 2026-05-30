@@ -21,6 +21,11 @@
   --cp-accent-soft: #e0f2fe;
   --cp-accent-text: #0369a1;
 
+  /* Track / productivity — violet */
+  --cp-track: #7c3aed;
+  --cp-track-soft: #f5f3ff;
+  --cp-track-text: #5b21b6;
+
   /* Semantic */
   --cp-warning-soft: #fffbeb;
   --cp-warning-text: #92400e;
@@ -70,7 +75,20 @@ select {
 }
 
 .rbc-today {
-  background-color: var(--cp-primary-soft);
+  background-color: var(--cp-track-soft);
+}
+
+.rbc-header {
+  font-weight: 600;
+  color: #3f3f46;
+  padding: 10px 4px;
+}
+
+.rbc-month-view,
+.rbc-time-view {
+  border-radius: 12px;
+  overflow: hidden;
+  border-color: #e4e4e7;
 }
 
 @keyframes cp-page-fade-in {
@@ -84,4 +102,24 @@ select {
 
 .cp-page-transition {
   animation: cp-page-fade-in 180ms ease-out;
+}
+
+@keyframes cp-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.cp-skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #e4e4e7 0%,
+    #f4f4f5 50%,
+    #e4e4e7 100%
+  );
+  background-size: 200% 100%;
+  animation: cp-shimmer 1.5s ease-in-out infinite;
 }

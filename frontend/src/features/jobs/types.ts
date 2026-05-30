@@ -50,6 +50,15 @@ export type JobSearchResponse = {
   matches: MatchSummary[];
 };
 
+export type JobSearchSummary = {
+  id: string;
+  query: string;
+  location: string | null;
+  source: string | null;
+  created_at: string | null;
+  match_count: number;
+};
+
 export type ManualJobRequest = {
   title: string;
   description: string;

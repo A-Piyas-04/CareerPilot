@@ -2,7 +2,7 @@
 
 > Derived from [`Problem-statement.md`](./Problem-statement.md)  
 > Codebase audit: **May 30, 2026** (monorepo: Next.js 16 + FastAPI + Supabase + Gemini + JSearch)  
-> Last cross-module / UI polish pass: grouped `AppNav`, `PageShell`, Job Hunter deep links, `/skill-gap` page
+> Last cross-module / UI polish pass: authenticated app UI polish (May 30, 2026) — premium workspace theme across dashboard, resume, jobs, chat, skill-gap, cover-letters, roadmap, tracker, goals, calendar, login, error/404
 
 ## Legend
 
@@ -202,7 +202,7 @@
 | Skill gap frontend | ✅ | `frontend/src/app/skill-gap/`, `features/skill-gap/` |
 | Tracker fit enrichment | ✅ | `applications.py` join on `jobs` + `job_matches`; drawer UI |
 | Dashboard job nudges | ✅ | `reminders/generate` + `highFitUnsavedMatches` |
-| Shared UI shell | ✅ | `components/layout/page-shell.tsx`, `lib/ui-theme.ts` |
+| Shared UI shell | ✅ | `components/layout/page-shell.tsx`, `detail-page-shell.tsx`, `lib/ui-theme.ts` (premium tokens, badges, accents) |
 | Grouped navigation | ✅ | `components/nav/AppNav.tsx`, `NavGroupMenu.tsx`, `NavContextBar.tsx`, `MobileNavDrawer.tsx`, `lib/navigation-config.ts`, `lib/nav-styles.ts` |
 | Evaluation doc | ✅ | `Docs/evaluation-suite.md` |
 
@@ -231,10 +231,20 @@
 5. ⚠️ **Global AI nudges** — optional on-login banner beyond `/dashboard` card.
 6. ⚠️ **Push/email reminders** — calendar `reminder_time` has no delivery channel.
 7. ⚠️ **System design bonus** — add cost/scaling section to docs.
-8. ⚠️ **Search history UI** — past `job_searches` not browsable in frontend.
+8. ✅ **Search history UI** — `/jobs` search history panel with `GET /api/v1/jobs/searches`.
 9. ❌ **Raw CV object storage** — optional; `file_url` unused.
 10. ⚠️ **Landing copy** — refresh hero text (still mentions assistant “coming online” in places).
 
 ---
 
 *Re-audit after major changes by re-running through the app and updating emoji status in this file.*
+
+---
+
+## Implementation Notes (2026-05-30)
+
+**Implemented:** `GET /api/v1/jobs/searches` backend endpoint; frontend search history browser on `/jobs`; shared confirm modal; chat rename, intent badges, guided workflows; branded error/404 pages.
+
+**Backend API added:** `GET /api/v1/jobs/searches` — returns user job searches with `match_count`.
+
+**Limitations:** Re-run prefills only; no auto-search. History rows do not store which resume was used for the original search.

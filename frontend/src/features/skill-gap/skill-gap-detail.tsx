@@ -1,12 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Map } from "lucide-react";
+import { LineChart, Map } from "lucide-react";
 
-import { ListCardSkeleton } from "@/components/ui";
+import { EmptyState, ListCardSkeleton } from "@/components/ui";
 import { buildRoadmapHref } from "@/features/jobs/job-actions";
 import type { MatchSummary } from "@/features/jobs/types";
 import type { SkillGapAnalysisDetail } from "@/lib/career-api";
+import {
+  alertError,
+  btnPrimarySky,
+  chipAmber,
+  chipEmerald,
+  chipNeutral,
+} from "@/lib/ui-theme";
 
 type Props = {
   analysis: SkillGapAnalysisDetail | null | undefined;
@@ -20,18 +27,18 @@ export function SkillGapDetail({ analysis, isLoading, error }: Props) {
   }
 
   if (error) {
-    return (
-      <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-        {error}
-      </p>
-    );
+    return <p className={alertError}>{error}</p>;
   }
 
   if (!analysis) {
     return (
-      <p className="text-sm text-zinc-500">
-        Select an analysis from the list to view missing skills and recommendations.
-      </p>
+      <EmptyState
+        accent="sky"
+        className="min-h-48 py-8"
+        description="Select an analysis from the list to view missing skills and recommendations."
+        icon={LineChart}
+        title="No analysis selected"
+      />
     );
   }
 
@@ -79,7 +86,11 @@ export function SkillGapDetail({ analysis, isLoading, error }: Props) {
         {summary ? <p className="mt-2 text-sm text-zinc-600">{summary}</p> : null}
       </div>
 
-      <SkillChipGroup title="Skills you have" skills={analysis.current_skills} tone="green" />
+      <SkillChipGroup
+        title="Skills you have"
+        skills={analysis.current_skills}
+        tone="green"
+      />
       <SkillChipGroup
         title="Required skills"
         skills={analysis.required_skills}
@@ -88,9 +99,9 @@ export function SkillGapDetail({ analysis, isLoading, error }: Props) {
       <SkillChipGroup title="Gaps to close" skills={analysis.missing_skills} tone="amber" />
 
       {learningPlan.length > 0 ? (
-        <section>
-          <h3 className="text-sm font-semibold text-zinc-900">Learning priorities</h3>
-          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-zinc-700">
+        <section className="rounded-xl border border-sky-200/80 bg-sky-50/50 p-4">
+          <h3 className="text-sm font-semibold text-sky-900">Learning priorities</h3>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-sky-950/80">
             {learningPlan.map((item) => (
               <li key={item}>{item}</li>
             ))}
@@ -99,10 +110,7 @@ export function SkillGapDetail({ analysis, isLoading, error }: Props) {
       ) : null}
 
       {analysis.missing_skills.length > 0 ? (
-        <Link
-          href={buildRoadmapHref(roadmapMatch)}
-          className="inline-flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-        >
+        <Link href={buildRoadmapHref(roadmapMatch)} className={btnPrimarySky}>
           <Map className="h-4 w-4" />
           Build roadmap from gaps
         </Link>
@@ -120,23 +128,23 @@ function SkillChipGroup({
   skills: string[];
   tone: "green" | "amber" | "neutral";
 }) {
-  const chipClass =
+  const cardClass =
     tone === "green"
-      ? "bg-emerald-50 text-emerald-800"
+      ? "border-emerald-200/80 bg-emerald-50/50"
       : tone === "amber"
-        ? "bg-amber-50 text-amber-900"
-        : "bg-zinc-100 text-zinc-800";
+        ? "border-amber-200/80 bg-amber-50/50"
+        : "border-zinc-200/80 bg-zinc-50/60";
+
+  const chipClass =
+    tone === "green" ? chipEmerald : tone === "amber" ? chipAmber : chipNeutral;
 
   return (
-    <section>
+    <section className={`rounded-xl border p-4 ${cardClass}`}>
       <h3 className="text-sm font-semibold text-zinc-900">{title}</h3>
       {skills.length ? (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {skills.map((skill) => (
-            <span
-              key={skill}
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${chipClass}`}
-            >
+            <span key={skill} className={chipClass}>
               {skill}
             </span>
           ))}

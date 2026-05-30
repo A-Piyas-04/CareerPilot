@@ -33,7 +33,7 @@ export function ListCardSkeleton({
       {Array.from({ length: count }, (_, i) => (
         <Skeleton
           key={i}
-          className={`rounded-lg border border-zinc-200 bg-white ${cardClassName}`}
+          className={`rounded-2xl border border-zinc-200 bg-white ${cardClassName}`}
         />
       ))}
     </div>

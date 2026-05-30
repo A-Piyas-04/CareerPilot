@@ -1,6 +1,10 @@
 "use client";
 
+import { LineChart } from "lucide-react";
+
+import { EmptyState } from "@/components/ui";
 import type { SkillGapAnalysisSummary } from "@/lib/career-api";
+import { alertError } from "@/lib/ui-theme";
 
 type Props = {
   analyses: SkillGapAnalysisSummary[];
@@ -22,18 +26,18 @@ export function SkillGapList({
   }
 
   if (error) {
-    return (
-      <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-        {error}
-      </p>
-    );
+    return <p className={alertError}>{error}</p>;
   }
 
   if (!analyses.length) {
     return (
-      <p className="text-sm text-zinc-500">
-        No analyses yet. Run your first skill gap check on the left.
-      </p>
+      <EmptyState
+        accent="sky"
+        className="min-h-48 py-8"
+        description="Run your first skill gap check using the form on the left."
+        icon={LineChart}
+        title="No analyses yet"
+      />
     );
   }
 
@@ -48,8 +52,8 @@ export function SkillGapList({
               onClick={() => onSelect(analysis.id)}
               className={`w-full rounded-md border px-3 py-2 text-left transition ${
                 isActive
-                  ? "border-emerald-300 bg-emerald-50"
-                  : "border-zinc-200 bg-white hover:bg-zinc-50"
+                  ? "border-sky-300 bg-sky-50 ring-1 ring-sky-200/60"
+                  : "border-zinc-200 bg-white hover:border-sky-200 hover:bg-sky-50/50"
               }`}
             >
               <p className="text-sm font-medium text-zinc-900">

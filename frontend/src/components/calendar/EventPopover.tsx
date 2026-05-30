@@ -2,6 +2,9 @@
 
 import { format } from "date-fns";
 import { CalendarClock, Pencil, Trash2, X } from "lucide-react";
+import { useState } from "react";
+
+import { ConfirmDialog } from "@/components/ui";
 
 import type {
   CalendarDisplayEvent,
@@ -17,6 +20,7 @@ type Props = {
 
 export function EventPopover({ event, onClose, onEdit }: Props) {
   const deleteMutation = useDeleteCalendarEvent();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!event) {
     return null;
@@ -38,15 +42,23 @@ export function EventPopover({ event, onClose, onEdit }: Props) {
       return;
     }
 
-    if (!confirm("Delete this event?")) {
-      return;
-    }
-
     await deleteMutation.mutateAsync(event.resource.event.id);
+    setShowDeleteConfirm(false);
     onClose();
   }
 
   return (
+    <>
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete this event?"
+        description="This will permanently remove this calendar event."
+        confirmLabel="Delete event"
+        destructive
+        isPending={deleteMutation.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     <div className="absolute right-4 top-4 z-30 w-[min(22rem,calc(100%-2rem))] rounded-lg border border-zinc-200 bg-white p-4 shadow-xl">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -109,7 +121,7 @@ export function EventPopover({ event, onClose, onEdit }: Props) {
           <button
             className="flex h-9 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
             type="button"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             disabled={deleteMutation.isPending}
           >
             <Trash2 className="h-4 w-4" />
@@ -118,6 +130,7 @@ export function EventPopover({ event, onClose, onEdit }: Props) {
         </div>
       )}
     </div>
+    </>
   );
 }
 

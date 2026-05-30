@@ -1,22 +1,24 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Sparkles, Search } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { PageHeader, PageShell } from "@/components/layout";
-import { ListCardSkeleton, Skeleton } from "@/components/ui";
+import { EmptyState, Skeleton } from "@/components/ui";
 import { useResumes } from "@/features/resume/hooks";
 import { pickPrimaryResume } from "@/features/resume/types";
 import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import { alertWarning, surfaceCard } from "@/lib/ui-theme";
 
+import { listMatches } from "./api";
 import { JobSearchForm } from "./search-form";
 import { ManualJobDrawer } from "./manual-job-drawer";
 import { MatchCard } from "./match-card";
 import { MatchDetailDrawer } from "./match-detail-drawer";
 import { MatchFilters } from "./match-filters";
-import { useJobMatches } from "./hooks";
-import type { JobSearchResponse, MatchSummary } from "./types";
+import { SearchHistoryPanel } from "./search-history-panel";
+import type { JobSearchResponse, JobSearchSummary, MatchSummary } from "./types";
 import {
   DEFAULT_MATCH_FILTERS,
   filterAndSortMatches,
@@ -43,7 +45,11 @@ export function JobsPageClient() {
   const [filters, setFilters] = useState<MatchFilterState>(DEFAULT_MATCH_FILTERS);
   const [detailMatch, setDetailMatch] = useState<MatchSummary | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
-  const [previousOpen, setPreviousOpen] = useState(false);
+  const [searchPrefill, setSearchPrefill] = useState<{
+    query: string;
+    location?: string;
+  } | null>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (selectedResumeId) return;
@@ -54,10 +60,6 @@ export function JobsPageClient() {
     }
   }, [primary, readyResumes, selectedResumeId]);
 
-  const previousMatchesQuery = useJobMatches(selectedResumeId, {
-    enabled: previousOpen,
-  });
-
   const currentMatches = currentSearch?.matches ?? [];
   const filteredMatches = useMemo(
     () => filterAndSortMatches(currentMatches, filters),
@@ -67,7 +69,8 @@ export function JobsPageClient() {
   function handleSearchSuccess(result: JobSearchResponse) {
     setCurrentSearch(result);
     setFilters(DEFAULT_MATCH_FILTERS);
-    setPreviousOpen(false);
+    setSearchPrefill(null);
+    scrollToResults();
   }
 
   function handleManualSuccess(_searchId: string, match: MatchSummary) {
@@ -92,14 +95,48 @@ export function JobsPageClient() {
     });
   }
 
-  const previousMatches = (previousMatchesQuery.data ?? []).filter((match) => {
-    if (!currentSearch?.search_id) return true;
-    return match.job.search_id !== currentSearch.search_id;
-  });
+  async function handleViewHistoryResults(search: JobSearchSummary) {
+    try {
+      const matches = await listMatches({ search_id: search.id, limit: 50 });
+      setCurrentSearch({ search_id: search.id, matches });
+      setFilters(DEFAULT_MATCH_FILTERS);
+      scrollToResults();
+      toast.success(
+        matches.length
+          ? `Loaded ${matches.length} stored matches for this search.`
+          : "No stored matches for this search.",
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to load search results.",
+      );
+      throw error;
+    }
+  }
+
+  function handleRerunHistorySearch(search: JobSearchSummary) {
+    setSearchPrefill({
+      query: search.query,
+      location: search.location ?? undefined,
+    });
+    document.getElementById("job-search-form")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    toast.message("Search form prefilled — click Search jobs to run again.");
+  }
+
+  function scrollToResults() {
+    window.requestAnimationFrame(() => {
+      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 
   return (
     <PageShell>
       <PageHeader
+        accent="emerald"
+        eyebrowText="Discover"
         icon={Sparkles}
         title="Job Hunter"
         description="Search live roles, see how each posting fits your CV, review skill gaps, and save strong matches to your application tracker."
@@ -109,7 +146,7 @@ export function JobsPageClient() {
           {STEPS.map((step, index) => (
             <li
               key={step}
-              className="rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-2 text-sm text-zinc-700"
+              className="rounded-lg border border-emerald-200/70 bg-gradient-to-r from-emerald-50/80 to-teal-50/60 px-3 py-2 text-sm text-zinc-700"
             >
               <span className="mr-2 font-semibold text-emerald-700">
                 {index + 1}.
@@ -133,8 +170,14 @@ export function JobsPageClient() {
           </div>
         ) : (
           <JobSearchForm
+            key={
+              searchPrefill
+                ? `prefill-${searchPrefill.query}-${searchPrefill.location ?? ""}`
+                : "job-search-default"
+            }
             resumes={resumes}
             selectedResumeId={selectedResumeId}
+            prefill={searchPrefill}
             onResumeChange={(resumeId) => {
               setSelectedResumeId(resumeId);
               setCurrentSearch(null);
@@ -145,69 +188,47 @@ export function JobsPageClient() {
           />
         )}
 
-        {currentMatches.length > 0 ? (
-          <>
-            <MatchFilters
-              filters={filters}
-              totalCount={currentMatches.length}
-              filteredCount={filteredMatches.length}
-              onChange={setFilters}
-            />
-            <div className="flex flex-col gap-4">
-              {filteredMatches.map((match) => (
-                <MatchCard
-                  key={match.match_id ?? match.job.id}
-                  match={match}
-                  onOpenDetails={setDetailMatch}
-                  onSaved={handleMatchSaved}
-                />
-              ))}
-              {filteredMatches.length === 0 ? (
-                <div className={`${surfaceCard} p-6 text-center text-sm text-zinc-600`}>
-                  No jobs match your current filters. Try lowering the minimum fit
-                  score or clearing quick filters.
-                </div>
-              ) : null}
-            </div>
-          </>
-        ) : (
-          <div className={`${surfaceCard} border-dashed p-8 text-center text-sm text-zinc-600`}>
-            Run a search above to see fit-scored job cards here.
-          </div>
-        )}
-
-        <div className={surfaceCard}>
-          <button
-            type="button"
-            onClick={() => setPreviousOpen((value) => !value)}
-            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-zinc-800"
-          >
-            Previous matches from earlier searches
-            {previousOpen ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </button>
-          {previousOpen ? (
-            <div className="space-y-3 border-t border-zinc-100 p-4">
-              {previousMatchesQuery.isLoading ? (
-                <ListCardSkeleton count={2} cardClassName="h-28" />
-              ) : previousMatches.length === 0 ? (
-                <p className="text-sm text-zinc-500">No earlier matches stored yet.</p>
-              ) : (
-                previousMatches.map((match) => (
+        <div ref={resultsRef}>
+          {currentMatches.length > 0 ? (
+            <>
+              <MatchFilters
+                filters={filters}
+                totalCount={currentMatches.length}
+                filteredCount={filteredMatches.length}
+                onChange={setFilters}
+              />
+              <div className="mt-4 flex flex-col gap-4">
+                {filteredMatches.map((match) => (
                   <MatchCard
-                    key={`prev-${match.match_id ?? match.job.id}`}
+                    key={match.match_id ?? match.job.id}
                     match={match}
                     onOpenDetails={setDetailMatch}
                     onSaved={handleMatchSaved}
                   />
-                ))
-              )}
-            </div>
-          ) : null}
+                ))}
+                {filteredMatches.length === 0 ? (
+                  <div className={`${surfaceCard} p-6 text-center text-sm text-zinc-600`}>
+                    No jobs match your current filters. Try lowering the minimum fit
+                    score or clearing quick filters.
+                  </div>
+                ) : null}
+              </div>
+            </>
+          ) : (
+            <EmptyState
+              accent="emerald"
+              icon={Search}
+              title="Ready to hunt"
+              description="Run a search above to see fit-scored job cards with matched skills, gaps, and save-to-tracker actions."
+              variant="dashed"
+            />
+          )}
         </div>
+
+        <SearchHistoryPanel
+          onViewResults={handleViewHistoryResults}
+          onRerunSearch={handleRerunHistorySearch}
+        />
       </div>
 
       <MatchDetailDrawer

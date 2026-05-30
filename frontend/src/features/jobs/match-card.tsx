@@ -13,6 +13,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { SpinnerButton } from "@/components/ui";
+import {
+  chipAmber,
+  chipEmerald,
+  fitScoreBadge,
+  premiumCard,
+  premiumCardHover,
+  surfaceCardMuted,
+} from "@/lib/ui-theme";
 
 import { useSaveMatchToTracker } from "./hooks";
 import { MatchJobActions } from "./match-job-actions";
@@ -33,6 +41,8 @@ export function MatchCard({ match, onOpenDetails, onSaved }: Props) {
   );
 
   const tier = getFitTier(match.fit_score);
+  const fitTierKey =
+    match.fit_score >= 75 ? "high" : match.fit_score >= 50 ? "medium" : "low";
   const isSaved = Boolean(savedApplicationId);
 
   function handleSave() {
@@ -59,26 +69,22 @@ export function MatchCard({ match, onOpenDetails, onSaved }: Props) {
   const similarityPercent = Math.round((match.mean_similarity || 0) * 100);
 
   return (
-    <article className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+    <article className={`${premiumCard} ${premiumCardHover} flex flex-col gap-4 p-5`}>
       <header className="flex flex-wrap items-start gap-4">
         <div
-          className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-full border-2 ${tier.className}`}
+          className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-full ${fitScoreBadge(fitTierKey)}`}
           aria-label={`Fit score ${match.fit_score}`}
         >
           <span className="text-xl font-bold leading-none">
             {match.fit_score.toFixed(0)}
           </span>
-          <span className="mt-0.5 text-[10px] font-semibold uppercase">Fit</span>
+          <span className="mt-0.5 text-[10px] font-semibold uppercase opacity-90">Fit</span>
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-semibold text-zinc-950">{job.title}</h3>
-            <span
-              className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${tier.className}`}
-            >
-              {tier.label}
-            </span>
+            <span className={fitScoreBadge(fitTierKey)}>{tier.label}</span>
           </div>
           <p className="mt-1 text-sm text-zinc-600">
             {[job.company, job.location, job.job_type].filter(Boolean).join(" · ") ||
@@ -114,7 +120,7 @@ export function MatchCard({ match, onOpenDetails, onSaved }: Props) {
         />
       </div>
 
-      <div className="rounded-lg border border-zinc-100 bg-zinc-50">
+      <div className={`${surfaceCardMuted} rounded-xl`}>
         <button
           type="button"
           onClick={() => setExpanded((value) => !value)}
@@ -223,23 +229,17 @@ function SkillGroup({
   skills: string[];
   variant: "matched" | "missing";
 }) {
-  const chipClass =
-    variant === "matched"
-      ? "bg-emerald-50 text-emerald-800"
-      : "bg-amber-50 text-amber-900";
+  const chipClass = variant === "matched" ? chipEmerald : chipAmber;
 
   return (
-    <div className="rounded-lg border border-zinc-100 p-3">
+    <div className="rounded-xl border border-zinc-200/80 bg-white/80 p-3 ring-1 ring-zinc-950/[0.02]">
       <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
         {title}
       </p>
       {skills.length ? (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {skills.slice(0, 8).map((skill) => (
-            <span
-              key={skill}
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${chipClass}`}
-            >
+            <span key={skill} className={chipClass}>
               {skill}
             </span>
           ))}

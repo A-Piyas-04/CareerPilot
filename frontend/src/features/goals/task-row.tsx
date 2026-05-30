@@ -3,6 +3,8 @@
 import { CheckCircle2, Circle, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
+import { ConfirmDialog } from "@/components/ui";
+
 import { getDueLabel } from "./format";
 import { useDeleteTask, useUpdateTask } from "./hooks";
 import { TaskForm } from "./task-form";
@@ -15,6 +17,7 @@ type Props = {
 
 export function TaskRow({ task }: Props) {
   const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const updateMutation = useUpdateTask();
   const deleteMutation = useDeleteTask();
 
@@ -26,11 +29,8 @@ export function TaskRow({ task }: Props) {
   }
 
   async function handleDelete() {
-    if (!confirm("Delete this task?")) {
-      return;
-    }
-
     await deleteMutation.mutateAsync(task.id);
+    setShowDeleteConfirm(false);
   }
 
   if (isEditing) {
@@ -55,6 +55,17 @@ export function TaskRow({ task }: Props) {
   const isDone = task.status === "done";
 
   return (
+    <>
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete this task?"
+        description="This will permanently remove this task."
+        confirmLabel="Delete task"
+        destructive
+        isPending={deleteMutation.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     <li className="flex gap-3 rounded-md border border-zinc-200 bg-white p-3">
       <button
         className="mt-0.5 h-6 w-6 shrink-0 rounded text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
@@ -118,7 +129,7 @@ export function TaskRow({ task }: Props) {
         <button
           className="rounded-md p-2 text-red-600 hover:bg-red-50"
           type="button"
-          onClick={handleDelete}
+          onClick={() => setShowDeleteConfirm(true)}
           disabled={deleteMutation.isPending}
           title="Delete task"
           aria-label="Delete task"
@@ -127,6 +138,7 @@ export function TaskRow({ task }: Props) {
         </button>
       </div>
     </li>
+    </>
   );
 }
 

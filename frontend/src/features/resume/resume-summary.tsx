@@ -15,28 +15,23 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { ResumeSummarySkeleton } from "@/components/ui";
+import { ResumeSummarySkeleton, Badge, EmptyState, SurfaceCard } from "@/components/ui";
+import { alertError, alertWarning, chipAmber, chipEmerald, chipSky } from "@/lib/ui-theme";
 
 import { useDeleteResume } from "./hooks";
 import { ResumeDeleteDialog } from "./resume-delete-dialog";
 import { ResumeSectionViewerDrawer } from "./resume-section-viewer-drawer";
-import { resumeCard, resumeSecondaryButton } from "./resume-ui";
+import { resumeCardBody, resumeSecondaryButton } from "./resume-ui";
 import type { ResumeDetail, ResumeSection, ResumeSkill } from "./types";
 import { formatResumeDate } from "./types";
 
-/* ─── Category color map ──────────────────────────────────────────────────── */
-const CATEGORY_COLORS: Record<string, string> = {
-  language:  "bg-blue-50   border-blue-100  text-blue-900",
-  framework: "bg-violet-50 border-violet-100 text-violet-900",
-  database:  "bg-orange-50 border-orange-100 text-orange-900",
-  devops:    "bg-slate-50  border-slate-200  text-slate-800",
-  cloud:     "bg-sky-50    border-sky-100    text-sky-900",
-  "ml/ai":   "bg-pink-50   border-pink-100   text-pink-900",
-  other:     "bg-zinc-50   border-zinc-200   text-zinc-700",
-};
+/* ─── Category chip colors ─────────────────────────────────────────────────── */
+const CATEGORY_CHIPS = [chipEmerald, chipSky, chipAmber] as const;
 
-function skillColor(category: string | null | undefined): string {
-  return CATEGORY_COLORS[(category ?? "other").toLowerCase()] ?? CATEGORY_COLORS.other;
+function skillChipClass(category: string | null | undefined, index: number): string {
+  const key = (category ?? "other").toLowerCase();
+  const hash = key.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return CATEGORY_CHIPS[(hash + index) % CATEGORY_CHIPS.length];
 }
 
 function groupSkillsByCategory(
@@ -154,21 +149,19 @@ export function ResumeSummary({
   /* ── Empty state ── */
   if (!hasResumes) {
     return (
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-zinc-950">Resume overview</h2>
-        <div className="mt-6 flex flex-col items-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-6 py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100">
-            <FileText className="h-6 w-6 text-zinc-400" />
-          </div>
-          <p className="mt-3 text-sm font-semibold text-zinc-800">
-            No resume uploaded yet
-          </p>
-          <p className="mt-1 max-w-xs text-sm text-zinc-500">
-            Upload a PDF or DOCX to extract sections, skills, and a RAG-ready
-            search index.
-          </p>
-        </div>
-      </section>
+      <SurfaceCard
+        accent="emerald"
+        header={<h2 className="text-base font-semibold text-zinc-950">Resume overview</h2>}
+      >
+        <EmptyState
+          accent="emerald"
+          icon={FileText}
+          title="No resume uploaded yet"
+          description="Upload a PDF or DOCX to extract sections, skills, and a RAG-ready search index."
+          variant="dashed"
+          className="py-8"
+        />
+      </SurfaceCard>
     );
   }
 
@@ -176,13 +169,15 @@ export function ResumeSummary({
 
   if (error) {
     return (
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-zinc-950">Resume overview</h2>
-        <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+      <SurfaceCard
+        accent="emerald"
+        header={<h2 className="text-base font-semibold text-zinc-950">Resume overview</h2>}
+      >
+        <div className={`${alertError} flex items-start gap-2`}>
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>{error.message}</p>
         </div>
-      </section>
+      </SurfaceCard>
     );
   }
 
@@ -193,38 +188,41 @@ export function ResumeSummary({
   const isFailed = resume.status === "failed";
   const isProcessed = resume.status === "processed";
 
-  const statusBadge = isProcessed
-    ? "bg-emerald-100 text-emerald-800"
+  const statusTone = isProcessed
+    ? "completed"
     : isFailed
-      ? "bg-red-100 text-red-800"
-      : "bg-amber-100 text-amber-900";
+      ? "amber"
+      : "inProgress";
 
   return (
-    <section className={resumeCard}>
-      {/* Card header */}
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold text-zinc-950">Resume overview</h2>
-          <p className="mt-0.5 truncate text-sm text-zinc-500">
-            {resume.file_name}
-            {resume.file_type === "builder"
-              ? " · built in app"
-              : resume.file_type === "manual"
-                ? " · manual entry"
-                : ""}
-          </p>
+    <SurfaceCard
+      accent="emerald"
+      premium
+      header={
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-zinc-950">Resume overview</h2>
+            <p className="mt-0.5 truncate text-sm text-zinc-600">
+              {resume.file_name}
+              {resume.file_type === "builder"
+                ? " · built in app"
+                : resume.file_type === "manual"
+                  ? " · manual entry"
+                  : ""}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {resume.is_active && (
+              <Badge tone="emerald">Active</Badge>
+            )}
+            <Badge tone={statusTone} className="capitalize">
+              {resume.status}
+            </Badge>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {resume.is_active && (
-            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-              Active
-            </span>
-          )}
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${statusBadge}`}>
-            {resume.status}
-          </span>
-        </div>
-      </div>
+      }
+      bodyClassName={resumeCardBody}
+    >
 
       {isProcessed && onEditInBuilder && resume.file_type === "builder" && (
         <button
@@ -284,7 +282,7 @@ export function ResumeSummary({
 
       {/* Processing banner */}
       {isProcessing && (
-        <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+        <div className={`${alertWarning} mt-4 flex items-center gap-2`}>
           <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
           Processing your CV — this may take a few seconds…
         </div>
@@ -345,9 +343,9 @@ export function ResumeSummary({
                   </p>
                 )}
                 <div className="flex flex-wrap gap-1.5">
-                  {categorySkills.map((skill: ResumeSkill) => (
+                  {categorySkills.map((skill: ResumeSkill, skillIndex: number) => (
                     <span
-                      className={`rounded-full border px-2.5 py-1 text-xs font-medium ${skillColor(skill.category)}`}
+                      className={skillChipClass(skill.category, skillIndex)}
                       key={skill.id}
                       title={skill.evidence ?? undefined}
                     >
@@ -388,6 +386,6 @@ export function ResumeSummary({
         onCancel={() => setDeleteDialogOpen(false)}
         onConfirm={handleDelete}
       />
-    </section>
+    </SurfaceCard>
   );
 }

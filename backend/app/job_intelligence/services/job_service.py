@@ -526,3 +526,49 @@ def list_matches_for_user(
             )
         )
     return summaries
+
+
+def list_searches_for_user(
+    *,
+    user_id: str,
+    supabase: Any,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    """Return the user's job searches with match counts, newest first."""
+    response = (
+        supabase.table("job_searches")
+        .select("id, query, location, source, created_at")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    searches = _rows(response)
+    if not searches:
+        return []
+
+    search_ids = [str(row["id"]) for row in searches if row.get("id")]
+    counts: dict[str, int] = {}
+    if search_ids:
+        jobs_response = (
+            supabase.table("jobs")
+            .select("search_id")
+            .in_("search_id", search_ids)
+            .execute()
+        )
+        for job in _rows(jobs_response):
+            search_id = str(job.get("search_id") or "")
+            if search_id:
+                counts[search_id] = counts.get(search_id, 0) + 1
+
+    return [
+        {
+            "id": str(row["id"]),
+            "query": row.get("query") or "",
+            "location": row.get("location"),
+            "source": row.get("source"),
+            "created_at": row.get("created_at"),
+            "match_count": counts.get(str(row["id"]), 0),
+        }
+        for row in searches
+    ]

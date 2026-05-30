@@ -3,7 +3,17 @@
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { SpinnerButton } from "@/components/ui";
+import { SpinnerButton, SurfaceCard } from "@/components/ui";
+import {
+  btnPrimary,
+  chipAmber,
+  chipEmerald,
+  chipSky,
+  inputField,
+  textareaField,
+} from "@/lib/ui-theme";
+
+import { resumeCardBody } from "./resume-ui";
 
 import { useCreateManualResume, useUpdateManualResume } from "./hooks";
 import type {
@@ -115,28 +125,34 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
   }
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-zinc-950">
-            Manual CV Editor
-          </h2>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            Build or refine your CV with structured fields. Saving regenerates
-            sections, skills, and the search index.
-          </p>
+    <SurfaceCard
+      accent="violet"
+      premium
+      header={
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-zinc-950">
+              Manual CV Editor
+            </h2>
+            <p className="mt-0.5 text-sm text-zinc-600">
+              Build or refine your CV with structured fields. Saving regenerates
+              sections, skills, and the search index.
+            </p>
+          </div>
+          <SpinnerButton
+            type="button"
+            loading={isSaving}
+            loadingLabel="Saving…"
+            onClick={handleSave}
+            icon={<Save className="h-4 w-4" />}
+            className={`${btnPrimary} shrink-0`}
+          >
+            Save CV
+          </SpinnerButton>
         </div>
-        <SpinnerButton
-          type="button"
-          loading={isSaving}
-          loadingLabel="Saving…"
-          onClick={handleSave}
-          icon={<Save className="h-4 w-4" />}
-          className="rounded-lg"
-        >
-          Save CV
-        </SpinnerButton>
-      </div>
+      }
+      bodyClassName={resumeCardBody}
+    >
 
       <div className="mt-5 space-y-6">
         <Field
@@ -146,7 +162,7 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
           placeholder="Manual CV"
         />
 
-        <EditorBlock title="Personal details">
+        <EditorBlock title="Personal details" accent="sky">
           <div className="grid gap-3 sm:grid-cols-2">
             {PERSONAL_FIELDS.map((field) => (
               <Field
@@ -160,7 +176,7 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
           </div>
         </EditorBlock>
 
-        <EditorBlock title="Professional summary">
+        <EditorBlock title="Professional summary" accent="violet">
           <Textarea
             label="Summary"
             value={payload.summary}
@@ -200,7 +216,7 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
           onChange={(items) => setField("languages", items)}
         />
       </div>
-    </section>
+    </SurfaceCard>
   );
 }
 
@@ -211,14 +227,31 @@ function SkillsEditor({
   items: ManualSkillInput[];
   onChange: (items: ManualSkillInput[]) => void;
 }) {
+  const CHIP_CLASSES = [chipEmerald, chipSky, chipAmber] as const;
+
   return (
     <EditorBlock
       title="Skills"
       actionLabel="Add skill"
+      accent="emerald"
       onAdd={() =>
         onChange([...items, { skill_name: "", category: "", proficiency: "" }])
       }
     >
+      {items.filter((item) => item.skill_name.trim()).length > 0 ? (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {items
+            .filter((item) => item.skill_name.trim())
+            .map((item, index) => (
+              <span
+                key={`${item.skill_name}-${index}`}
+                className={CHIP_CLASSES[index % CHIP_CLASSES.length]}
+              >
+                {item.skill_name}
+              </span>
+            ))}
+        </div>
+      ) : null}
       <div className="space-y-3">
         {items.map((item, index) => (
           <RepeatableRow
@@ -436,28 +469,39 @@ function EditorBlock({
   children,
   onAdd,
   title,
+  accent = "emerald",
 }: {
   actionLabel?: string;
   children: React.ReactNode;
   onAdd?: () => void;
   title: string;
+  accent?: "emerald" | "sky" | "violet";
 }) {
+  const headerTint =
+    accent === "sky"
+      ? "border-sky-100/80 bg-gradient-to-r from-sky-50/90 to-cyan-50/60"
+      : accent === "violet"
+        ? "border-violet-100/80 bg-gradient-to-r from-violet-50/90 to-purple-50/60"
+        : "border-emerald-100/80 bg-gradient-to-r from-emerald-50/90 to-teal-50/60";
+
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-zinc-950">{title}</h3>
-        {actionLabel && onAdd ? (
-          <button
-            className="flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100"
-            type="button"
-            onClick={onAdd}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {actionLabel}
-          </button>
-        ) : null}
+    <div className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white ring-1 ring-zinc-950/[0.03]">
+      <div className={`border-b px-4 py-3 ${headerTint}`}>
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-zinc-950">{title}</h3>
+          {actionLabel && onAdd ? (
+            <button
+              className="flex items-center gap-1.5 rounded-md border border-zinc-200/80 bg-white/90 px-2.5 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-white"
+              type="button"
+              onClick={onAdd}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {actionLabel}
+            </button>
+          ) : null}
+        </div>
       </div>
-      {children}
+      <div className="p-4">{children}</div>
     </div>
   );
 }
@@ -501,7 +545,7 @@ function Field({
     <label className="block text-xs font-semibold text-zinc-600">
       {label}
       <input
-        className="mt-1 h-10 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-950 outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100 disabled:bg-zinc-100"
+        className={`${inputField} mt-1 h-10 font-medium text-zinc-950 disabled:bg-zinc-100`}
         disabled={disabled}
         placeholder={placeholder}
         value={value}
@@ -528,7 +572,7 @@ function Textarea({
     <label className="block text-xs font-semibold text-zinc-600">
       {label}
       <textarea
-        className="mt-1 w-full resize-y rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium leading-6 text-zinc-950 outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+        className={`${textareaField} mt-1 font-medium leading-6 text-zinc-950`}
         placeholder={placeholder}
         rows={rows}
         value={value}

@@ -3,6 +3,7 @@ import { apiRequest } from "@/lib/api";
 import type {
   JobSearchRequest,
   JobSearchResponse,
+  JobSearchSummary,
   ManualJobRequest,
   MatchSummary,
   SaveMatchResponse,
@@ -37,6 +38,12 @@ export function listMatches(
   const suffix = query.toString();
   return apiRequest<MatchSummary[]>(
     `/api/v1/jobs/matches${suffix ? `?${suffix}` : ""}`,
+  );
+}
+
+export function listJobSearches(limit = 50) {
+  return apiRequest<JobSearchSummary[]>(
+    `/api/v1/jobs/searches?limit=${limit}`,
   );
 }
 

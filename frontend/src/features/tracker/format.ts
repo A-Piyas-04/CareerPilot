@@ -1,6 +1,7 @@
 import { format, formatDistanceToNowStrict, parseISO } from "date-fns";
 
 import { resolveApplicationFields } from "./types";
+import type { LinkedJobSummary } from "./types";
 
 export function formatDate(value: string | null | undefined) {
   if (!value) {
@@ -20,7 +21,7 @@ export function formatRelative(value: string | null | undefined) {
 
 export function getApplicationTitle(application: {
   manual_job_title: string | null;
-  job?: { title?: string | null } | null;
+  job?: LinkedJobSummary | null;
 }) {
   const resolved = resolveApplicationFields({
     manual_job_title: application.manual_job_title,
@@ -34,7 +35,7 @@ export function getApplicationTitle(application: {
 export function getCompanyLine(application: {
   manual_company: string | null;
   manual_location: string | null;
-  job?: { company?: string | null; location?: string | null } | null;
+  job?: LinkedJobSummary | null;
 }) {
   const resolved = resolveApplicationFields({
     manual_job_title: null,
@@ -49,7 +50,7 @@ export function getCompanyLine(application: {
 
 export function getApplicationDeadline(application: {
   deadline?: string | null;
-  job?: { deadline?: string | null } | null;
+  job?: LinkedJobSummary | null;
   manual_job_title?: string | null;
   manual_company?: string | null;
   manual_location?: string | null;

@@ -3,24 +3,29 @@
 import { Loader2 } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+import {
+  btnDanger,
+  btnGhost,
+  btnPrimary,
+  btnPrimarySky,
+  btnSecondary,
+} from "@/lib/ui-theme";
+
 type SpinnerButtonVariant =
   | "primary"
   | "secondary"
   | "danger"
   | "ghost"
-  | "emerald";
+  | "emerald"
+  | "sky";
 
 const VARIANT_CLASSES: Record<SpinnerButtonVariant, string> = {
-  primary:
-    "inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-zinc-300",
-  secondary:
-    "inline-flex h-10 items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-55",
-  danger:
-    "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-300",
-  ghost:
-    "inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-55",
-  emerald:
-    "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400",
+  primary: `${btnPrimary} disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:opacity-100`,
+  secondary: `${btnSecondary} disabled:cursor-not-allowed disabled:opacity-55`,
+  danger: `${btnDanger} disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:opacity-100`,
+  ghost: `${btnGhost} disabled:cursor-not-allowed disabled:opacity-55`,
+  emerald: `${btnPrimary} disabled:cursor-not-allowed disabled:bg-emerald-400 disabled:opacity-100`,
+  sky: `${btnPrimarySky} disabled:cursor-not-allowed disabled:opacity-60`,
 };
 
 type SpinnerButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {

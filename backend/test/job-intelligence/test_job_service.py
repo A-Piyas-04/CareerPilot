@@ -340,3 +340,47 @@ class TestSaveToTracker:
                 supabase=supabase,
             )
         assert "404" in str(excinfo.value) or "not found" in str(excinfo.value).lower()
+
+
+class TestListSearchesForUser:
+    def test_returns_searches_with_match_counts(self, supabase):
+        supabase.select_responses["job_searches"] = [[
+            {
+                "id": _SEARCH_ID,
+                "query": "python backend",
+                "location": "Berlin",
+                "source": "jsearch",
+                "created_at": "2026-05-30T10:00:00Z",
+            },
+            {
+                "id": "00000000-0000-0000-0000-000000000011",
+                "query": "data analyst",
+                "location": None,
+                "source": "jsearch",
+                "created_at": "2026-05-29T10:00:00Z",
+            },
+        ]]
+        supabase.select_responses["jobs"] = [[
+            {"search_id": _SEARCH_ID},
+            {"search_id": _SEARCH_ID},
+            {"search_id": "00000000-0000-0000-0000-000000000011"},
+        ]]
+
+        result = job_service.list_searches_for_user(
+            user_id=_USER_ID,
+            supabase=supabase,
+        )
+
+        assert len(result) == 2
+        assert result[0]["id"] == _SEARCH_ID
+        assert result[0]["query"] == "python backend"
+        assert result[0]["match_count"] == 2
+        assert result[1]["match_count"] == 1
+
+    def test_returns_empty_when_no_searches(self, supabase):
+        supabase.select_responses["job_searches"] = [[]]
+        result = job_service.list_searches_for_user(
+            user_id=_USER_ID,
+            supabase=supabase,
+        )
+        assert result == []

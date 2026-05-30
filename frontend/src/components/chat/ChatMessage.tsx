@@ -1,14 +1,16 @@
 "use client";
 
 import { format } from "date-fns";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { Bot, ChevronDown, Loader2, User } from "lucide-react";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 
-import { ChunkEvidenceCard } from "@/components/resume/chunk-evidence-card";
-import type { AssistantIntent } from "@/lib/assistant/detectIntent";
+import { Badge } from "@/components/ui";
 import { saveCoverLetter, saveRoadmap } from "@/lib/career-api";
+import { btnPrimarySky, surfaceCardElevated } from "@/lib/ui-theme";
 import type { AssistantMessage } from "@/lib/types/assistant";
+
+import { getIntentFromMetadata, IntentBadge } from "./intent-badge";
 
 type Props = {
   message: AssistantMessage;
@@ -38,14 +40,27 @@ export function ChatMessage({ message }: Props) {
   const hasResume = message.metadata?.has_resume === true;
   const showNoResumeBanner =
     !isUser && message.metadata?.has_resume === false;
+  const intent = !isUser ? getIntentFromMetadata(message.metadata) : null;
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <article
-        className={`group max-w-[78%] rounded-lg px-4 py-3 shadow-sm ${
+    <div
+      className={`flex gap-3 ${isUser ? "flex-row-reverse justify-start" : "justify-start"}`}
+    >
+      <span
+        className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl shadow-sm ${
           isUser
-            ? "bg-sky-600 text-white"
-            : "border border-zinc-200 bg-white text-zinc-900"
+            ? "bg-gradient-to-br from-sky-500 to-sky-700 text-white"
+            : "border border-sky-100 bg-sky-50 text-sky-700"
+        }`}
+        aria-hidden
+      >
+        {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+      </span>
+      <article
+        className={`group max-w-[min(78%,42rem)] px-4 py-3 shadow-sm ${
+          isUser
+            ? "rounded-2xl rounded-tr-md bg-gradient-to-br from-sky-600 via-sky-600 to-sky-700 text-white shadow-md shadow-sky-900/15 ring-1 ring-sky-500/20"
+            : "rounded-2xl rounded-tl-md border border-zinc-200/90 bg-white text-zinc-900 ring-1 ring-zinc-950/[0.03]"
         }`}
       >
         {showNoResumeBanner ? (
@@ -64,7 +79,12 @@ export function ChatMessage({ message }: Props) {
           </p>
         ) : (
           <>
-            <div className="prose prose-sm max-w-none prose-zinc leading-6">
+            {intent ? (
+              <div className="mb-2">
+                <IntentBadge intent={intent} />
+              </div>
+            ) : null}
+            <div className="prose prose-sm max-w-none prose-zinc prose-headings:text-zinc-900 prose-a:text-sky-700 leading-6">
               <ReactMarkdown>{message.content}</ReactMarkdown>
             </div>
             {hasResume && evidenceChunks.length > 0 ? (
@@ -77,7 +97,7 @@ export function ChatMessage({ message }: Props) {
 
         <p
           className={`mt-2 text-[11px] font-medium opacity-0 transition group-hover:opacity-100 ${
-            isUser ? "text-blue-100" : "text-zinc-400"
+            isUser ? "text-sky-100" : "text-zinc-400"
           }`}
         >
           {format(new Date(message.created_at), "MMM d, h:mm a")}
@@ -91,26 +111,62 @@ function CvEvidenceSection({ chunks }: { chunks: EvidenceChunk[] }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="mt-3 border-t border-zinc-100 pt-3">
+    <div className="mt-4 border-t border-sky-100 pt-3">
       <button
-        className="flex w-full items-center justify-between gap-2 text-left text-xs font-semibold text-indigo-700"
+        className="flex w-full items-center justify-between gap-2 rounded-lg px-1 py-1 text-left transition hover:bg-sky-50/80"
         type="button"
         onClick={() => setOpen((value) => !value)}
       >
-        <span>Based on your CV ({chunks.length} sections)</span>
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-sky-800">
+            Based on your CV
+          </span>
+          <Badge tone="sky">{chunks.length} sections</Badge>
+        </span>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 transition ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 text-sky-600 transition ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open ? (
-        <div className="mt-2 space-y-2">
+        <div className="mt-3 space-y-2">
           {chunks.map((chunk) => (
-            <ChunkEvidenceCard chunk={chunk} key={chunk.chunk_id} />
+            <ChatEvidenceCard chunk={chunk} key={chunk.chunk_id} />
           ))}
         </div>
       ) : null}
     </div>
   );
+}
+
+function ChatEvidenceCard({ chunk }: { chunk: EvidenceChunk }) {
+  const matchPct = Math.round(chunk.similarity * 100);
+
+  return (
+    <article className={`${surfaceCardElevated} p-3`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Badge tone="neutral" className="capitalize">
+          {chunk.section_name ?? "General"}
+        </Badge>
+        <Badge tone="sky">{matchPct}% match</Badge>
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-zinc-700">
+        {truncateEvidenceText(chunk.chunk_text, 280)}
+      </p>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-sky-100">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
+          style={{ width: `${matchPct}%` }}
+        />
+      </div>
+    </article>
+  );
+}
+
+function truncateEvidenceText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return `${text.slice(0, maxLength - 1)}…`;
 }
 
 function DraftAction({
@@ -179,9 +235,9 @@ function DraftAction({
   }
 
   return (
-    <div className="mt-3 border-t border-zinc-100 pt-3">
+    <div className="mt-4 border-t border-sky-100 pt-3">
       <button
-        className="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+        className={`${btnPrimarySky} h-9 px-3 text-xs disabled:opacity-60`}
         disabled={loading}
         type="button"
         onClick={() => void handleSave()}
@@ -197,7 +253,7 @@ function DraftAction({
 }
 
 function assistantMessageAction(message: AssistantMessage) {
-  const intent = message.metadata?.intent as AssistantIntent | undefined;
+  const intent = getIntentFromMetadata(message.metadata);
   const canSaveCover =
     message.metadata?.can_save_cover_letter === true;
   const canSaveRoadmap = message.metadata?.can_save_roadmap === true;

@@ -1,8 +1,11 @@
 "use client";
 
+import { CalendarClock } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
+import { Badge, EmptyState } from "@/components/ui";
 import type { UpcomingDashboardEvent } from "@/lib/dashboard/types";
+import { surfaceCard, surfaceCardHeader } from "@/lib/ui-theme";
 
 type UpcomingDeadlinesProps = {
   events: UpcomingDashboardEvent[];
@@ -10,48 +13,56 @@ type UpcomingDeadlinesProps = {
 
 export function UpcomingDeadlines({ events }: UpcomingDeadlinesProps) {
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-zinc-950">Upcoming Deadlines</h2>
-      <p className="mt-1 text-sm text-zinc-500">Next calendar items</p>
+    <section className={`overflow-hidden ${surfaceCard}`}>
+      <div className={surfaceCardHeader("violet")}>
+        <h2 className="text-lg font-semibold text-zinc-950">Upcoming Deadlines</h2>
+        <p className="mt-0.5 text-sm text-zinc-500">Next calendar items</p>
+      </div>
 
-      {events.length === 0 ? (
-        <div className="mt-5 rounded-md border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
-          No upcoming deadlines.
-        </div>
-      ) : (
-        <div className="mt-5 space-y-3">
-          {events.map((event) => {
-            const date = new Date(event.startTime);
-            const validDate = !Number.isNaN(date.getTime());
+      <div className="p-5">
+        {events.length === 0 ? (
+          <EmptyState
+            accent="violet"
+            icon={CalendarClock}
+            title="No upcoming deadlines"
+            description="Add events on the calendar or save job deadlines to see them here."
+            variant="filled"
+          />
+        ) : (
+          <div className="space-y-3">
+            {events.map((event) => {
+              const date = new Date(event.startTime);
+              const validDate = !Number.isNaN(date.getTime());
 
-            return (
-              <article
-                className="rounded-md border border-zinc-200 p-3"
-                key={event.id}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-zinc-950">
-                      {event.title}
-                    </p>
-                    <p className="mt-1 text-xs text-zinc-500">
-                      {validDate ? format(date, "MMM d, h:mm a") : "Time not set"}
-                    </p>
+              return (
+                <article
+                  className="rounded-xl border border-violet-100/80 bg-gradient-to-r from-violet-50/40 to-white p-3 ring-1 ring-violet-100/50"
+                  key={event.id}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-zinc-950">
+                        {event.title}
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {validDate ? format(date, "MMM d, h:mm a") : "Time not set"}
+                      </p>
+                    </div>
+                    <Badge tone="deadline" className="shrink-0 capitalize">
+                      {event.eventType}
+                    </Badge>
                   </div>
-                  <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold capitalize text-emerald-800">
-                    {event.eventType}
-                  </span>
-                </div>
-                {validDate ? (
-                  <p className="mt-2 text-xs font-medium text-zinc-500">
-                    {formatDistanceToNow(date, { addSuffix: true })}
-                  </p>
-                ) : null}
-              </article>
-            );
-          })}
-        </div>
-      )}
+                  {validDate ? (
+                    <p className="mt-2 text-xs font-medium text-violet-700/80">
+                      {formatDistanceToNow(date, { addSuffix: true })}
+                    </p>
+                  ) : null}
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

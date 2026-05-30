@@ -13,6 +13,10 @@ import {
 import { useState } from "react";
 import type { ReactNode } from "react";
 
+import { ConfirmDialog } from "@/components/ui";
+
+import { premiumCard } from "@/lib/ui-theme";
+
 import { formatDate } from "./format";
 import { useCancelGoal, useUpdateGoal } from "./hooks";
 import { TaskList } from "./task-list";
@@ -26,6 +30,7 @@ type Props = {
 
 export function GoalCard({ goal, onEdit }: Props) {
   const [isExpanded, setIsExpanded] = useState(goal.status === "active");
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const updateMutation = useUpdateGoal(goal.id);
   const cancelMutation = useCancelGoal();
   const completedTasks = goal.tasks.filter((task) => task.status === "done").length;
@@ -37,15 +42,23 @@ export function GoalCard({ goal, onEdit }: Props) {
   }
 
   async function handleCancel() {
-    if (!confirm("Cancel this goal? Linked tasks will stay available for history.")) {
-      return;
-    }
-
     await cancelMutation.mutateAsync(goal.id);
+    setShowCancelConfirm(false);
   }
 
   return (
-    <article className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+    <>
+      <ConfirmDialog
+        isOpen={showCancelConfirm}
+        title="Cancel this goal?"
+        description="Linked tasks will stay available for history."
+        confirmLabel="Cancel goal"
+        destructive
+        isPending={cancelMutation.isPending}
+        onConfirm={handleCancel}
+        onCancel={() => setShowCancelConfirm(false)}
+      />
+    <article className={`overflow-hidden ${premiumCard}`}>
       <div className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -106,7 +119,7 @@ export function GoalCard({ goal, onEdit }: Props) {
             {goal.status !== "cancelled" ? (
               <IconButton
                 label="Cancel goal"
-                onClick={handleCancel}
+                onClick={() => setShowCancelConfirm(true)}
                 disabled={cancelMutation.isPending}
                 danger
               >
@@ -130,9 +143,9 @@ export function GoalCard({ goal, onEdit }: Props) {
         </div>
 
         <div className="mt-4">
-          <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
+          <div className="h-2 overflow-hidden rounded-full bg-violet-100">
             <div
-              className="h-full rounded-full bg-emerald-600 transition-all"
+              className="h-full rounded-full bg-gradient-to-r from-violet-600 to-purple-600 transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -150,6 +163,7 @@ export function GoalCard({ goal, onEdit }: Props) {
 
       {isExpanded ? <TaskList goal={goal} /> : null}
     </article>
+    </>
   );
 }
 
@@ -187,7 +201,7 @@ function IconButton({
 function statusClass(status: GoalStatus) {
   const base = "rounded px-2 py-0.5 text-xs font-semibold";
   if (status === "active") {
-    return `${base} bg-emerald-50 text-emerald-700`;
+    return `${base} bg-violet-50 text-violet-800 ring-1 ring-violet-200/60`;
   }
   if (status === "completed") {
     return `${base} bg-sky-50 text-sky-700`;

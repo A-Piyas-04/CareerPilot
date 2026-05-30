@@ -56,11 +56,12 @@ export function SkillGapPageClient() {
   useEffect(() => {
     if (!jobIdParam) return;
 
+    const jobId = jobIdParam;
     let cancelled = false;
 
     async function loadJobContext() {
       try {
-        const matches = await listMatches({ job_id: jobIdParam, limit: 1 });
+        const matches = await listMatches({ job_id: jobId, limit: 1 });
         if (cancelled || !matches.length) return;
 
         const match = matches[0];
@@ -112,6 +113,8 @@ export function SkillGapPageClient() {
   return (
     <PageShell>
       <PageHeader
+        accent="sky"
+        eyebrowText="Plan"
         icon={LineChart}
         title="Skill Gap Analysis"
         description="Compare your CV against a target role and get prioritized learning recommendations."
@@ -128,7 +131,7 @@ export function SkillGapPageClient() {
               resumeId,
             }}
             previewMissingSkills={prefill?.previewMissingSkills ?? []}
-            prefillLabel={prefill?.label ?? null}
+            prefillLabel={prefill?.label}
             isAnalyzing={analyze.isPending}
             onAnalyze={handleAnalyze}
           />

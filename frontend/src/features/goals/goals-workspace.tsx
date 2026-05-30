@@ -5,9 +5,10 @@ import { useMemo, useState } from "react";
 
 import { PageHeader, PageShell } from "@/components/layout";
 import { TaskList } from "@/components/tasks/TaskList";
-import { ListCardSkeleton } from "@/components/ui";
+import { EmptyState, ListCardSkeleton } from "@/components/ui";
 import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
-import { alertError, btnPrimary, surfaceCard } from "@/lib/ui-theme";
+import { getPageAccentStyles } from "@/lib/nav-styles";
+import { alertError, btnPrimary, surfaceCardElevated } from "@/lib/ui-theme";
 
 import { GoalCard } from "./goal-card";
 import { GoalFormDrawer } from "./goal-form-drawer";
@@ -38,6 +39,8 @@ export function GoalsWorkspace() {
   return (
     <PageShell width="wide">
       <PageHeader
+        accent="violet"
+        eyebrowText="Track"
         icon={Target}
         title="Goals"
         description="Set career milestones, break them into tasks, and track progress alongside your applications."
@@ -55,9 +58,9 @@ export function GoalsWorkspace() {
           <div className="flex flex-wrap items-center gap-2">
             {(["all", ...GOAL_STATUSES] as GoalFilter[]).map((status) => (
               <button
-                className={`h-9 rounded-lg border px-3 text-sm font-semibold transition ${
+                className={`h-9 rounded-full border px-3.5 text-sm font-semibold transition ${
                   filter === status
-                    ? "border-emerald-700 bg-emerald-700 text-white"
+                    ? getPageAccentStyles("violet").pillActive
                     : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
                 }`}
                 key={status}
@@ -80,29 +83,25 @@ export function GoalsWorkspace() {
               ))}
             </div>
           ) : (
-            <div className={`${surfaceCard} border-dashed p-8 text-center`}>
-              <h2 className="text-lg font-semibold text-zinc-950">
-                No goals found
-              </h2>
-              <p className="mt-1 text-sm text-zinc-500">
-                Create a goal and break it into linked tasks.
-              </p>
-              <button
-                className={`${btnPrimary} mt-4`}
-                type="button"
-                onClick={handleCreateGoal}
-              >
-                <Plus className="h-4 w-4" />
-                Add Goal
-              </button>
-            </div>
-          )}
-        </div>
+            <EmptyState
+              accent="violet"
+              icon={Target}
+              title="No goals found"
+              description="Create a goal and break it into linked tasks."
+              actions={
+                <button className={btnPrimary} type="button" onClick={handleCreateGoal}>
+                  <Plus className="h-4 w-4" />
+                  Add Goal
+                </button>
+              }
+            />
+          )}        </div>
 
         <div className="min-w-0 xl:sticky xl:top-20 xl:self-start">
-          <TaskList />
-        </div>
-      </div>
+          <div className={`${surfaceCardElevated} overflow-hidden`}>
+            <TaskList />
+          </div>
+        </div>      </div>
 
       <GoalFormDrawer
         goal={editingGoal}

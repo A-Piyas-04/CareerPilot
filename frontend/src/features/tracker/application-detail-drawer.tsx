@@ -4,7 +4,7 @@ import { CalendarDays, Mail, Save, Sparkles, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 
-import { DrawerSkeleton, SpinnerButton } from "@/components/ui";
+import { DrawerSkeleton, ConfirmDialog, SpinnerButton } from "@/components/ui";
 import {
   buildChatHref,
   buildCoverLetterHref,
@@ -136,6 +136,7 @@ function ApplicationDetailForm({
     deadline: source.deadline ?? "",
     notes: source.notes ?? "",
   });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -149,15 +150,23 @@ function ApplicationDetailForm({
   }
 
   async function handleDelete() {
-    if (!confirm("Delete this application card?")) {
-      return;
-    }
-
     await deleteMutation.mutateAsync(application.id);
+    setShowDeleteConfirm(false);
     onClose();
   }
 
   return (
+    <>
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete application?"
+        description="This will permanently remove this application card from your tracker."
+        confirmLabel="Delete application"
+        destructive
+        isPending={deleteMutation.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     <form className="space-y-4 p-5" onSubmit={handleSave}>
       <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
         <p className="text-sm font-medium text-zinc-900">
@@ -229,7 +238,7 @@ function ApplicationDetailForm({
         <button
           className="flex h-10 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
           type="button"
-          onClick={handleDelete}
+          onClick={() => setShowDeleteConfirm(true)}
           disabled={deleteMutation.isPending}
         >
           <Trash2 className="h-4 w-4" />
@@ -247,6 +256,7 @@ function ApplicationDetailForm({
         </SpinnerButton>
       </div>
     </form>
+    </>
   );
 }
 

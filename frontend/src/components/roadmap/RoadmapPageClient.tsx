@@ -42,6 +42,8 @@ export function RoadmapPageClient() {
   return (
     <PageShell>
       <PageHeader
+        accent="sky"
+        eyebrowText="Plan"
         icon={Map}
         title="Learning Roadmap"
         description="Generate weekly learning plans from skill gaps or target roles, then track progress over time."

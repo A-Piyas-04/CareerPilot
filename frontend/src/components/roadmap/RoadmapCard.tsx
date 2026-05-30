@@ -5,6 +5,7 @@ import { ArrowRight, CalendarDays } from "lucide-react";
 import Link from "next/link";
 
 import type { RoadmapListItem } from "@/lib/roadmap/types";
+import { surfaceCard } from "@/lib/ui-theme";
 
 type RoadmapCardProps = {
   roadmap: RoadmapListItem;
@@ -12,7 +13,7 @@ type RoadmapCardProps = {
 
 export function RoadmapCard({ roadmap }: RoadmapCardProps) {
   return (
-    <article className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+    <article className={`p-4 transition hover:border-sky-200 hover:shadow-md ${surfaceCard}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-zinc-950">
@@ -28,7 +29,7 @@ export function RoadmapCard({ roadmap }: RoadmapCardProps) {
         </div>
         <Link
           href={`/roadmap/${roadmap.id}`}
-          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 transition hover:border-[#1A56DB] hover:text-[#1A56DB]"
+          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
         >
           Open
           <ArrowRight className="h-4 w-4" />
@@ -50,7 +51,7 @@ export function RoadmapCard({ roadmap }: RoadmapCardProps) {
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
           <div
-            className="h-full rounded-full bg-[#1A56DB]"
+            className="h-full rounded-full bg-gradient-to-r from-sky-500 to-sky-700"
             style={{ width: `${Math.min(100, roadmap.progress_percent)}%` }}
           />
         </div>

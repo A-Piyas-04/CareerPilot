@@ -21,7 +21,8 @@ import type {
 } from "@/lib/hooks/useCalendarEvents";
 import { useCalendarEvents } from "@/lib/hooks/useCalendarEvents";
 import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
-import { btnPrimary, surfaceCard } from "@/lib/ui-theme";
+import { getPageAccentStyles } from "@/lib/nav-styles";
+import { btnPrimary, premiumCard } from "@/lib/ui-theme";
 
 import { EventModal } from "./EventModal";
 import { EventPopover } from "./EventPopover";
@@ -74,6 +75,8 @@ export function CalendarView() {
   return (
     <PageShell width="wide">
       <PageHeader
+        accent="violet"
+        eyebrowText="Track"
         icon={CalendarDays}
         title="Calendar"
         description="See deadlines, interviews, and roadmap milestones alongside your goals and tracker."
@@ -91,13 +94,13 @@ export function CalendarView() {
       />
 
       <div className="flex flex-1 flex-col gap-5 xl:flex-row">
-        <div className={`min-w-0 flex-1 p-4 ${surfaceCard}`}>
+        <div className={`min-w-0 flex-1 overflow-hidden p-4 ${premiumCard}`}>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex rounded-md border border-zinc-300 bg-white p-1">
+            <div className="flex rounded-full border border-zinc-200 bg-white p-1 ring-1 ring-zinc-100">
               <button
-                className={`h-8 rounded px-3 text-sm font-semibold ${
+                className={`h-8 rounded-full px-4 text-sm font-semibold transition ${
                   view === Views.MONTH
-                    ? "bg-emerald-700 text-white"
+                    ? getPageAccentStyles("violet").pillActive
                     : "text-zinc-700 hover:bg-zinc-50"
                 }`}
                 type="button"
@@ -106,9 +109,9 @@ export function CalendarView() {
                 Month
               </button>
               <button
-                className={`h-8 rounded px-3 text-sm font-semibold ${
+                className={`h-8 rounded-full px-4 text-sm font-semibold transition ${
                   view === Views.WEEK
-                    ? "bg-emerald-700 text-white"
+                    ? getPageAccentStyles("violet").pillActive
                     : "text-zinc-700 hover:bg-zinc-50"
                 }`}
                 type="button"
@@ -127,7 +130,11 @@ export function CalendarView() {
 
           <div className="relative min-h-[680px]">
             {eventsQuery.isLoading ? (
-              <Skeleton className="absolute inset-0 rounded-lg" aria-label="Loading calendar" />
+              <div className="absolute inset-0 grid grid-cols-7 gap-1 p-2" aria-label="Loading calendar">
+                {Array.from({ length: 35 }, (_, i) => (
+                  <Skeleton key={i} className="min-h-[88px] rounded-lg" />
+                ))}
+              </div>
             ) : null}
             <Calendar<CalendarDisplayEvent>
               localizer={localizer}

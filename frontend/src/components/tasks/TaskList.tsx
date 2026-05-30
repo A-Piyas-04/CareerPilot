@@ -12,7 +12,7 @@ import {
 import { CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { ListCardSkeleton } from "@/components/ui";
+import { ListCardSkeleton, ConfirmDialog } from "@/components/ui";
 import type { StandaloneTask } from "@/lib/hooks/useTasks";
 import {
   useBulkCompleteStandaloneTasks,
@@ -45,6 +45,7 @@ export function TaskList() {
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const tasksQuery = useTasks();
   const bulkCompleteMutation = useBulkCompleteStandaloneTasks();
   const bulkDeleteMutation = useBulkDeleteStandaloneTasks();
@@ -74,15 +75,23 @@ export function TaskList() {
   }
 
   async function handleBulkDelete() {
-    if (!confirm("Delete selected tasks?")) {
-      return;
-    }
-
     await bulkDeleteMutation.mutateAsync(selectedIds);
     setSelectedTaskIds(new Set());
+    setShowBulkDeleteConfirm(false);
   }
 
   return (
+    <>
+      <ConfirmDialog
+        isOpen={showBulkDeleteConfirm}
+        title="Delete selected tasks?"
+        description={`This will permanently remove ${selectedIds.length} task${selectedIds.length === 1 ? "" : "s"}.`}
+        confirmLabel="Delete tasks"
+        destructive
+        isPending={bulkDeleteMutation.isPending}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setShowBulkDeleteConfirm(false)}
+      />
     <aside
       className="flex min-h-[640px] flex-col rounded-lg border border-zinc-200 bg-white shadow-sm"
       id="tasks"
@@ -140,7 +149,7 @@ export function TaskList() {
             <button
               className="flex h-8 items-center gap-1.5 rounded-md border border-red-200 bg-white px-2.5 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
               type="button"
-              onClick={handleBulkDelete}
+              onClick={() => setShowBulkDeleteConfirm(true)}
               disabled={bulkDeleteMutation.isPending}
             >
               <Trash2 className="h-4 w-4" />
@@ -172,6 +181,7 @@ export function TaskList() {
         )}
       </div>
     </aside>
+    </>
   );
 }
 

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { FormEvent, useState } from "react";
 
+import { ConfirmDialog } from "@/components/ui";
 import type {
   StandaloneTask,
   StandaloneTaskPriority,
@@ -30,6 +31,7 @@ type Props = {
 
 export function TaskItem({ task, isSelected, onSelectionChange }: Props) {
   const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const updateMutation = useUpdateStandaloneTask();
   const deleteMutation = useDeleteStandaloneTask();
 
@@ -41,11 +43,8 @@ export function TaskItem({ task, isSelected, onSelectionChange }: Props) {
   }
 
   async function handleDelete() {
-    if (!confirm("Delete this task?")) {
-      return;
-    }
-
     await deleteMutation.mutateAsync(task.id);
+    setShowDeleteConfirm(false);
   }
 
   if (isEditing) {
@@ -63,6 +62,17 @@ export function TaskItem({ task, isSelected, onSelectionChange }: Props) {
     isBefore(parseISO(task.due_date!), startOfToday());
 
   return (
+    <>
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete this task?"
+        description="This will permanently remove this task."
+        confirmLabel="Delete task"
+        destructive
+        isPending={deleteMutation.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     <li className="group flex items-start gap-2 rounded-md border border-zinc-200 bg-white p-3 transition hover:border-zinc-300 hover:shadow-sm">
       <input
         className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-600"
@@ -147,7 +157,7 @@ export function TaskItem({ task, isSelected, onSelectionChange }: Props) {
         <button
           className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
           type="button"
-          onClick={handleDelete}
+          onClick={() => setShowDeleteConfirm(true)}
           disabled={deleteMutation.isPending}
           title="Delete task"
           aria-label="Delete task"
@@ -156,6 +166,7 @@ export function TaskItem({ task, isSelected, onSelectionChange }: Props) {
         </button>
       </div>
     </li>
+    </>
   );
 }
 

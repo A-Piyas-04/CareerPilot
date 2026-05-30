@@ -3,7 +3,8 @@
 import { CheckCircle2, FileText, FileUp, Upload, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
-import { SpinnerButton, SubmissionProgress } from "@/components/ui";
+import { Badge, SpinnerButton, SubmissionProgress, SurfaceCard } from "@/components/ui";
+import { alertError, iconTile } from "@/lib/ui-theme";
 import { useSimulatedProgress } from "@/hooks/useSimulatedProgress";
 import { RESUME_UPLOAD_STEPS } from "@/lib/progress/resume-upload-progress";
 
@@ -14,7 +15,7 @@ import {
   type UploadPreviewPhase,
 } from "./resume-upload-preview-drawer";
 import {
-  resumeCard,
+  resumeCardBody,
   resumeCardHeader,
   resumeCardSubtext,
   resumePrimaryButton,
@@ -150,22 +151,26 @@ export function ResumeUploadCard({
 
   return (
     <>
-      <section className={resumeCard}>
-        {/* Header */}
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h2 className={resumeCardHeader}>Upload CV</h2>
-            <p className={resumeCardSubtext}>
-              PDF or DOCX · max 10 MB · parsed into sections, skills &amp; search index
-            </p>
+      <SurfaceCard
+        accent="emerald"
+        premium
+        header={
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h2 className={resumeCardHeader}>Upload CV</h2>
+              <p className={resumeCardSubtext}>
+                PDF or DOCX · max 10 MB · parsed into sections, skills &amp; search index
+              </p>
+            </div>
+            {isDone && (
+              <Badge tone="completed" icon={<CheckCircle2 className="h-3.5 w-3.5" />}>
+                Processed
+              </Badge>
+            )}
           </div>
-          {isDone && (
-            <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Processed
-            </span>
-          )}
-        </div>
+        }
+        bodyClassName={resumeCardBody}
+      >
 
         {/* Drop zone */}
         <div
@@ -193,8 +198,8 @@ export function ResumeUploadCard({
         >
           {selectedFile ? (
             <>
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100">
-                <FileText className="h-6 w-6 text-emerald-700" />
+              <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${iconTile("emerald")}`}>
+                <FileText className="h-6 w-6" />
               </div>
               <p className="mt-2 text-sm font-semibold text-zinc-900">
                 {selectedFile.name}
@@ -227,7 +232,7 @@ export function ResumeUploadCard({
 
         {/* Error */}
         {(localError || uploadMutation.error) && (
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+          <div className={`${alertError} mt-3 flex items-start gap-2`}>
             <X className="mt-0.5 h-4 w-4 shrink-0" />
             <p>{localError ?? uploadMutation.error?.message}</p>
           </div>
@@ -269,7 +274,7 @@ export function ResumeUploadCard({
             </button>
           )}
         </div>
-      </section>
+      </SurfaceCard>
 
       <ResumeUploadPreviewDrawer
         detail={previewDetail}

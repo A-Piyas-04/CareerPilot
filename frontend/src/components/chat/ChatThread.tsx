@@ -7,8 +7,11 @@ import { useEffect, useMemo, useRef } from "react";
 import { useAssistantMessages, useSendAssistantMessage } from "@/lib/hooks/useAssistantMessages";
 import type { AssistantConversation } from "@/lib/types/assistant";
 
-import { ListCardSkeleton } from "@/components/ui";
+import { Badge, ListCardSkeleton } from "@/components/ui";
+import { chipSky, surfaceCardElevated, surfaceCardHeader } from "@/lib/ui-theme";
 
+import { getIntentFromMetadata, IntentBadge } from "./intent-badge";
+import { GuidedWorkflows } from "./guided-workflows";
 import type { ActiveJobContext } from "./ChatWorkspace";
 import { ChatMessage } from "./ChatMessage";
 import { MessageComposer } from "./MessageComposer";
@@ -16,6 +19,7 @@ import { MessageComposer } from "./MessageComposer";
 type Props = {
   conversation: AssistantConversation | null;
   jobContext?: ActiveJobContext | null;
+  onCreateConversation?: () => void;
 };
 
 const DEFAULT_PROMPTS = [
@@ -33,7 +37,11 @@ function buildJobPrompts(title: string) {
   ];
 }
 
-export function ChatThread({ conversation, jobContext }: Props) {
+export function ChatThread({
+  conversation,
+  jobContext,
+  onCreateConversation,
+}: Props) {
   const messagesQuery = useAssistantMessages(conversation?.id ?? null);
   const sendMessageMutation = useSendAssistantMessage();
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -51,8 +59,18 @@ export function ChatThread({ conversation, jobContext }: Props) {
       jobContext?.title
         ? buildJobPrompts(jobContext.title)
         : DEFAULT_PROMPTS,
-    [jobContext?.title],
+    [jobContext],
   );
+
+  const latestIntent = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+      if (message.role !== "assistant") continue;
+      const intent = getIntentFromMetadata(message.metadata);
+      if (intent) return intent;
+    }
+    return null;
+  }, [messages]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -70,31 +88,49 @@ export function ChatThread({ conversation, jobContext }: Props) {
     });
   }
 
+  function handlePromptClick(prompt: string) {
+    if (conversation) {
+      void handleSend(prompt);
+      return;
+    }
+
+    onCreateConversation?.();
+  }
+
+  const promptsDisabled =
+    sendMessageMutation.isPending ||
+    (!conversation && !onCreateConversation);
+
   return (
-    <section className="flex min-h-0 flex-1 flex-col bg-[var(--cp-page-bg)]">
-      <header className="flex min-h-16 shrink-0 flex-col justify-center gap-2 border-b border-zinc-200 bg-white px-5 py-3">
+    <section className="flex min-h-0 flex-1 flex-col bg-gradient-to-b from-[var(--cp-page-bg)] to-sky-50/20">
+      <header
+        className={`${surfaceCardHeader("sky")} flex min-h-16 shrink-0 flex-col justify-center gap-2 py-3`}
+      >
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
               Conversation
             </p>
-            <h2 className="truncate text-lg font-semibold text-zinc-950">
+            <h2 className="truncate text-lg font-semibold tracking-tight text-zinc-950">
               {conversation?.title?.trim() || "No conversation selected"}
             </h2>
           </div>
-          <span className="hidden rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-bold text-sky-800 sm:inline-flex">
-            CV-grounded
-          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            {latestIntent ? <IntentBadge intent={latestIntent} /> : null}
+            <Badge tone="sky" className="hidden sm:inline-flex">
+              CV-grounded
+            </Badge>
+          </div>
         </div>
         {jobContext ? (
           <div className="flex items-center gap-2">
-            <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-900">
+            <Badge tone="emerald" className="max-w-full truncate capitalize">
               Job context: {jobContext.title}
               {jobContext.company ? ` · ${jobContext.company}` : ""}
-            </span>
+            </Badge>
             <Link
               href="/chat"
-              className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100"
+              className="rounded-lg p-1.5 text-sky-600 transition hover:bg-sky-100 hover:text-sky-800"
               aria-label="Clear job context"
             >
               <X className="h-4 w-4" />
@@ -107,8 +143,10 @@ export function ChatThread({ conversation, jobContext }: Props) {
         {!conversation ? (
           <EmptyThread
             title="Select or create a conversation"
-            description="Your saved career chats will appear here once you choose a thread from the sidebar."
+            description="Your saved career chats will appear here once you choose a thread from the sidebar — or start a new chat with a suggested prompt below."
             prompts={suggestedPrompts}
+            onPromptClick={handlePromptClick}
+            disabled={promptsDisabled}
           />
         ) : messagesQuery.isLoading ? (
           <ListCardSkeleton
@@ -136,11 +174,31 @@ export function ChatThread({ conversation, jobContext }: Props) {
                 : "Ask a question now. CareerPilot will respond using the current CV context and recent conversation memory."
             }
             prompts={suggestedPrompts}
-            onPromptClick={handleSend}
-            disabled={sendMessageMutation.isPending}
+            onPromptClick={handlePromptClick}
+            disabled={promptsDisabled}
+            workflows={
+              conversation ? (
+                <GuidedWorkflows
+                  jobContext={jobContext}
+                  disabled={sendMessageMutation.isPending}
+                  onSubmitPrompt={handleSend}
+                />
+              ) : null
+            }
           />
         )}
       </div>
+
+      {conversation && messages.length > 0 ? (
+        <div className="border-t border-sky-100/80 bg-white/80 px-5 py-3 backdrop-blur-sm">
+          <GuidedWorkflows
+            jobContext={jobContext}
+            disabled={sendMessageMutation.isPending}
+            onSubmitPrompt={handleSend}
+            compact
+          />
+        </div>
+      ) : null}
 
       <MessageComposer
         disabled={!conversation}
@@ -157,23 +215,27 @@ function EmptyThread({
   prompts,
   onPromptClick,
   disabled,
+  workflows,
 }: {
   description: string;
   title: string;
   prompts: string[];
   onPromptClick?: (prompt: string) => void;
   disabled?: boolean;
+  workflows?: React.ReactNode;
 }) {
   return (
     <div className="mx-auto flex min-h-[420px] max-w-3xl flex-col items-center justify-center text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-800 text-white shadow-md shadow-sky-900/25">
         <Bot className="h-7 w-7" />
       </span>
-      <h3 className="mt-4 text-2xl font-semibold text-zinc-950">{title}</h3>
+      <h3 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-950">
+        {title}
+      </h3>
       <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-600">
         {description}
       </p>
-      <div className="mt-6 grid w-full gap-2 sm:grid-cols-2">
+      <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
         {prompts.map((prompt) =>
           onPromptClick ? (
             <button
@@ -181,22 +243,32 @@ function EmptyThread({
               key={prompt}
               disabled={disabled}
               onClick={() => onPromptClick(prompt)}
-              className="rounded-lg border border-zinc-200 bg-white p-3 text-left text-sm font-medium text-zinc-700 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 disabled:opacity-50"
+              className={`${surfaceCardElevated} group p-4 text-left transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-lg hover:shadow-sky-900/10 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0`}
             >
-              <Sparkles className="mb-2 h-4 w-4 text-sky-600" />
-              {prompt}
+              <Sparkles className="mb-2 h-4 w-4 text-sky-600 transition group-hover:text-sky-700" />
+              <span className="text-sm font-medium leading-6 text-zinc-800 group-hover:text-sky-950">
+                {prompt}
+              </span>
             </button>
           ) : (
             <div
-              className="rounded-lg border border-zinc-200 bg-white p-3 text-left text-sm font-medium text-zinc-700 shadow-sm"
+              className={`${surfaceCardElevated} p-4 text-left`}
               key={prompt}
             >
               <Sparkles className="mb-2 h-4 w-4 text-sky-600" />
-              {prompt}
+              <span className="text-sm font-medium leading-6 text-zinc-700">
+                {prompt}
+              </span>
             </div>
           ),
         )}
       </div>
+      {workflows ? <div className="mt-8 w-full">{workflows}</div> : null}
+      {!onPromptClick ? (
+        <p className={`mt-4 ${chipSky}`}>
+          Select a conversation from the sidebar to use these prompts
+        </p>
+      ) : null}
     </div>
   );
 }

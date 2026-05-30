@@ -3,6 +3,7 @@
 import { CalendarPlus, Check, Plus } from "lucide-react";
 
 import type { RoadmapItem, RoadmapItemStatus } from "@/lib/roadmap/types";
+import { badgeCompleted, badgeInProgress, chipSky, surfaceCard } from "@/lib/ui-theme";
 
 type RoadmapItemCardProps = {
   isCreatingTask: boolean;
@@ -12,6 +13,9 @@ type RoadmapItemCardProps = {
   onCreateTask: (itemId: string) => void;
   onToggleStatus: (itemId: string, status: RoadmapItemStatus) => void;
 };
+
+const actionButtonClass =
+  "inline-flex h-8 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-60";
 
 export function RoadmapItemCard({
   isCreatingTask,
@@ -24,7 +28,7 @@ export function RoadmapItemCard({
   const isDone = item.status === "done";
 
   return (
-    <article className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+    <article className={`p-4 ${surfaceCard}`}>
       <div className="flex items-start gap-3">
         <button
           type="button"
@@ -32,8 +36,8 @@ export function RoadmapItemCard({
           onClick={() => onToggleStatus(item.id, isDone ? "todo" : "done")}
           className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition ${
             isDone
-              ? "border-[#1A56DB] bg-[#1A56DB] text-white"
-              : "border-zinc-300 text-transparent hover:border-[#1A56DB]"
+              ? "border-sky-600 bg-sky-600 text-white"
+              : "border-zinc-300 text-transparent hover:border-sky-400"
           } disabled:cursor-not-allowed disabled:opacity-60`}
           aria-label={isDone ? "Mark incomplete" : "Mark complete"}
         >
@@ -42,16 +46,8 @@ export function RoadmapItemCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-[#1A56DB]">
-              Week {item.week_number}
-            </span>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                isDone
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-zinc-100 text-zinc-600"
-              }`}
-            >
+            <span className={chipSky}>Week {item.week_number}</span>
+            <span className={isDone ? badgeCompleted : badgeInProgress}>
               {statusLabel(item.status)}
             </span>
           </div>
@@ -64,9 +60,7 @@ export function RoadmapItemCard({
             {item.title}
           </h3>
           {item.description ? (
-            <p className="mt-2 text-sm leading-6 text-zinc-600">
-              {item.description}
-            </p>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">{item.description}</p>
           ) : null}
 
           {item.resources.length > 0 ? (
@@ -78,7 +72,7 @@ export function RoadmapItemCard({
                     href={resource.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:border-[#1A56DB] hover:text-[#1A56DB]"
+                    className="rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
                   >
                     {resource.name}
                   </a>
@@ -99,7 +93,7 @@ export function RoadmapItemCard({
               type="button"
               onClick={() => onCreateTask(item.id)}
               disabled={isCreatingTask}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:border-[#1A56DB] hover:text-[#1A56DB] disabled:opacity-60"
+              className={actionButtonClass}
             >
               <Plus className="h-4 w-4" />
               Create Task
@@ -107,7 +101,7 @@ export function RoadmapItemCard({
             <button
               type="button"
               onClick={() => onAddToCalendar(item)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:border-[#1A56DB] hover:text-[#1A56DB]"
+              className={actionButtonClass}
             >
               <CalendarPlus className="h-4 w-4" />
               Add to Calendar

@@ -48,18 +48,27 @@ export function RoadmapTimeline({ items, roadmapId }: RoadmapTimelineProps) {
 
   return (
     <>
-      <div className="grid gap-3">
-        {items.map((item) => (
-          <RoadmapItemCard
-            key={item.id}
-            isCreatingTask={createTask.isPending}
-            isUpdating={updateStatus.isPending}
-            item={item}
-            onAddToCalendar={setSelectedCalendarItem}
-            onCreateTask={(itemId) => createTask.mutate(itemId)}
-            onToggleStatus={handleToggleStatus}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div
+            className="h-1 w-8 rounded-full bg-gradient-to-r from-sky-600 to-cyan-500"
+            aria-hidden
           />
-        ))}
+          <h2 className="text-sm font-semibold text-zinc-900">Weekly plan</h2>
+        </div>
+        <div className="grid gap-3">
+          {items.map((item) => (
+            <RoadmapItemCard
+              key={item.id}
+              isCreatingTask={createTask.isPending}
+              isUpdating={updateStatus.isPending}
+              item={item}
+              onAddToCalendar={setSelectedCalendarItem}
+              onCreateTask={(itemId) => createTask.mutate(itemId)}
+              onToggleStatus={handleToggleStatus}
+            />
+          ))}
+        </div>
       </div>
 
       <AddToCalendarModal

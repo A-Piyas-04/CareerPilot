@@ -8,7 +8,12 @@ import type {
   CoverLetterTone,
   GenerateCoverLetterRequest,
 } from "@/lib/cover-letter/types";
-import { surfaceCard } from "@/lib/ui-theme";
+import {
+  formHintPanel,
+  inputFieldSky,
+  surfaceCard,
+  textareaFieldSky,
+} from "@/lib/ui-theme";
 
 type CoverLetterGenerateFormProps = {
   isGenerating: boolean;
@@ -91,7 +96,7 @@ export function CoverLetterGenerateForm({
       </div>
 
       {prefillLabel ? (
-        <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        <p className={`mt-4 ${formHintPanel}`}>
           Prefilled from Job Hunter — {prefillLabel}
         </p>
       ) : null}
@@ -103,7 +108,7 @@ export function CoverLetterGenerateForm({
             value={jobTitle}
             onChange={(event) => setJobTitle(event.target.value)}
             placeholder="ML Engineer Intern"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+            className={inputFieldSky}
             required
           />
         </label>
@@ -116,7 +121,7 @@ export function CoverLetterGenerateForm({
             value={companyName}
             onChange={(event) => setCompanyName(event.target.value)}
             placeholder="Acme Corp"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+            className={inputFieldSky}
             required
           />
         </label>
@@ -130,7 +135,7 @@ export function CoverLetterGenerateForm({
           value={jobDescription}
           onChange={(event) => setJobDescription(event.target.value)}
           placeholder="Paste the role description, requirements, and responsibilities."
-          className="min-h-40 resize-y rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+          className={`min-h-40 ${textareaFieldSky}`}
           required
         />
       </label>
@@ -141,7 +146,7 @@ export function CoverLetterGenerateForm({
           <select
             value={tone}
             onChange={(event) => setTone(event.target.value as CoverLetterTone)}
-            className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+            className={inputFieldSky}
           >
             {TONES.map((option) => (
               <option key={option.value} value={option.value}>
@@ -159,7 +164,7 @@ export function CoverLetterGenerateForm({
             value={extraNotes}
             onChange={(event) => setExtraNotes(event.target.value)}
             placeholder="Mention my backend internship"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+            className={inputFieldSky}
           />
         </label>
       </div>
@@ -167,6 +172,7 @@ export function CoverLetterGenerateForm({
       <div className="mt-5 flex justify-end">
         <SpinnerButton
           type="submit"
+          variant="sky"
           loading={isGenerating}
           loadingLabel="Generating…"
           disabled={

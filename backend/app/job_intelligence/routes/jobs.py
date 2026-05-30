@@ -61,6 +61,15 @@ class JobSearchResponse(BaseModel):
     matches: list[MatchSummary]
 
 
+class JobSearchSummary(BaseModel):
+    id: str
+    query: str
+    location: Optional[str] = None
+    source: Optional[str] = None
+    created_at: Optional[str] = None
+    match_count: int = 0
+
+
 class SaveMatchResponse(BaseModel):
     id: str
     user_id: str
@@ -153,6 +162,21 @@ def search_jobs(
         search_id=result["search_id"],
         matches=[_match_summary_from_dict(m) for m in result["matches"]],
     )
+
+
+@router.get("/searches", response_model=list[JobSearchSummary])
+def list_searches(
+    limit: int = 50,
+    user_id: str = Depends(get_current_user),
+) -> list[JobSearchSummary]:
+    """Return the current user's previous job searches, newest first."""
+    supabase = get_supabase_client()
+    rows = job_service.list_searches_for_user(
+        user_id=user_id,
+        supabase=supabase,
+        limit=min(max(limit, 1), 100),
+    )
+    return [JobSearchSummary(**row) for row in rows]
 
 
 @router.post("/manual", response_model=MatchSummary, status_code=status.HTTP_201_CREATED)

@@ -2,7 +2,6 @@
 
 import { format } from "date-fns";
 import {
-  ArrowLeft,
   Clipboard,
   Edit3,
   RefreshCw,
@@ -10,15 +9,15 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { DeleteCoverLetterDialog } from "@/components/cover-letters/DeleteCoverLetterDialog";
+import { RegenerateCoverLetterDialog } from "@/components/cover-letters/RegenerateCoverLetterDialog";
+import { DetailPageShell } from "@/components/layout";
 import { DetailPageSkeleton, SpinnerButton, SubmissionProgress } from "@/components/ui";
 import { COVER_LETTER_REGENERATE_STEPS } from "@/lib/progress/cover-letter-progress";
-import { RegenerateCoverLetterDialog } from "@/components/cover-letters/RegenerateCoverLetterDialog";
 import {
   useCoverLetterDetail,
   useDeleteCoverLetter,
@@ -26,6 +25,14 @@ import {
   useUpdateCoverLetter,
 } from "@/lib/hooks/useCoverLetters";
 import type { CoverLetterTone } from "@/lib/cover-letter/types";
+import {
+  alertError,
+  btnSecondary,
+  chipSky,
+  inputFieldSky,
+  surfaceCardMuted,
+  textareaFieldSky,
+} from "@/lib/ui-theme";
 
 type CoverLetterDetailClientProps = {
   coverLetterId: string;
@@ -36,6 +43,8 @@ const TONES: { label: string; value: CoverLetterTone }[] = [
   { label: "Concise", value: "concise" },
   { label: "Enthusiastic", value: "enthusiastic" },
 ];
+
+const ghostActionClass = `${btnSecondary} h-9 px-3 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700`;
 
 export function CoverLetterDetailClient({
   coverLetterId,
@@ -63,11 +72,13 @@ export function CoverLetterDetailClient({
 
   if (error || !data) {
     return (
-      <main className="min-h-[calc(100vh-49px)] bg-zinc-50 px-6 py-6">
-        <div className="mx-auto max-w-5xl rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error?.message ?? "Cover letter not found."}
-        </div>
-      </main>
+      <DetailPageShell
+        backHref="/cover-letters"
+        backLabel="Back to cover letters"
+        title="Cover letter not found"
+      >
+        <p className={alertError}>{error?.message ?? "Cover letter not found."}</p>
+      </DetailPageShell>
     );
   }
 
@@ -126,216 +137,193 @@ export function CoverLetterDetailClient({
     });
   };
 
+  const displayTitle =
+    coverLetter.job_title || coverLetter.title || "Cover letter";
+
   return (
-    <main className="min-h-[calc(100vh-49px)] bg-zinc-50 px-6 py-6">
-      <div className="mx-auto max-w-5xl">
-        <Link
-          href="/cover-letters"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-600 hover:text-[#1A56DB]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to cover letters
-        </Link>
-
-        <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-          <SubmissionProgress
-            isActive={regenerateCoverLetter.isPending}
-            mode="simulated"
-            steps={[...COVER_LETTER_REGENERATE_STEPS]}
-            tone="blue"
-            className="mb-4"
-          />
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              {isEditing ? (
-                <div className="grid gap-3 lg:grid-cols-2">
-                  <label className="flex flex-col gap-1.5">
-                    <span className="text-sm font-medium text-zinc-800">
-                      Job title
-                    </span>
-                    <input
-                      value={form.jobTitle}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          jobTitle: event.target.value,
-                        }))
-                      }
-                      className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1.5">
-                    <span className="text-sm font-medium text-zinc-800">
-                      Company
-                    </span>
-                    <input
-                      value={form.companyName}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          companyName: event.target.value,
-                        }))
-                      }
-                      className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
-                    />
-                  </label>
-                </div>
-              ) : (
-                <>
-                  <h1 className="text-2xl font-semibold text-zinc-950">
-                    {coverLetter.job_title || coverLetter.title || "Cover letter"}
-                  </h1>
-                  <div className="mt-2 flex flex-wrap gap-3 text-sm text-zinc-500">
-                    <span>{coverLetter.company_name || "Company not set"}</span>
-                    <span>Version {coverLetter.version}</span>
-                    <span>
-                      Updated{" "}
-                      {Number.isNaN(updatedAt.getTime())
-                        ? "recently"
-                        : format(updatedAt, "MMM d, yyyy")}
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {isEditing ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-                  >
-                    <X className="h-4 w-4" />
-                    Cancel
-                  </button>
-                  <SpinnerButton
-                    type="button"
-                    loading={updateCoverLetter.isPending}
-                    loadingLabel="Saving…"
-                    onClick={handleSave}
-                    icon={<Save className="h-4 w-4" />}
-                    className="h-9 px-3"
-                  >
-                    Save
-                  </SpinnerButton>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:border-[#1A56DB] hover:text-[#1A56DB]"
-                  >
-                    <Clipboard className="h-4 w-4" />
-                    Copy
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleStartEditing}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:border-[#1A56DB] hover:text-[#1A56DB]"
-                  >
-                    <Edit3 className="h-4 w-4" />
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowRegenerateDialog(true)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:border-[#1A56DB] hover:text-[#1A56DB]"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    Regenerate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowDeleteDialog(true)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-md border border-red-200 px-3 text-sm font-medium text-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {isEditing ? (
-            <div className="mt-5 grid gap-4">
-              <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-sm font-medium text-zinc-800">Tone</span>
-                  <select
-                    value={form.tone}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        tone: event.target.value as CoverLetterTone,
-                      }))
-                    }
-                    className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
-                  >
-                    {TONES.map((tone) => (
-                      <option key={tone.value} value={tone.value}>
-                        {tone.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-sm font-medium text-zinc-800">
-                    Extra notes
-                  </span>
-                  <input
-                    value={form.extraNotes}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        extraNotes: event.target.value,
-                      }))
-                    }
-                    className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
-                  />
-                </label>
-              </div>
-              <label className="flex flex-col gap-1.5">
-                <span className="text-sm font-medium text-zinc-800">
-                  Job description
-                </span>
-                <textarea
-                  value={form.jobDescription}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      jobDescription: event.target.value,
-                    }))
-                  }
-                  className="min-h-32 resize-y rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
-              <label className="flex flex-col gap-1.5">
-                <span className="text-sm font-medium text-zinc-800">
-                  Cover letter
-                </span>
-                <textarea
-                  value={form.content}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      content: event.target.value,
-                    }))
-                  }
-                  className="min-h-[460px] resize-y rounded-md border border-zinc-300 px-3 py-2 text-sm leading-6 outline-none focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
-            </div>
+    <>
+      <DetailPageShell
+        backHref="/cover-letters"
+        backLabel="Back to cover letters"
+        title={isEditing ? form.jobTitle || displayTitle : displayTitle}
+        description={
+          isEditing
+            ? form.companyName || undefined
+            : coverLetter.company_name || undefined
+        }
+        meta={
+          !isEditing ? (
+            <>
+              <span className={chipSky}>Version {coverLetter.version}</span>
+              <span className="text-xs text-zinc-500">
+                Updated{" "}
+                {Number.isNaN(updatedAt.getTime())
+                  ? "recently"
+                  : format(updatedAt, "MMM d, yyyy")}
+              </span>
+            </>
+          ) : undefined
+        }
+        actions={
+          isEditing ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className={ghostActionClass}
+              >
+                <X className="h-4 w-4" />
+                Cancel
+              </button>
+              <SpinnerButton
+                type="button"
+                variant="sky"
+                loading={updateCoverLetter.isPending}
+                loadingLabel="Saving…"
+                onClick={handleSave}
+                icon={<Save className="h-4 w-4" />}
+                className="h-9 px-3"
+              >
+                Save
+              </SpinnerButton>
+            </>
           ) : (
-            <div className="mt-6 whitespace-pre-wrap rounded-lg border border-zinc-200 bg-zinc-50 p-5 text-sm leading-7 text-zinc-800">
-              {coverLetter.content}
+            <>
+              <button type="button" onClick={handleCopy} className={ghostActionClass}>
+                <Clipboard className="h-4 w-4" />
+                Copy
+              </button>
+              <button type="button" onClick={handleStartEditing} className={ghostActionClass}>
+                <Edit3 className="h-4 w-4" />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowRegenerateDialog(true)}
+                className={ghostActionClass}
+              >
+                <RefreshCw className="h-4 w-4" />
+                Regenerate
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteDialog(true)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-200 px-3 text-sm font-medium text-red-600 transition hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </button>
+            </>
+          )
+        }
+      >
+        <SubmissionProgress
+          isActive={regenerateCoverLetter.isPending}
+          mode="simulated"
+          steps={[...COVER_LETTER_REGENERATE_STEPS]}
+          tone="sky"
+          className="mb-4"
+        />
+
+        {isEditing ? (
+          <div className="grid gap-4">
+            <div className="grid gap-3 lg:grid-cols-2">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-zinc-800">Job title</span>
+                <input
+                  value={form.jobTitle}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      jobTitle: event.target.value,
+                    }))
+                  }
+                  className={inputFieldSky}
+                />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-zinc-800">Company</span>
+                <input
+                  value={form.companyName}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      companyName: event.target.value,
+                    }))
+                  }
+                  className={inputFieldSky}
+                />
+              </label>
             </div>
-          )}
-        </section>
-      </div>
+            <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-zinc-800">Tone</span>
+                <select
+                  value={form.tone}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      tone: event.target.value as CoverLetterTone,
+                    }))
+                  }
+                  className={inputFieldSky}
+                >
+                  {TONES.map((tone) => (
+                    <option key={tone.value} value={tone.value}>
+                      {tone.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-zinc-800">Extra notes</span>
+                <input
+                  value={form.extraNotes}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      extraNotes: event.target.value,
+                    }))
+                  }
+                  className={inputFieldSky}
+                />
+              </label>
+            </div>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-zinc-800">Job description</span>
+              <textarea
+                value={form.jobDescription}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    jobDescription: event.target.value,
+                  }))
+                }
+                className={`min-h-32 ${textareaFieldSky}`}
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-zinc-800">Cover letter</span>
+              <textarea
+                value={form.content}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    content: event.target.value,
+                  }))
+                }
+                className={`min-h-[460px] text-sm leading-6 ${textareaFieldSky}`}
+              />
+            </label>
+          </div>
+        ) : (
+          <div
+            className={`whitespace-pre-wrap p-5 text-sm leading-7 text-zinc-800 ${surfaceCardMuted}`}
+          >
+            {coverLetter.content}
+          </div>
+        )}
+      </DetailPageShell>
 
       <DeleteCoverLetterDialog
         isDeleting={deleteCoverLetter.isPending}
@@ -349,6 +337,6 @@ export function CoverLetterDetailClient({
         onClose={() => setShowRegenerateDialog(false)}
         onConfirm={handleRegenerate}
       />
-    </main>
+    </>
   );
 }

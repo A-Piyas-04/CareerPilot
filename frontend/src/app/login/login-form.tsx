@@ -5,6 +5,11 @@ import { FormEvent, useEffect, useState } from "react";
 
 import { SpinnerButton } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
+import {
+  alertWarning,
+  inputField,
+  premiumCard,
+} from "@/lib/ui-theme";
 
 type AuthMode = "signin" | "signup";
 
@@ -71,24 +76,54 @@ export function LoginForm() {
   }
 
   return (
-    <section className="w-full max-w-md rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
+    <section className={`w-full max-w-md p-6 md:p-8 ${premiumCard}`}>
       <div className="mb-6">
-        <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">
-          CareerPilot
-        </p>
-        <h1 className="mt-2 text-2xl font-semibold text-zinc-950">
-          {mode === "signin" ? "Sign in" : "Create account"}
+        <div className="inline-flex rounded-full bg-zinc-100 p-1 ring-1 ring-zinc-200/80">
+          <button
+            type="button"
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+              mode === "signin"
+                ? "bg-white text-emerald-800 shadow-sm ring-1 ring-emerald-200/60"
+                : "text-zinc-600 hover:text-zinc-900"
+            }`}
+            onClick={() => {
+              setMode("signin");
+              setMessage(null);
+            }}
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+              mode === "signup"
+                ? "bg-white text-emerald-800 shadow-sm ring-1 ring-emerald-200/60"
+                : "text-zinc-600 hover:text-zinc-900"
+            }`}
+            onClick={() => {
+              setMode("signup");
+              setMessage(null);
+            }}
+          >
+            Create account
+          </button>
+        </div>
+        <h1 className="mt-4 text-2xl font-semibold text-zinc-950">
+          {mode === "signin" ? "Welcome back" : "Get started free"}
         </h1>
+        <p className="mt-1 text-sm text-zinc-600">
+          {mode === "signin"
+            ? "Sign in to continue your job search."
+            : "Create an account to unlock all modules."}
+        </p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         {mode === "signup" ? (
           <label className="block">
-            <span className="text-sm font-medium text-zinc-700">
-              Full name
-            </span>
+            <span className="text-sm font-medium text-zinc-700">Full name</span>
             <input
-              className="mt-1 h-11 w-full rounded-md border border-zinc-300 px-3 text-zinc-950 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              className={`mt-1.5 ${inputField} h-11`}
               value={fullName}
               onChange={(event) => setFullName(event.target.value)}
               placeholder="Amina Rahman"
@@ -99,7 +134,7 @@ export function LoginForm() {
         <label className="block">
           <span className="text-sm font-medium text-zinc-700">Email</span>
           <input
-            className="mt-1 h-11 w-full rounded-md border border-zinc-300 px-3 text-zinc-950 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            className={`mt-1.5 ${inputField} h-11`}
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -111,7 +146,7 @@ export function LoginForm() {
         <label className="block">
           <span className="text-sm font-medium text-zinc-700">Password</span>
           <input
-            className="mt-1 h-11 w-full rounded-md border border-zinc-300 px-3 text-zinc-950 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            className={`mt-1.5 ${inputField} h-11`}
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -121,11 +156,7 @@ export function LoginForm() {
           />
         </label>
 
-        {message ? (
-          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-            {message}
-          </p>
-        ) : null}
+        {message ? <p className={alertWarning}>{message}</p> : null}
 
         <SpinnerButton
           type="submit"
@@ -138,19 +169,6 @@ export function LoginForm() {
           {mode === "signin" ? "Sign in" : "Create account"}
         </SpinnerButton>
       </form>
-
-      <button
-        className="mt-4 w-full text-center text-sm font-medium text-emerald-800 hover:text-emerald-900"
-        type="button"
-        onClick={() => {
-          setMode(mode === "signin" ? "signup" : "signin");
-          setMessage(null);
-        }}
-      >
-        {mode === "signin"
-          ? "Need an account? Create one"
-          : "Already have an account? Sign in"}
-      </button>
     </section>
   );
 }

@@ -4,13 +4,19 @@ function cn(...classes: (string | undefined | false)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-type SkeletonProps = ComponentPropsWithoutRef<"div">;
+type SkeletonProps = ComponentPropsWithoutRef<"div"> & {
+  shimmer?: boolean;
+};
 
-export function Skeleton({ className, ...props }: SkeletonProps) {
+export function Skeleton({ className, shimmer = true, ...props }: SkeletonProps) {
   return (
     <div
       aria-busy="true"
-      className={cn("animate-pulse rounded bg-zinc-200", className)}
+      className={cn(
+        "rounded",
+        shimmer ? "cp-skeleton-shimmer" : "animate-pulse bg-zinc-200",
+        className,
+      )}
       {...props}
     />
   );

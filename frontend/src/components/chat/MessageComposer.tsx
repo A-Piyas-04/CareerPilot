@@ -4,6 +4,7 @@ import { SendHorizonal } from "lucide-react";
 import { KeyboardEvent, useState } from "react";
 
 import { SpinnerButton } from "@/components/ui";
+import { surfaceCardElevated } from "@/lib/ui-theme";
 
 type Props = {
   disabled?: boolean;
@@ -40,10 +41,12 @@ export function MessageComposer({ disabled, isSending, onSend }: Props) {
   }
 
   return (
-    <div className="border-t border-zinc-200 bg-white p-4">
-      <div className="mx-auto flex max-w-4xl items-end gap-3 rounded-lg border border-zinc-300 bg-white p-2 shadow-sm focus-within:border-sky-600 focus-within:ring-2 focus-within:ring-sky-100">
+    <div className="border-t border-sky-100/80 bg-white/90 p-4 backdrop-blur-sm">
+      <div
+        className={`${surfaceCardElevated} mx-auto flex max-w-4xl items-end gap-3 p-2 transition focus-within:border-sky-300 focus-within:ring-2 focus-within:ring-sky-100`}
+      >
         <textarea
-          className="max-h-40 min-h-12 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-zinc-950 outline-none"
+          className="max-h-40 min-h-12 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-zinc-950 outline-none placeholder:text-zinc-400"
           value={content}
           onChange={(event) => setContent(event.target.value)}
           onKeyDown={handleKeyDown}
@@ -57,18 +60,19 @@ export function MessageComposer({ disabled, isSending, onSend }: Props) {
         />
         <SpinnerButton
           type="button"
+          variant="sky"
           loading={isSending}
           onClick={handleSend}
           disabled={!canSend}
           icon={<SendHorizonal className="h-4 w-4" />}
-          className="h-10 w-10 shrink-0 p-0"
+          className="h-10 w-10 shrink-0 rounded-xl p-0 shadow-sm"
           aria-label="Send message"
           title="Send message"
         >
           <span className="sr-only">Send message</span>
         </SpinnerButton>
       </div>
-      <p className="mx-auto mt-2 max-w-4xl text-xs text-zinc-500">
+      <p className="mx-auto mt-2 max-w-4xl text-xs text-sky-900/60">
         Enter to send, Shift+Enter for a new line. Responses stream from
         CareerPilot and are saved to this conversation.
       </p>

@@ -60,14 +60,14 @@
 | Sign out | ✅ | Centralized in `AppNav` (desktop) + mobile drawer |
 | Responsive layout | ✅ | Mobile drawer; chat sidebar stacks; nav no longer horizontally cramped |
 | Dark mode | ❌ | Light theme only |
-| Error boundary page | ❌ | No dedicated `error.tsx` / `not-found.tsx` branded pages |
+| Error boundary page | ✅ | Branded `app/error.tsx` + `app/not-found.tsx` |
 
 ### Modals / overlays (general)
 
 | UI | Status | Notes |
 |----|--------|-------|
-| Browser `confirm()` dialogs | ⚠️ | Used for delete conversation, application, task, goal, calendar event |
-| Dedicated confirm modal component | ❌ | No shared `ConfirmDialog` (CV/cover-letter delete use dedicated dialogs) |
+| Browser `confirm()` dialogs | ✅ | Replaced with shared `ConfirmDialog` in tracker/chat/goals/calendar/tasks |
+| Dedicated confirm modal component | ✅ | `components/ui/confirm-dialog.tsx` |
 
 ### User flows (general)
 
@@ -136,7 +136,7 @@
 | Paste JD for fit (manual) | ✅ | Manual job drawer |
 | Filter/sort matches | ✅ | `match-filters.tsx` |
 | Jump to cover letter / gap / roadmap / chat | ✅ | Actions on card + drawer with URL prefill |
-| View past searches | ❌ | No search history UI (stored matches accordion only) |
+| View past searches | ✅ | `search-history-panel.tsx` on `/jobs`; `GET /api/v1/jobs/searches` |
 
 ---
 
@@ -188,7 +188,7 @@
 
 | Component | File | Status | Notes |
 |-----------|------|--------|-------|
-| Conversation sidebar | `ConversationSidebar.tsx` | ✅ | Grouped list, new chat, delete, related-link pills |
+| Conversation sidebar | `ConversationSidebar.tsx` | ✅ | Grouped list, new chat, rename, delete, related-link pills |
 | Chat thread | `ChatThread.tsx` | ✅ | Job context chip, CV-grounded badge, streaming |
 | Message bubbles | `ChatMessage.tsx` | ✅ | User sky bubbles; assistant Markdown + evidence |
 | Streaming composer | `MessageComposer.tsx` | ✅ | Sky focus ring |
@@ -197,7 +197,7 @@
 | Save Cover Letter / Roadmap | `ChatMessage.tsx` | ✅ | Metadata-driven action buttons |
 | Skill gap analyze form | `skill-gap-analyze-form.tsx` | ✅ | Prefill from Job Hunter; preview missing skills |
 | Skill gap history | `skill-gap-list.tsx` | ✅ | Select prior analyses |
-| Intent badge in UI | ❌ | Intent in metadata only |
+| Intent badge in UI | ✅ | `intent-badge.tsx` on assistant messages + thread header |
 
 ### User flows
 
@@ -209,7 +209,7 @@
 | Skill gap dedicated page | ✅ | `/skill-gap` analyze → save → revisit in list/detail |
 | Cover letter with job prefill | ✅ | From `/jobs` action or `?jobId=` on `/cover-letters` |
 | Roadmap with role/JD prefill | ✅ | From jobs action or URL params |
-| Readiness / gap / roadmap / letter via chat | ⚠️ | Free-text + intents work; no guided multi-step wizard |
+| Readiness / gap / roadmap / letter via chat | ✅ | Guided workflows (Roadmap, Cover Letter, Readiness wizards) + free-text intents |
 
 ---
 
@@ -278,6 +278,15 @@
 | `components/nav/NavContextBar.tsx` | Section sub-navigation |
 | `components/nav/MobileNavDrawer.tsx` | Mobile menu + trigger |
 | `features/jobs/job-actions.ts` | URL builders for cross-module links |
+| `features/jobs/search-history-panel.tsx` | Job search history browser on `/jobs` |
+| `features/jobs/job-search-history-card.tsx` | Search history card UI |
+| `components/ui/confirm-dialog.tsx` | Shared destructive confirm modal |
+| `components/chat/intent-badge.tsx` | Assistant intent pill badges |
+| `components/chat/guided-workflows.tsx` | Roadmap / cover letter / readiness wizards |
+| `components/chat/workflow-wizard-modal.tsx` | Guided workflow modal shell |
+| `components/chat/workflow-prompt-builders.ts` | Wizard prompt templates |
+| `app/error.tsx` | Branded error boundary page |
+| `app/not-found.tsx` | Branded 404 page |
 | `features/jobs/match-job-actions.tsx` | Action buttons on match UI |
 | `features/skill-gap/*` | Skill gap page module |
 | `lib/hooks/useSkillGap.ts` | Skill gap queries + analyze mutation |
@@ -294,7 +303,7 @@
 | Empty states with CTA | ✅ | Most lists |
 | Sonner toasts | ✅ | Search, save, upload, etc. |
 | Markdown in chat | ✅ | `react-markdown` |
-| Shared confirm modal | ❌ | Tracker/chat/goals still use `window.confirm` |
+| Shared confirm modal | ✅ | `ConfirmDialog` used across tracker/chat/goals/calendar/tasks |
 
 ---
 
@@ -318,16 +327,43 @@
 ## Frontend priority backlog
 
 1. ❌ **5-minute demo video** — organizer deliverable (not a UI task).
-2. ❌ **Shared confirm modal** — replace `window.confirm` in tracker/chat/goals/calendar.
+2. ✅ **Shared confirm modal** — `ConfirmDialog` replaces browser confirms in tracker/chat/goals/calendar/tasks.
 3. ⚠️ **Global nudges** — on-login or app-wide banner beyond `/dashboard`.
-4. ⚠️ **Search history UI** — browse past `job_searches` by query/date.
-5. ⚠️ **Chat intent badge** — surface detected intent in thread header.
-6. ⚠️ **Conversation rename** — edit title in sidebar.
+4. ✅ **Search history UI** — browse past `job_searches` on `/jobs` with view/re-run actions.
+5. ✅ **Chat intent badge** — intent pill on assistant messages and thread header.
+6. ✅ **Conversation rename** — inline edit in sidebar via Supabase update.
 7. ❌ **Dark mode** — optional polish.
-8. ❌ **Branded `error.tsx` / `not-found.tsx`**.
-9. ⚠️ **Detail pages theme** — `/cover-letters/[id]`, `/roadmap/[id]` still use older blue accent in places.
+8. ✅ **Branded `error.tsx` / `not-found.tsx`** — CareerPilot-themed error and 404 pages.
+9. ✅ **Detail pages theme** — `/cover-letters/[id]`, `/roadmap/[id]` migrated to sky accent + `DetailPageShell`.
 10. ⚠️ **Landing hero copy** — align with fully live assistant + nudges story.
 
 ---
 
 *Re-audit after UI changes by walking each route in the running app (`docker compose up`) and updating status emojis.*
+
+---
+
+## Implementation Notes (2026-05-30)
+
+**Implemented:** Job search history panel on `/jobs` (view stored results, re-run prefill); `GET /api/v1/jobs/searches`; shared `ConfirmDialog` replacing browser confirms; chat conversation rename; intent badges; guided assistant wizards; branded `error.tsx` / `not-found.tsx`.
+
+**Key files:** `confirm-dialog.tsx`, `search-history-panel.tsx`, `job-search-history-card.tsx`, `useAssistantConversations.ts` (update hook), `ConversationSidebar.tsx`, `intent-badge.tsx`, `guided-workflows.tsx`, `workflow-wizard-modal.tsx`, `workflow-prompt-builders.ts`, `app/error.tsx`, `app/not-found.tsx`, `backend/.../jobs.py`, `job_service.py`.
+
+**Limitations:** Re-run search prefills the form but does not auto-execute (avoids surprise JSearch API calls). Search history has no per-search `resume_id` stored — view results uses `search_id` only; re-run uses the currently selected CV.
+
+---
+
+## Authenticated app UI polish (2026-05-30)
+
+**Completed:** Full visual upgrade of all workspace pages to match landing-page quality — premium cards, emerald/sky/violet accent groups, gradient page backgrounds, shared `EmptyState`/`Badge`/`SurfaceCard`, polished login, and branded error/404 pages.
+
+**Core design system:** `lib/ui-theme.ts`, `lib/nav-styles.ts`, `app/globals.css`, `components/layout/page-shell.tsx`, `components/layout/detail-page-shell.tsx`, `components/ui/empty-state.tsx`, `components/ui/badge.tsx`, `components/ui/surface-card.tsx`, `components/ui/skeleton.tsx`.
+
+**Page groups updated:**
+- **Track (violet):** dashboard, tracker, goals, calendar
+- **Discover (emerald):** resume, jobs
+- **Plan (sky):** skill-gap, cover-letters, roadmap (list + detail)
+- **Assistant:** chat sidebar, bubbles, evidence cards
+- **Global:** login, `error.tsx`, `not-found.tsx`
+
+**Remaining limitations:** No dark mode; `react-big-calendar` base CSS still imported; chat intentionally omits standard `PageHeader`; dense forms/tables avoid hover-lift animations.

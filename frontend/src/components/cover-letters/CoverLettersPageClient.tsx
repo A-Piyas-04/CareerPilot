@@ -36,11 +36,12 @@ export function CoverLettersPageClient() {
   useEffect(() => {
     if (!jobIdParam) return;
 
+    const jobId = jobIdParam;
     let cancelled = false;
 
     async function loadJobContext() {
       try {
-        const matches = await listMatches({ job_id: jobIdParam, limit: 1 });
+        const matches = await listMatches({ job_id: jobId, limit: 1 });
         if (cancelled || !matches.length) return;
 
         const job = matches[0].job;
@@ -78,6 +79,8 @@ export function CoverLettersPageClient() {
   return (
     <PageShell>
       <PageHeader
+        accent="sky"
+        eyebrowText="Plan"
         icon={Mail}
         title="Cover Letters"
         description="Generate tailored letters from job descriptions and verified CV context."
@@ -92,7 +95,7 @@ export function CoverLettersPageClient() {
             initialValues={
               prefill ?? (jobIdParam ? { jobId: jobIdParam } : undefined)
             }
-            prefillLabel={prefill?.label ?? null}
+            prefillLabel={prefill?.label}
           />
           <SubmissionProgress
             isActive={generateCoverLetter.isPending}

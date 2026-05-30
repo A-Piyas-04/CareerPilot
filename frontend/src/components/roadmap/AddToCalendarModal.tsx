@@ -4,6 +4,11 @@ import { FormEvent, useMemo, useState } from "react";
 
 import { SpinnerButton } from "@/components/ui";
 import type { RoadmapItem } from "@/lib/roadmap/types";
+import {
+  btnSecondary,
+  inputFieldSky,
+  premiumCard,
+} from "@/lib/ui-theme";
 
 type AddToCalendarModalProps = {
   isOpen: boolean;
@@ -42,10 +47,10 @@ export function AddToCalendarModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/30 px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl"
+        className={`w-full max-w-md p-6 ${premiumCard}`}
       >
         <h2 className="text-base font-semibold text-zinc-950">
           Add to calendar
@@ -61,7 +66,7 @@ export function AddToCalendarModal({
               type="datetime-local"
               value={startTime}
               onChange={(event) => setStartTime(event.target.value)}
-              className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+              className={inputFieldSky}
               required
             />
           </label>
@@ -74,26 +79,22 @@ export function AddToCalendarModal({
               type="datetime-local"
               value={endTime}
               onChange={(event) => setEndTime(event.target.value)}
-              className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+              className={inputFieldSky}
             />
           </label>
         </div>
 
         <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-9 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-          >
+          <button type="button" onClick={onClose} className={btnSecondary}>
             Cancel
           </button>
           <SpinnerButton
             type="submit"
+            variant="sky"
             loading={isSaving}
-            loadingLabel="Adding…"
-            className="h-9 px-3"
+            loadingLabel="Saving…"
           >
-            Add Event
+            Add event
           </SpinnerButton>
         </div>
       </form>

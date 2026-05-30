@@ -77,3 +77,54 @@ export function findActiveNavItem(pathname: string) {
   }
   return undefined;
 }
+
+export function getAccentForPath(pathname: string): NavGroupAccent {
+  return findActiveNavGroup(pathname)?.accent ?? "emerald";
+}
+
+export const PAGE_ACCENT_STYLES: Record<
+  NavGroupAccent,
+  {
+    iconTile: string;
+    headerBand: string;
+    relatedLinkHover: string;
+    emptyStateBg: string;
+    sectionAccentBar: string;
+    pillActive: string;
+  }
+> = {
+  emerald: {
+    iconTile:
+      "bg-gradient-to-br from-emerald-600 to-emerald-950 text-white shadow-md shadow-emerald-900/30",
+    headerBand: "bg-gradient-to-r from-emerald-50/80 to-teal-50/50",
+    relatedLinkHover:
+      "hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800",
+    emptyStateBg: "border-emerald-200/80 bg-emerald-50/40",
+    sectionAccentBar: "bg-gradient-to-r from-emerald-600 to-teal-500",
+    pillActive: "bg-emerald-600 text-white ring-emerald-600",
+  },
+  sky: {
+    iconTile:
+      "bg-gradient-to-br from-sky-500 to-indigo-800 text-white shadow-md shadow-sky-900/25",
+    headerBand: "bg-gradient-to-r from-sky-50/80 to-cyan-50/50",
+    relatedLinkHover:
+      "hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800",
+    emptyStateBg: "border-sky-200/80 bg-sky-50/40",
+    sectionAccentBar: "bg-gradient-to-r from-sky-600 to-cyan-500",
+    pillActive: "bg-sky-600 text-white ring-sky-600",
+  },
+  violet: {
+    iconTile:
+      "bg-gradient-to-br from-violet-500 to-purple-900 text-white shadow-md shadow-violet-900/25",
+    headerBand: "bg-gradient-to-r from-violet-50/80 to-purple-50/50",
+    relatedLinkHover:
+      "hover:border-violet-200 hover:bg-violet-50 hover:text-violet-800",
+    emptyStateBg: "border-violet-200/80 bg-violet-50/40",
+    sectionAccentBar: "bg-gradient-to-r from-violet-600 to-purple-500",
+    pillActive: "bg-violet-600 text-white ring-violet-600",
+  },
+};
+
+export function getPageAccentStyles(accent: NavGroupAccent) {
+  return PAGE_ACCENT_STYLES[accent];
+}

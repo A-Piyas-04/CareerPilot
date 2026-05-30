@@ -6,6 +6,13 @@ import { toast } from "sonner";
 
 import { SpinnerButton } from "@/components/ui";
 import type { Resume } from "@/features/resume/types";
+import {
+  chipSky,
+  formHintPanel,
+  formHintPanelEmerald,
+  formPanel,
+  inputField,
+} from "@/lib/ui-theme";
 
 import { useSearchJobs } from "./hooks";
 
@@ -17,9 +24,15 @@ const EXAMPLE_QUERIES = [
 
 const RESULT_LIMITS = [10, 20, 25] as const;
 
+type SearchPrefill = {
+  query: string;
+  location?: string;
+};
+
 type Props = {
   resumes: Resume[];
   selectedResumeId: string | null;
+  prefill?: SearchPrefill | null;
   onResumeChange: (resumeId: string) => void;
   onSearchStart: () => void;
   onSearchSuccess: (result: import("./types").JobSearchResponse) => void;
@@ -29,13 +42,14 @@ type Props = {
 export function JobSearchForm({
   resumes,
   selectedResumeId,
+  prefill,
   onResumeChange,
   onSearchStart,
   onSearchSuccess,
   onOpenManual,
 }: Props) {
-  const [query, setQuery] = useState("");
-  const [location, setLocation] = useState("");
+  const [query, setQuery] = useState(prefill?.query ?? "");
+  const [location, setLocation] = useState(prefill?.location ?? "");
   const [limit, setLimit] = useState<number>(20);
   const [searchStep, setSearchStep] = useState<"idle" | "fetching" | "scoring">(
     "idle",
@@ -114,14 +128,15 @@ export function JobSearchForm({
       </div>
 
       <form
+        id="job-search-form"
         onSubmit={handleSubmit}
-        className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
+        className={`${formPanel} flex flex-col gap-4 border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50/25 to-sky-50/30 ring-emerald-900/[0.04]`}
       >
         <div>
           <label className="text-sm font-medium text-zinc-900">
             What kind of role are you looking for?
           </label>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className={`${formHintPanel} mt-2 border-sky-200/60 bg-sky-50/60 text-xs text-sky-900`}>
             Describe the role in natural language. You can include location in the
             query or use the optional field below.
           </p>
@@ -130,7 +145,7 @@ export function JobSearchForm({
             placeholder='e.g. "ML internships in Dhaka open this month"'
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="mt-2 h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+            className={`${inputField} mt-2 h-11`}
           />
           <div className="mt-2 flex flex-wrap gap-2">
             {EXAMPLE_QUERIES.map((example) => (
@@ -138,7 +153,7 @@ export function JobSearchForm({
                 key={example}
                 type="button"
                 onClick={() => setQuery(example)}
-                className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-medium text-zinc-700 hover:border-emerald-300 hover:bg-emerald-50"
+                className={chipSky}
               >
                 {example}
               </button>
@@ -152,12 +167,12 @@ export function JobSearchForm({
             placeholder="Optional location (e.g. Berlin)"
             value={location}
             onChange={(event) => setLocation(event.target.value)}
-            className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-emerald-600 focus:outline-none"
+            className={`${inputField} h-10`}
           />
           <select
             value={selectedResumeId ?? ""}
             onChange={(event) => onResumeChange(event.target.value)}
-            className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-emerald-600 focus:outline-none"
+            className={`${inputField} h-10`}
           >
             <option value="" disabled>
               Match against CV…
@@ -171,7 +186,7 @@ export function JobSearchForm({
           <select
             value={limit}
             onChange={(event) => setLimit(Number(event.target.value))}
-            className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-emerald-600 focus:outline-none"
+            className={`${inputField} h-10`}
           >
             {RESULT_LIMITS.map((value) => (
               <option key={value} value={value}>
@@ -182,13 +197,13 @@ export function JobSearchForm({
         </div>
 
         {search.isPending ? (
-          <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <div className={formHintPanelEmerald}>
             <p className="font-medium">
               {searchStep === "fetching"
                 ? "Step 1/2 — Fetching jobs from JSearch…"
                 : "Step 2/2 — Scoring fit against your CV…"}
             </p>
-            <p className="mt-1 text-xs text-emerald-800">
+            <p className="mt-1 text-xs opacity-90">
               {elapsedSeconds > 0 ? `${elapsedSeconds}s elapsed · ` : ""}
               Scoring up to {limit} postings
             </p>
@@ -208,7 +223,7 @@ export function JobSearchForm({
       </form>
 
       {readyResumes.length === 0 ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className={formHintPanel}>
           No processed CV found. Upload and wait for indexing on the CV Intelligence
           page before searching.
         </p>
