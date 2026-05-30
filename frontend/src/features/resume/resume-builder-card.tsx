@@ -6,8 +6,6 @@ import { useEffect, useId, useState } from "react";
 import { SpinnerButton, SubmissionProgress } from "@/components/ui";
 import { useSimulatedProgress } from "@/hooks/useSimulatedProgress";
 import { RESUME_UPLOAD_STEPS } from "@/lib/progress/resume-upload-progress";
-import { Loader2, PenLine, Plus, Save, Trash2 } from "lucide-react";
-import { useId, useState } from "react";
 
 import { useBuildResume, useRebuildResume } from "./hooks";
 import {
