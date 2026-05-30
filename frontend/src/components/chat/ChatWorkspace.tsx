@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import {
   isTemporaryAssistantConversationId,
@@ -8,14 +9,26 @@ import {
   useCreateAssistantConversation,
   useDeleteAssistantConversation,
 } from "@/lib/hooks/useAssistantConversations";
+import { listMatches } from "@/features/jobs/api";
 
 import { ChatThread } from "./ChatThread";
 import { ConversationSidebar } from "./ConversationSidebar";
 
+export type ActiveJobContext = {
+  jobId: string;
+  title: string;
+  company: string | null;
+};
+
 export function ChatWorkspace() {
+  const searchParams = useSearchParams();
+  const jobIdParam = searchParams.get("jobId");
+
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
     null,
   );
+  const [jobContext, setJobContext] = useState<ActiveJobContext | null>(null);
+
   const conversationsQuery = useAssistantConversations();
   const createConversationMutation = useCreateAssistantConversation();
   const deleteConversationMutation = useDeleteAssistantConversation();
@@ -40,6 +53,37 @@ export function ChatWorkspace() {
     [activeConversationId, persistedConversations],
   );
 
+  useEffect(() => {
+    if (!jobIdParam) {
+      setJobContext(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadJob() {
+      try {
+        const matches = await listMatches({ job_id: jobIdParam, limit: 1 });
+        if (cancelled || !matches.length) return;
+        const job = matches[0].job;
+        setJobContext({
+          jobId: job.id,
+          title: job.title,
+          company: job.company,
+        });
+      } catch {
+        if (!cancelled) {
+          setJobContext({ jobId: jobIdParam, title: "Selected job", company: null });
+        }
+      }
+    }
+
+    void loadJob();
+    return () => {
+      cancelled = true;
+    };
+  }, [jobIdParam]);
+
   async function handleCreateConversation() {
     const conversation = await createConversationMutation.mutateAsync({
       title: "New conversation",
@@ -60,7 +104,7 @@ export function ChatWorkspace() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f6f7f9] lg:flex-row">
+    <main className="flex min-h-[calc(100vh-var(--cp-nav-height))] flex-col bg-[var(--cp-page-bg)] lg:flex-row">
       <ConversationSidebar
         activeConversationId={activeConversation?.id ?? null}
         conversations={conversations}
@@ -72,7 +116,7 @@ export function ChatWorkspace() {
         onDeleteConversation={handleDeleteConversation}
         onSelectConversation={setActiveConversationId}
       />
-      <ChatThread conversation={activeConversation} />
+      <ChatThread conversation={activeConversation} jobContext={jobContext} />
     </main>
   );
 }

@@ -28,4 +28,5 @@ export type CreateAssistantConversationInput = {
 export type SendAssistantMessageInput = {
   conversation: AssistantConversation;
   content: string;
+  jobId?: string | null;
 };

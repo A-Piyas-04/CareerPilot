@@ -27,7 +27,7 @@ export function RecentActivityFeed({ items }: RecentActivityFeedProps) {
 
             return (
               <article className="flex gap-3" key={item.id}>
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1A56DB]">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
                   <Icon className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 flex-1 border-b border-zinc-100 pb-3">

@@ -44,7 +44,7 @@ export function ChatMessage({ message }: Props) {
       <article
         className={`group max-w-[78%] rounded-lg px-4 py-3 shadow-sm ${
           isUser
-            ? "bg-[#1A56DB] text-white"
+            ? "bg-sky-600 text-white"
             : "border border-zinc-200 bg-white text-zinc-900"
         }`}
       >

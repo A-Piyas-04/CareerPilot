@@ -14,7 +14,7 @@ type SubmissionProgressProps = {
   label?: string;
   intervalMs?: number;
   className?: string;
-  tone?: "amber" | "blue";
+  tone?: "amber" | "blue" | "emerald" | "sky";
 };
 
 function cn(...classes: (string | undefined | false)[]) {
@@ -33,14 +33,34 @@ const TONE_STYLES = {
     stepPending: "text-amber-400",
   },
   blue: {
-    container: "border-blue-200 bg-blue-50",
-    label: "text-blue-900",
-    sub: "text-blue-700",
-    bar: "bg-[#1A56DB]",
-    barTrack: "bg-blue-200",
-    stepActive: "text-blue-900 font-medium",
-    stepDone: "text-blue-600",
-    stepPending: "text-blue-400",
+    container: "border-sky-200 bg-sky-50",
+    label: "text-sky-900",
+    sub: "text-sky-700",
+    bar: "bg-sky-600",
+    barTrack: "bg-sky-200",
+    stepActive: "text-sky-900 font-medium",
+    stepDone: "text-sky-600",
+    stepPending: "text-sky-400",
+  },
+  emerald: {
+    container: "border-emerald-200 bg-emerald-50",
+    label: "text-emerald-900",
+    sub: "text-emerald-700",
+    bar: "bg-emerald-600",
+    barTrack: "bg-emerald-200",
+    stepActive: "text-emerald-900 font-medium",
+    stepDone: "text-emerald-600",
+    stepPending: "text-emerald-400",
+  },
+  sky: {
+    container: "border-sky-200 bg-sky-50",
+    label: "text-sky-900",
+    sub: "text-sky-700",
+    bar: "bg-sky-600",
+    barTrack: "bg-sky-200",
+    stepActive: "text-sky-900 font-medium",
+    stepDone: "text-sky-600",
+    stepPending: "text-sky-400",
   },
 };
 

@@ -63,6 +63,28 @@ def analyze_skill_gap(
     )
 
 
+@router.get("/skill-gap")
+def list_skill_gap_analyses(
+    limit: int = 50,
+    user_id: str = Depends(get_current_user),
+) -> list[dict]:
+    return career_generation_service.list_skill_gap_analyses(
+        user_id=user_id,
+        limit=limit,
+    )
+
+
+@router.get("/skill-gap/{analysis_id}")
+def get_skill_gap_analysis(
+    analysis_id: str,
+    user_id: str = Depends(get_current_user),
+) -> dict:
+    return career_generation_service.get_skill_gap_analysis(
+        user_id=user_id,
+        analysis_id=analysis_id,
+    )
+
+
 @router.post("/roadmaps/generate")
 def generate_roadmap(
     payload: RoadmapGenerateRequest,

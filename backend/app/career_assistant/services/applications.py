@@ -37,11 +37,32 @@ def _not_found() -> HTTPException:
     )
 
 
+def _normalize_application_row(item: dict[str, Any]) -> dict[str, Any]:
+    row = dict(item)
+    job = row.pop("jobs", None)
+    if isinstance(job, list):
+        job = job[0] if job else None
+    if job:
+        row["job"] = job
+    match = row.pop("job_matches", None)
+    if isinstance(match, list):
+        match = match[0] if match else None
+    if match:
+        row["job_match"] = match
+    return row
+
+
+_APPLICATION_SELECT = (
+    "*, jobs:job_id(id, title, company, location, source_url, salary_range, deadline), "
+    "job_matches:job_match_id(fit_score, matched_skills, missing_skills, explanation)"
+)
+
+
 def list_applications(user_id: str, status_filter: str | None = None) -> list[Application]:
     query = (
         get_supabase_client()
         .table("applications")
-        .select("*")
+        .select(_APPLICATION_SELECT)
         .eq("user_id", user_id)
         .order("updated_at", desc=True)
     )
@@ -49,7 +70,10 @@ def list_applications(user_id: str, status_filter: str | None = None) -> list[Ap
     if status_filter:
         query = query.eq("status", status_filter)
 
-    return [Application(**item) for item in _rows(query.execute())]
+    return [
+        Application(**_normalize_application_row(item))
+        for item in _rows(query.execute())
+    ]
 
 
 def create_application(user_id: str, payload: ApplicationCreate) -> Application:
@@ -74,7 +98,19 @@ def create_application(user_id: str, payload: ApplicationCreate) -> Application:
 
 
 def get_application_detail(user_id: str, application_id: str) -> ApplicationDetail:
-    application = _get_owned_application(user_id, application_id)
+    response = (
+        get_supabase_client()
+        .table("applications")
+        .select(_APPLICATION_SELECT)
+        .eq("id", application_id)
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    application_row = _row(response)
+    if not application_row:
+        raise _not_found()
+    application = Application(**_normalize_application_row(application_row))
     history_response = (
         get_supabase_client()
         .table("application_history")
@@ -172,7 +208,7 @@ def _get_owned_application(user_id: str, application_id: str) -> Application:
     response = (
         get_supabase_client()
         .table("applications")
-        .select("*")
+        .select(_APPLICATION_SELECT)
         .eq("id", application_id)
         .eq("user_id", user_id)
         .limit(1)
@@ -182,4 +218,4 @@ def _get_owned_application(user_id: str, application_id: str) -> Application:
     if not application:
         raise _not_found()
 
-    return Application(**application)
+    return Application(**_normalize_application_row(application))

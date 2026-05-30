@@ -18,11 +18,11 @@ export function AiNudges() {
   } = useAiNudges();
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+    <section className="rounded-xl border border-zinc-200/90 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-50 text-[#1A56DB]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
               <Sparkles className="h-5 w-5" />
             </span>
             <div>
@@ -43,7 +43,7 @@ export function AiNudges() {
           ) : null}
         </div>
         <button
-          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-semibold text-zinc-700 hover:border-[#1A56DB] hover:text-[#1A56DB] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-zinc-200 px-3 text-sm font-semibold text-zinc-700 hover:border-emerald-300 hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isLoading}
           onClick={refreshNudges}
           type="button"

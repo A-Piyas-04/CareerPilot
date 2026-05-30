@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { AppNav } from "@/components/nav/AppNav";
 import { CoverLettersPageClient } from "@/components/cover-letters/CoverLettersPageClient";
@@ -17,7 +18,9 @@ export default async function CoverLettersPage() {
   return (
     <>
       <AppNav />
-      <CoverLettersPageClient />
+      <Suspense fallback={null}>
+        <CoverLettersPageClient />
+      </Suspense>
     </>
   );
 }

@@ -1,9 +1,14 @@
 "use client";
 
-import { CalendarDays, Save, Trash2, X } from "lucide-react";
+import { CalendarDays, Mail, Save, Sparkles, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 import { DrawerSkeleton, SpinnerButton } from "@/components/ui";
+import {
+  buildChatHref,
+  buildCoverLetterHref,
+} from "@/features/jobs/job-actions";
 
 import {
   useApplicationDetail,
@@ -14,6 +19,7 @@ import type { Application } from "./types";
 import {
   formatDate,
   formatRelative,
+  getApplicationDeadline,
   getApplicationTitle,
   getCompanyLine,
 } from "./format";
@@ -67,6 +73,13 @@ export function ApplicationDetailDrawer({ application, onClose }: Props) {
                 source={source}
                 onClose={onClose}
               />
+
+              {source.job_match ? (
+                <JobMatchSummaryBlock
+                  application={source}
+                  jobMatch={source.job_match}
+                />
+              ) : null}
 
               <section className="border-t border-zinc-200 p-5">
                 <h3 className="text-sm font-semibold text-zinc-950">History</h3>
@@ -152,7 +165,7 @@ function ApplicationDetailForm({
         </p>
         <p className="mt-1 flex items-center gap-1.5 text-sm text-zinc-600">
           <CalendarDays className="h-4 w-4" />
-          Deadline: {formatDate(source.deadline)}
+          Deadline: {formatDate(getApplicationDeadline(source))}
         </p>
       </div>
 
@@ -234,6 +247,91 @@ function ApplicationDetailForm({
         </SpinnerButton>
       </div>
     </form>
+  );
+}
+
+function JobMatchSummaryBlock({
+  application,
+  jobMatch,
+}: {
+  application: Application;
+  jobMatch: NonNullable<Application["job_match"]>;
+}) {
+  const fitScore =
+    typeof jobMatch.fit_score === "number" ? jobMatch.fit_score.toFixed(0) : null;
+
+  return (
+    <section className="border-t border-zinc-200 p-5">
+      <h3 className="text-sm font-semibold text-zinc-950">Job Hunter fit</h3>
+      <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+        {fitScore ? (
+          <p className="text-2xl font-bold text-emerald-800">{fitScore}% fit</p>
+        ) : null}
+        {jobMatch.explanation ? (
+          <p className="mt-2 text-sm text-emerald-900">{jobMatch.explanation}</p>
+        ) : null}
+        {jobMatch.matched_skills.length ? (
+          <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-emerald-800">
+            Matched skills
+          </p>
+        ) : null}
+        {jobMatch.matched_skills.length ? (
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {jobMatch.matched_skills.map((skill) => (
+              <span
+                key={skill}
+                className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-emerald-800"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        {jobMatch.missing_skills.length ? (
+          <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-amber-800">
+            Gaps
+          </p>
+        ) : null}
+        {jobMatch.missing_skills.length ? (
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {jobMatch.missing_skills.map((skill) => (
+              <span
+                key={skill}
+                className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-amber-900"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href="/jobs"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-emerald-300 bg-white px-3 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+          >
+            <Sparkles className="h-4 w-4" />
+            View in Job Hunter
+          </Link>
+          {application.job_id ? (
+            <>
+              <Link
+                href={buildCoverLetterHref(application.job_id)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+              >
+                <Mail className="h-4 w-4" />
+                Draft cover letter
+              </Link>
+              <Link
+                href={buildChatHref(application.job_id)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+              >
+                Ask assistant
+              </Link>
+            </>
+          ) : null}
+        </div>
+      </div>
+    </section>
   );
 }
 

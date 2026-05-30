@@ -1,10 +1,11 @@
 """JSearch (RapidAPI) job source adapter.
 
-Endpoint: GET {JSEARCH_BASE_URL}/search?query=...&num_pages=1
+Endpoint: GET {JSEARCH_BASE_URL}/search?query=...&num_pages=N
 Docs:     https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
 """
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import httpx
@@ -88,7 +89,8 @@ class JSearchAdapter:
             "x-rapidapi-key": self._api_key,
             "x-rapidapi-host": self._host,
         }
-        params = {"query": full_query, "num_pages": "1"}
+        num_pages = max(1, min(3, math.ceil(limit / 10)))
+        params = {"query": full_query, "num_pages": str(num_pages)}
 
         with httpx.Client(timeout=_TIMEOUT_SECONDS) as client:
             response = client.get(url, headers=headers, params=params)

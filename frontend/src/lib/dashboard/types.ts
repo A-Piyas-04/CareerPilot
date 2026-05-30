@@ -4,7 +4,8 @@ export type DashboardMetricKey =
   | "roadmapProgress"
   | "tasksCompletedThisWeek"
   | "weeklyStreak"
-  | "roadmapItemsDone";
+  | "roadmapItemsDone"
+  | "skillsAdded";
 
 export type DashboardMetrics = Record<DashboardMetricKey, number>;
 

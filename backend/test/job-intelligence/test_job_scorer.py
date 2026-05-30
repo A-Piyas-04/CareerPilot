@@ -110,7 +110,7 @@ class TestScoreJob:
         assert result["fit_score"] == 20.00
         assert result["matched_skills"] == []
         assert result["missing_skills"] == []
-        assert "no recognizable skills" in result["explanation"].lower()
+        assert "resume-chunk similarity" in result["explanation"].lower()
 
     def test_evidence_chunk_ids_returned_in_order(self):
         with patch(
@@ -178,3 +178,5 @@ class TestScoreJob:
                 supabase=object(),
             )
         assert "1/2" in result["explanation"]
+        assert "You have:" in result["explanation"]
+        assert "Gaps:" in result["explanation"]

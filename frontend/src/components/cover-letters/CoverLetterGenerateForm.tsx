@@ -1,17 +1,25 @@
 "use client";
 
 import { FileText } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { SpinnerButton } from "@/components/ui";
 import type {
   CoverLetterTone,
   GenerateCoverLetterRequest,
 } from "@/lib/cover-letter/types";
+import { surfaceCard } from "@/lib/ui-theme";
 
 type CoverLetterGenerateFormProps = {
   isGenerating: boolean;
   onGenerate: (payload: GenerateCoverLetterRequest) => void;
+  initialValues?: {
+    jobTitle?: string;
+    companyName?: string;
+    jobDescription?: string;
+    jobId?: string;
+  };
+  prefillLabel?: string | null;
 };
 
 const TONES: { label: string; value: CoverLetterTone }[] = [
@@ -23,21 +31,36 @@ const TONES: { label: string; value: CoverLetterTone }[] = [
 export function CoverLetterGenerateForm({
   isGenerating,
   onGenerate,
+  initialValues,
+  prefillLabel,
 }: CoverLetterGenerateFormProps) {
-  const [jobTitle, setJobTitle] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [jobDescription, setJobDescription] = useState("");
+  const [jobTitle, setJobTitle] = useState(initialValues?.jobTitle ?? "");
+  const [companyName, setCompanyName] = useState(initialValues?.companyName ?? "");
+  const [jobDescription, setJobDescription] = useState(
+    initialValues?.jobDescription ?? "",
+  );
   const [tone, setTone] = useState<CoverLetterTone>("professional");
   const [extraNotes, setExtraNotes] = useState("");
+  const [jobId] = useState(initialValues?.jobId ?? "");
+
+  useEffect(() => {
+    if (initialValues?.jobTitle) setJobTitle(initialValues.jobTitle);
+    if (initialValues?.companyName) setCompanyName(initialValues.companyName);
+    if (initialValues?.jobDescription) {
+      setJobDescription(initialValues.jobDescription);
+    }
+  }, [
+    initialValues?.jobTitle,
+    initialValues?.companyName,
+    initialValues?.jobDescription,
+  ]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (
       isGenerating ||
-      !jobTitle.trim() ||
-      !companyName.trim() ||
-      !jobDescription.trim()
+      (!jobId && (!jobTitle.trim() || !companyName.trim() || !jobDescription.trim()))
     ) {
       return;
     }
@@ -48,23 +71,30 @@ export function CoverLetterGenerateForm({
       jobDescription: jobDescription.trim(),
       jobTitle: jobTitle.trim(),
       tone,
+      jobId: jobId || undefined,
     });
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
+      className={`p-5 ${surfaceCard}`}
     >
       <div>
-        <h1 className="text-xl font-semibold text-zinc-950">
-          Cover Letter Generator
-        </h1>
+        <h2 className="text-lg font-semibold text-zinc-950">
+          Generate a cover letter
+        </h2>
         <p className="mt-1 text-sm text-zinc-600">
           Create a tailored letter from a job description and verified CV
           context.
         </p>
       </div>
+
+      {prefillLabel ? (
+        <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          Prefilled from Job Hunter — {prefillLabel}
+        </p>
+      ) : null}
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <label className="flex flex-col gap-1.5">
@@ -141,9 +171,10 @@ export function CoverLetterGenerateForm({
           loadingLabel="Generating…"
           disabled={
             isGenerating ||
-            !jobTitle.trim() ||
-            !companyName.trim() ||
-            !jobDescription.trim()
+            (!jobId &&
+              (!jobTitle.trim() ||
+                !companyName.trim() ||
+                !jobDescription.trim()))
           }
           icon={<FileText className="h-4 w-4" />}
         >

@@ -3,10 +3,16 @@ import type { AssistantProfile } from "./types";
 export function buildSystemPrompt({
   profile,
   resumeContext,
+  jobContext,
 }: {
   profile: AssistantProfile | null;
   resumeContext: string;
+  jobContext?: string;
 }) {
+  const jobBlock = jobContext
+    ? `\nActive Job Posting Context:\n${jobContext}\n\nThe user is asking about this specific job posting. Ground readiness, skill gap, roadmap, and cover letter answers in both their CV and this posting.`
+    : "";
+
   return `You are CareerPilot, an AI career co-pilot.
 
 User Profile:
@@ -15,7 +21,7 @@ Target Role: ${profile?.target_role || "Not specified"}
 Location: ${profile?.location || "Not specified"}
 
 CV Context:
-${resumeContext}
+${resumeContext}${jobBlock}
 
 Instructions:
 - Ground all career advice in the user's actual CV context.

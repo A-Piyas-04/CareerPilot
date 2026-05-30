@@ -2,7 +2,7 @@
 
 import { CalendarDays, MapPin } from "lucide-react";
 
-import { formatDate, getApplicationTitle, getCompanyLine } from "./format";
+import { formatDate, getApplicationTitle, getCompanyLine, getApplicationDeadline } from "./format";
 import type { Application } from "./types";
 
 type Props = {
@@ -29,7 +29,7 @@ export function ApplicationCard({ application, onOpen }: Props) {
       <div className="mt-3 grid gap-1.5 text-xs text-zinc-500">
         <span className="flex items-center gap-1.5">
           <CalendarDays className="h-3.5 w-3.5" />
-          Deadline: {formatDate(application.deadline)}
+          Deadline: {formatDate(getApplicationDeadline(application))}
         </span>
         {application.applied_at ? (
           <span className="flex items-center gap-1.5">

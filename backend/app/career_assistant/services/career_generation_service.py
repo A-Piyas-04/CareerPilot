@@ -149,7 +149,47 @@ def analyze_and_save_skill_gap(
         "missing_skills": missing,
         "recommendations": recommendations,
         "used_resume_chunks": rag.chunk_ids,
+        "job_id": job_id,
+        "resume_id": rag.resume_id,
+        "created_at": inserted.get("created_at"),
     }
+
+
+def list_skill_gap_analyses(
+    *, user_id: str, limit: int = 50
+) -> list[dict[str, Any]]:
+    supabase = get_supabase_client()
+    response = (
+        supabase.table("skill_gap_analysis")
+        .select(
+            "id, target_role, current_skills, required_skills, missing_skills, "
+            "job_id, resume_id, created_at"
+        )
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return _rows(response)
+
+
+def get_skill_gap_analysis(*, user_id: str, analysis_id: str) -> dict[str, Any]:
+    supabase = get_supabase_client()
+    response = (
+        supabase.table("skill_gap_analysis")
+        .select("*")
+        .eq("id", analysis_id)
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    row = _row(response)
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Skill gap analysis not found.",
+        )
+    return row
 
 
 def generate_and_save_roadmap(

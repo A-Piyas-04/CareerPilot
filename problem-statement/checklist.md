@@ -30,20 +30,20 @@
 | Item | Requirement / Constraint | Status | Notes |
 |------|------------------------|--------|-------|
 | Input | Natural-language job search (e.g. “ML internships in Dhaka”) | ✅ | `/jobs` search form → `POST /api/v1/jobs/search` |
-| Output | Structured job cards | ⚠️ | Cards show role, company, location, fit score, skills, explanation; **salary & deadline not shown on UI** (backend has `salary_range`; JSearch rarely fills deadline) |
-| Output | Role, company, salary range on card | ⚠️ | `salary_range` stored from JSearch; **not rendered** in `match-card.tsx` |
-| Output | Application deadline on card | ❌ | `jobs.deadline` exists in schema; JSearch adapter does not map deadline |
+| Output | Structured job cards | ✅ | Cards show role, company, location, salary, fit score, matched/gap skills, expandable why + CV evidence |
+| Output | Role, company, salary range on card | ✅ | `salary_range` rendered in `match-card.tsx` metadata row |
+| Output | Application deadline on card | ⚠️ | Shown when present on `jobs.deadline`; JSearch rarely provides deadline |
 | Output | Location on card | ✅ | Shown on match cards |
 | Output | Fit score on card | ✅ | Programmatic badge (0–100) |
-| Reasoning | Agent explains WHY each result matches (or doesn't), grounded in CV | ⚠️ | `explanation` + matched/missing skills from `job_scorer.py`; not a conversational agent narrative |
+| Reasoning | Agent explains WHY each result matches (or doesn't), grounded in CV | ✅ | Expandable explanation + skills/similarity bars + CV evidence snippets on match cards |
 | Config | JSearch credentials via environment | ✅ | `JSEARCH_API_KEY`, `JSEARCH_API_HOST`, `JSEARCH_BASE_URL` in `backend/.env`; legacy `RAPIDAPI_*` aliases in `config.py` |
 | Live search | At least one live search (job board API / scraping) | ✅ | JSearch via RapidAPI (`JSearchAdapter`); **verified E2E** on `/jobs` with subscribed RapidAPI key |
 | External tools | Agent uses external tool calls (search API) | ✅ | `httpx` → `{JSEARCH_BASE_URL}/search`; satisfies core technical requirement |
 | Error handling | Actionable JSearch / RapidAPI failures | ✅ | `JSearchError` maps 403 (not subscribed), 401/403 (bad key), 429 (quota) to clear API responses |
 | Fit score | Computed programmatically (not LLM-only) | ✅ | `0.6 × skills_overlap + 0.4 × chunk_similarity` in `job_scorer.py` |
 | Persistence | Search results stored | ✅ | `job_searches`, `jobs`, `job_matches` |
-| Tracker link | Save match → application tracker | ✅ | `POST /matches/{id}/save` → Kanban `saved` |
-| Manual JD | Paste job description for scoring | ⚠️ | `POST /api/v1/jobs/manual` + `addManualJob()`; **no UI form on `/jobs`** |
+| Tracker link | Save match → application tracker | ✅ | Denormalized title/company/location/deadline on save; idempotent; tracker joins `jobs` fallback |
+| Manual JD | Paste job description for scoring | ✅ | `ManualJobDrawer` on `/jobs` → `POST /api/v1/jobs/manual` |
 
 ---
 
@@ -79,7 +79,7 @@
 | Memory | Conversational memory within a session | ✅ | `loadConversationMemory` — last 12 messages per conversation |
 | Persistence | Conversations & messages saved | ✅ | `assistant_conversations`, `assistant_messages` |
 | Query | “Am I ready for this data engineer role?” → verdict + reasoning | ✅ | `readiness_check` intent + grounded prompts |
-| Query | “What skills am I missing for a Google internship?” → skill gap | ⚠️ | Chat intent + `POST /api/v1/career/skill-gap/analyze`; **no dedicated UI page** |
+| Query | “What skills am I missing for a Google internship?” → skill gap | ✅ | Chat intent + `POST /api/v1/career/skill-gap/analyze` + dedicated `/skill-gap` page with Job Hunter prefill |
 | Query | “Build me a 3-month roadmap…” → weekly plan + resources | ✅ | `/roadmap` generate + detail timeline; chat **Save Roadmap**; items → task/calendar APIs |
 | Query | “Draft a cover letter…” → personalized from real experience | ✅ | `/cover-letters` studio (generate, edit, regenerate) + chat save path |
 | Cover letter metadata | Job title, company, tone, JD stored on letter | ✅ | `cover_letters` columns + Pydantic models; migration `20260529000000` |
@@ -105,9 +105,9 @@
 | Application tracker | Kanban: Applied / Interviewing / Offer / Rejected | ✅ | `/tracker` + DnD; includes `saved` column |
 | Application tracker | Full application history | ✅ | `application_history` + timeline in detail drawer |
 | Dashboard | Progress dashboard (weekly stats) | ✅ | `/dashboard` — `DashboardPageClient` + `GET /api/dashboard/metrics` |
-| Dashboard | Applications sent, skills added, roadmap % complete | ⚠️ | Jobs applied, active apps, roadmap %, tasks/week, pipeline chart ✅; **skills-added count not on dashboard** |
+| Dashboard | Applications sent, skills added, roadmap % complete | ✅ | Jobs applied, active apps, **skillsAdded** from `user_skills`, roadmap %, tasks/week, pipeline chart |
 | Dashboard | Streak counter | ✅ | `calculateWeeklyStreak` — weeks with ≥1 completed task |
-| AI nudges | Proactive agent reminders (e.g. “3 openings matching profile”) | ⚠️ | `AiNudges` on `/dashboard` via `POST /api/reminders/generate`; **not on-login / push; job-match nudges not explicit** |
+| AI nudges | Proactive agent reminders (e.g. “3 openings matching profile”) | ✅ | Dashboard nudges include high-fit unsaved job matches + deterministic `/jobs` prompt |
 | Calendar ↔ goals | Deadlines linked to goals | ⚠️ | Tasks/events can link `goal_id`, `application_id`; not fully automated from goals |
 | Roadmap → task | Create task from roadmap item | ✅ | `POST /api/roadmap/items/[itemId]/create-task` (Next.js BFF) |
 | Roadmap → calendar | Add study event from roadmap item | ✅ | `POST /api/roadmap/items/[itemId]/add-to-calendar` + `AddToCalendarModal` |
@@ -132,12 +132,12 @@
 |---|---------|--------|-------|
 | 1 | Working app with all four pillars implemented or prototyped | ⚠️ | Pillar 4 dashboard ✅; AI nudges partial |
 | 2 | CV upload pipeline: PDF/DOCX → chunk → embed → vector DB | ✅ | End-to-end in `resume_service.process_resume()` |
-| 3 | Job Hunter with live search + structured cards | ⚠️ | Live JSearch search **verified E2E** ✅; cards missing salary/deadline display |
+| 3 | Job Hunter with live search + structured cards | ✅ | Live JSearch + filters/sort + 10/20/25 results + parallel scoring |
 | 4 | Fit score: % match + explanation for a posting | ✅ | Score + `explanation` + skills on match cards |
-| 5 | AI Assistant chat with RAG across benchmark query types | ⚠️ | Chat intents ✅; roadmap + cover letter have dedicated pages; **skill gap page still missing** |
+| 5 | AI Assistant chat with RAG across benchmark query types | ✅ | Chat intents + job context from Job Hunter; benchmark prompts when job selected |
 | 6 | Calendar + to-do with deadline tracking linked to goals | ✅ | Calendar + goal tasks + standalone tasks |
 | 7 | Kanban application tracker (4+ statuses) | ✅ | saved → applied → interviewing → offer → rejected |
-| 8 | Progress dashboard with real data | ⚠️ | `/dashboard` with real Supabase metrics; skills-added widget still missing |
+| 8 | Progress dashboard with real data | ✅ | `/dashboard` with skillsAdded, pipeline, job-match nudges |
 
 ---
 
@@ -148,8 +148,8 @@
 | **4.1 Application** | Working demo covering all four pillars | ⚠️ | Runnable via `docker compose up`; pillar gaps above |
 | **4.1 Application** | Runnable from source by judges | ✅ | `docker-compose.yml`, README setup steps |
 | **4.2 Repository** | Public GitHub with source before deadline | ⚠️ | Repo exists locally; **verify public remote & final commit before submit** |
-| **4.2 Repository** | README: setup, env vars, how to run | ⚠️ | `README.md` present but **outdated** (Anthropic, hashing embeddings, “routes pending”) vs actual Gemini/JSearch stack |
-| **4.2 Repository** | Architecture diagram: CV upload → agent response | ⚠️ | Text architecture in README + `Docs/cv-intelligence-implementation.md`; **no single diagram in README** as required |
+| **4.2 Repository** | README: setup, env vars, how to run | ✅ | Updated for Gemini, JSearch, Docker, architecture diagram, demo script |
+| **4.2 Repository** | Architecture diagram: CV upload → agent response | ✅ | Mermaid diagram in README + module docs |
 | **4.3 Demo** | 5-minute recorded video | ❌ | No video file in repo (organizer deliverable) |
 | **4.3 Demo** | Full flow: CV → search → fit → assistant → cover letter → tracker | ✅ | Full path supported including live JSearch on `/jobs`; cover letter via `/cover-letters` or chat; roadmap via `/roadmap` |
 
@@ -161,7 +161,7 @@
 |-------|-------------------|--------|-------|
 | Live deployment | Public URL; stable during judging | ❌ | No deployment URL documented in repo |
 | System design doc | Data flow, scale to 10k users, cost/user, bottlenecks | ⚠️ | `Docs/db-design.md` (1625 lines) + `present-state.md` — strong schema/flow docs; **missing explicit cost/scaling analysis** per bonus rubric |
-| Evaluation suite | ≥5 documented test cases (input, expected, actual, pass/fail) | ❌ | `evaluation_tests` table + Pydantic models only; **no populated cases or verdict doc** |
+| Evaluation suite | ≥5 documented test cases (input, expected, actual, pass/fail) | ✅ | [`Docs/evaluation-suite.md`](../Docs/evaluation-suite.md) — 10 cases + demo script |
 | Automated tests | (Supporting) | ⚠️ | pytest: CV + job intelligence + career generation + **career-assistant service/model** tests; Vitest on cover-letter/roadmap/chat API routes |
 
 ---

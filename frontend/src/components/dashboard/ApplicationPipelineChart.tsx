@@ -52,7 +52,7 @@ export function ApplicationPipelineChart({ data }: ApplicationPipelineChartProps
                 boxShadow: "0 8px 24px rgba(24, 24, 27, 0.08)",
               }}
             />
-            <Bar dataKey="count" fill="#1A56DB" radius={[0, 6, 6, 0]} />
+            <Bar dataKey="count" fill="#047857" radius={[0, 6, 6, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

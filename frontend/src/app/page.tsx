@@ -18,10 +18,19 @@ import Link from "next/link";
 
 const corePages = [
   {
+    title: "Job Hunter",
+    href: "/jobs",
+    description:
+      "Search live roles, score fit against your CV, review gaps, and save matches to your tracker.",
+    icon: Sparkles,
+    accent: "bg-emerald-50 text-emerald-700",
+    status: "Live",
+  },
+  {
     title: "AI Career Assistant",
     href: "/chat",
     description:
-      "Save career conversations, review message history, and prepare for the Phase 2.2 AI engine.",
+      "Grounded career chat with readiness checks, skill gaps, roadmaps, and cover letters.",
     icon: MessageSquareText,
     accent: "bg-blue-50 text-blue-700",
     status: "Live",
@@ -33,6 +42,24 @@ const corePages = [
       "Move opportunities through Saved, Applied, Interviewing, Offer, and Rejected with history tracking.",
     icon: BriefcaseBusiness,
     accent: "bg-emerald-50 text-emerald-700",
+    status: "Live",
+  },
+  {
+    title: "Skill Gap Analysis",
+    href: "/skill-gap",
+    description:
+      "Compare your CV against target roles and prioritize what to learn next.",
+    icon: LineChart,
+    accent: "bg-amber-50 text-amber-800",
+    status: "Live",
+  },
+  {
+    title: "Roadmap Generator",
+    href: "/roadmap",
+    description:
+      "Generate week-by-week learning plans and turn roadmap items into tasks or calendar events.",
+    icon: Map,
+    accent: "bg-indigo-50 text-indigo-700",
     status: "Live",
   },
   {
@@ -66,7 +93,7 @@ const corePages = [
     title: "Resume Intelligence",
     href: "/resume",
     description:
-      "Upload, inspect, and query resume context that powers future AI recommendations.",
+      "Upload, inspect, and query resume context that powers all CareerPilot agents.",
     icon: FileText,
     accent: "bg-rose-50 text-rose-700",
     status: "Live",
@@ -84,7 +111,7 @@ const corePages = [
     title: "Progress Dashboard",
     href: "/dashboard",
     description:
-      "Track applications, roadmap progress, completed tasks, upcoming deadlines, and recent activity.",
+      "Track applications, skills indexed, roadmap progress, tasks, deadlines, and AI nudges.",
     icon: Layers3,
     accent: "bg-zinc-100 text-zinc-700",
     status: "Live",
@@ -93,21 +120,9 @@ const corePages = [
 
 const futureFeatures = [
   {
-    title: "Skill Gap Analysis",
-    description:
-      "Compare resume strengths against target roles and prioritize what to learn next.",
-    icon: LineChart,
-  },
-  {
-    title: "Roadmap Generator",
-    description:
-      "Generate week-by-week learning plans and turn roadmap items into tasks or calendar events.",
-    icon: Map,
-  },
-  {
     title: "AI Nudges",
     description:
-      "Surface timely reminders when deadlines, overdue tasks, or stalled applications need attention.",
+      "Proactive reminders for high-fit jobs, overdue tasks, and stalled applications on your dashboard.",
     icon: Bot,
   },
 ];
@@ -122,7 +137,7 @@ const proofPoints = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#f6f7f9] text-zinc-950">
+    <main className="min-h-screen bg-[var(--cp-page-bg)] text-zinc-950">
       <section className="border-b border-zinc-200 bg-white">
         <nav className="mx-auto flex max-w-[1560px] items-center justify-between gap-4 px-5 py-4">
           <Link className="flex items-center gap-3" href="/">
@@ -341,7 +356,7 @@ export default function Home() {
               const Icon = item.icon;
               return (
                 <div
-                  className="rounded-lg border border-zinc-200 bg-[#f6f7f9] p-5"
+                  className="rounded-xl border border-zinc-200 bg-[var(--cp-page-bg)] p-5"
                   key={item.title}
                 >
                   <span className="flex h-10 w-10 items-center justify-center rounded-md bg-white text-emerald-700 shadow-sm">

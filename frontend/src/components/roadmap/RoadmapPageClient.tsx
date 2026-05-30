@@ -1,18 +1,35 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { Map } from "lucide-react";
+import { useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
+import { PageHeader, PageShell } from "@/components/layout";
 import { RoadmapGenerateForm } from "@/components/roadmap/RoadmapGenerateForm";
 import { RoadmapList } from "@/components/roadmap/RoadmapList";
 import { SubmissionProgress } from "@/components/ui";
 import { ROADMAP_GENERATE_STEPS } from "@/lib/progress/roadmap-progress";
 import { useGenerateRoadmap, useRoadmaps } from "@/lib/hooks/useRoadmaps";
+import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
+import { surfaceCard } from "@/lib/ui-theme";
 import type { GenerateRoadmapRequest } from "@/lib/roadmap/types";
 
 export function RoadmapPageClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const targetRoleParam = searchParams.get("targetRole");
+  const jobDescriptionParam = searchParams.get("jobDescription");
+  const companyParam = searchParams.get("company");
+
   const roadmaps = useRoadmaps();
   const generateRoadmap = useGenerateRoadmap();
+
+  const prefillLabel = useMemo(() => {
+    if (!targetRoleParam) return null;
+    return companyParam
+      ? `${targetRoleParam} at ${companyParam}`
+      : targetRoleParam;
+  }, [companyParam, targetRoleParam]);
 
   const handleGenerate = (payload: GenerateRoadmapRequest) => {
     generateRoadmap.mutate(payload, {
@@ -23,22 +40,34 @@ export function RoadmapPageClient() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-49px)] bg-zinc-50 px-6 py-6">
-      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+    <PageShell>
+      <PageHeader
+        icon={Map}
+        title="Learning Roadmap"
+        description="Generate weekly learning plans from skill gaps or target roles, then track progress over time."
+        relatedLinks={PAGE_RELATED_LINKS["/roadmap"]}
+      />
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
         <div className="space-y-4">
           <RoadmapGenerateForm
             isGenerating={generateRoadmap.isPending}
             onGenerate={handleGenerate}
+            initialValues={{
+              targetRole: targetRoleParam ?? undefined,
+              jobDescription: jobDescriptionParam ?? undefined,
+            }}
+            prefillLabel={prefillLabel}
           />
           <SubmissionProgress
             isActive={generateRoadmap.isPending}
             mode="simulated"
             steps={[...ROADMAP_GENERATE_STEPS]}
-            tone="blue"
+            tone="sky"
           />
         </div>
 
-        <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+        <section className={`p-5 ${surfaceCard}`}>
           <div className="mb-4">
             <h2 className="text-base font-semibold text-zinc-950">
               Saved roadmaps
@@ -54,6 +83,6 @@ export function RoadmapPageClient() {
           />
         </section>
       </div>
-    </main>
+    </PageShell>
   );
 }

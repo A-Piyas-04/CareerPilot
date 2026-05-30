@@ -7,10 +7,12 @@ import {
   isYesterday,
   parseISO,
 } from "date-fns";
-import { MessageSquarePlus, Trash2 } from "lucide-react";
+import { MessageSquarePlus, MessageSquareText, Trash2 } from "lucide-react";
+import Link from "next/link";
 
 import { ListCardSkeleton } from "@/components/ui";
 import { isTemporaryAssistantConversationId } from "@/lib/hooks/useAssistantConversations";
+import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import type { AssistantConversation } from "@/lib/types/assistant";
 
 type Props = {
@@ -50,17 +52,22 @@ export function ConversationSidebar({
   return (
     <aside className="flex h-full w-full flex-col border-r border-zinc-200 bg-white lg:w-80">
       <header className="border-b border-zinc-200 p-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#1A56DB]">
-            CareerPilot
-          </p>
-          <h1 className="text-xl font-semibold text-zinc-950">
-            Career Assistant
-          </h1>
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm">
+            <MessageSquareText className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+              AI Assistant
+            </p>
+            <h1 className="text-lg font-semibold text-zinc-950">
+              Career Assistant
+            </h1>
+          </div>
         </div>
 
         <button
-          className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#1A56DB] px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:bg-blue-300"
+          className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:bg-sky-300"
           type="button"
           onClick={onCreateConversation}
           disabled={isCreating}
@@ -68,10 +75,25 @@ export function ConversationSidebar({
           <MessageSquarePlus className="h-4 w-4" />
           New Chat
         </button>
+
+        <nav
+          aria-label="Related pages"
+          className="mt-3 flex flex-wrap gap-1.5"
+        >
+          {PAGE_RELATED_LINKS["/chat"].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="inline-flex h-7 items-center rounded-full border border-zinc-200 bg-zinc-50 px-2.5 text-[11px] font-medium text-zinc-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
       </header>
 
       {errorMessage ? (
-        <p className="m-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="m-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {errorMessage}
         </p>
       ) : null}
@@ -135,9 +157,9 @@ function ConversationButton({
 }) {
   return (
     <div
-      className={`group flex items-start gap-2 rounded-md border transition ${
+      className={`group flex items-start gap-2 rounded-lg border transition ${
         isActive
-          ? "border-blue-200 bg-blue-50"
+          ? "border-sky-200 bg-sky-50"
           : "border-transparent hover:border-zinc-200 hover:bg-zinc-50"
       }`}
     >

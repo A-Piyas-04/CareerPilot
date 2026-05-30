@@ -54,6 +54,9 @@ export type NudgeActivitySummary = {
   recentlyCompletedRoadmapItems: number | null;
   activeGoals: number | null;
   goalsNearTargetDate: number | null;
+  highFitUnsavedMatches: number;
+  topMatchTitles: string[];
+  recentSearchQuery: string | null;
 };
 
 export const QUOTA_EXCEEDED_MESSAGE =

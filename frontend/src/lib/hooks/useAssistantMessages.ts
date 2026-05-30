@@ -134,7 +134,7 @@ async function fetchAssistantMessages(conversationId: string) {
 }
 
 async function streamAssistantMessage(
-  { content, conversation }: SendAssistantMessageInput,
+  { content, conversation, jobId }: SendAssistantMessageInput,
   queryClient: ReturnType<typeof useQueryClient>,
 ) {
   if (isTemporaryAssistantConversationId(conversation.id)) {
@@ -149,6 +149,7 @@ async function streamAssistantMessage(
     body: JSON.stringify({
       conversationId: conversation.id,
       message: content,
+      jobId: jobId ?? undefined,
     }),
   });
 

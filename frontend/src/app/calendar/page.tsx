@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { AppNav } from "@/components/nav/AppNav";
 import { CalendarView } from "@/components/calendar/CalendarView";
 import { createClient } from "@/lib/supabase/server";
 
@@ -13,5 +14,10 @@ export default async function CalendarPage() {
     redirect("/login?next=/calendar");
   }
 
-  return <CalendarView />;
+  return (
+    <>
+      <AppNav />
+      <CalendarView />
+    </>
+  );
 }

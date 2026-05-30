@@ -43,12 +43,33 @@ class ApplicationStatusUpdate(BaseModel):
     note: Optional[str] = None
 
 
+class LinkedJobSummary(BaseModel):
+    """Nested job data when application is linked to a Job Hunter result."""
+    id: Optional[str] = None
+    title: Optional[str] = None
+    company: Optional[str] = None
+    location: Optional[str] = None
+    source_url: Optional[str] = None
+    salary_range: Optional[str] = None
+    deadline: Optional[date] = None
+
+
+class LinkedJobMatchSummary(BaseModel):
+    """Fit data when application is linked to a job match."""
+    fit_score: Optional[float] = None
+    matched_skills: list[str] = Field(default_factory=list)
+    missing_skills: list[str] = Field(default_factory=list)
+    explanation: Optional[str] = None
+
+
 class Application(ApplicationBase):
     """Full application model."""
     id: str
     user_id: str
     job_id: Optional[str] = None
     job_match_id: Optional[str] = None
+    job: Optional[LinkedJobSummary] = None
+    job_match: Optional[LinkedJobMatchSummary] = None
     status: ApplicationStatusEnum
     applied_at: Optional[datetime] = None
     created_at: datetime

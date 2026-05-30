@@ -1,14 +1,13 @@
 "use client";
 
-import { Briefcase, CalendarDays, LogOut, Plus } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Plus, Target } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { PageHeader, PageShell } from "@/components/layout";
 import { TaskList } from "@/components/tasks/TaskList";
-import { createClient } from "@/lib/supabase/client";
-
 import { ListCardSkeleton } from "@/components/ui";
+import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
+import { alertError, btnPrimary, surfaceCard } from "@/lib/ui-theme";
 
 import { GoalCard } from "./goal-card";
 import { GoalFormDrawer } from "./goal-form-drawer";
@@ -19,19 +18,12 @@ import { GOAL_STATUS_LABELS, GOAL_STATUSES } from "./types";
 type GoalFilter = GoalStatus | "all";
 
 export function GoalsWorkspace() {
-  const router = useRouter();
   const [filter, setFilter] = useState<GoalFilter>("active");
   const [isGoalDrawerOpen, setIsGoalDrawerOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<GoalDetail | null>(null);
   const goalsQuery = useGoals(filter === "all" ? undefined : filter);
 
   const goals = useMemo(() => goalsQuery.data ?? [], [goalsQuery.data]);
-
-  async function handleSignOut() {
-    await createClient().auth.signOut();
-    router.replace("/login");
-    router.refresh();
-  }
 
   function handleCreateGoal() {
     setEditingGoal(null);
@@ -44,57 +36,26 @@ export function GoalsWorkspace() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f6f7f9]">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-[1560px] flex-wrap items-center justify-between gap-3 px-5 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              CareerPilot
-            </p>
-            <h1 className="text-2xl font-semibold text-zinc-950">Goals</h1>
-          </div>
+    <PageShell width="wide">
+      <PageHeader
+        icon={Target}
+        title="Goals"
+        description="Set career milestones, break them into tasks, and track progress alongside your applications."
+        relatedLinks={PAGE_RELATED_LINKS["/goals"]}
+        actions={
+          <button className={btnPrimary} type="button" onClick={handleCreateGoal}>
+            <Plus className="h-4 w-4" />
+            Add Goal
+          </button>
+        }
+      />
 
-          <div className="flex items-center gap-2">
-            <Link
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-              href="/calendar"
-            >
-              <CalendarDays className="h-4 w-4" />
-              Calendar
-            </Link>
-            <Link
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-              href="/tracker"
-            >
-              <Briefcase className="h-4 w-4" />
-              Tracker
-            </Link>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-              type="button"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
-              type="button"
-              onClick={handleCreateGoal}
-            >
-              <Plus className="h-4 w-4" />
-              Add Goal
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <section className="mx-auto grid w-full max-w-[1560px] flex-1 gap-5 px-5 py-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="min-w-0 space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             {(["all", ...GOAL_STATUSES] as GoalFilter[]).map((status) => (
               <button
-                className={`h-9 rounded-md border px-3 text-sm font-semibold transition ${
+                className={`h-9 rounded-lg border px-3 text-sm font-semibold transition ${
                   filter === status
                     ? "border-emerald-700 bg-emerald-700 text-white"
                     : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
@@ -111,9 +72,7 @@ export function GoalsWorkspace() {
           {goalsQuery.isLoading ? (
             <ListCardSkeleton count={3} cardClassName="h-44" className="space-y-3" />
           ) : goalsQuery.error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              {goalsQuery.error.message}
-            </div>
+            <div className={`${alertError} p-4`}>{goalsQuery.error.message}</div>
           ) : goals.length ? (
             <div className="space-y-4">
               {goals.map((goal) => (
@@ -121,7 +80,7 @@ export function GoalsWorkspace() {
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center">
+            <div className={`${surfaceCard} border-dashed p-8 text-center`}>
               <h2 className="text-lg font-semibold text-zinc-950">
                 No goals found
               </h2>
@@ -129,7 +88,7 @@ export function GoalsWorkspace() {
                 Create a goal and break it into linked tasks.
               </p>
               <button
-                className="mt-4 inline-flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                className={`${btnPrimary} mt-4`}
                 type="button"
                 onClick={handleCreateGoal}
               >
@@ -140,16 +99,16 @@ export function GoalsWorkspace() {
           )}
         </div>
 
-        <div className="min-w-0 xl:sticky xl:top-5 xl:self-start">
+        <div className="min-w-0 xl:sticky xl:top-20 xl:self-start">
           <TaskList />
         </div>
-      </section>
+      </div>
 
       <GoalFormDrawer
         goal={editingGoal}
         isOpen={isGoalDrawerOpen}
         onClose={() => setIsGoalDrawerOpen(false)}
       />
-    </main>
+    </PageShell>
   );
 }

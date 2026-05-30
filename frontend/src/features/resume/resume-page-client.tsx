@@ -3,15 +3,14 @@
 import {
   AlertCircle,
   FileText,
-  LogOut,
   PenLine,
   Sparkles,
   Upload,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 
-import { createClient } from "@/lib/supabase/client";
+import { PageHeader, PageShell } from "@/components/layout";
+import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 
 import { useResume, useResumes } from "./hooks";
 import { ManualResumeEditor } from "./manual-resume-editor";
@@ -102,7 +101,6 @@ function ResumeEmptyState({
 }
 
 export function ResumePageClient() {
-  const router = useRouter();
   const resumesQuery = useResumes();
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState<CvInputMode>("upload");
@@ -125,12 +123,6 @@ export function ResumePageClient() {
 
   const pageBadge = getPageStatusBadge(resumes, selectedResume);
   const BadgeIcon = BADGE_ICONS[pageBadge];
-
-  async function handleSignOut() {
-    await createClient().auth.signOut();
-    router.replace("/login");
-    router.refresh();
-  }
 
   function handleCvSuccess(resumeId: string) {
     setSelectedResumeId(resumeId);
@@ -168,46 +160,23 @@ export function ResumePageClient() {
   const showEmptyHero = resumes.length === 0 && !resumesQuery.isLoading;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#f6f7f9] to-zinc-100/80">
-      <header className="border-b border-zinc-200/80 bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-5 py-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white shadow-sm">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold tracking-tight text-zinc-950">
-                  CV Intelligence
-                </h1>
-                <p className="mt-0.5 max-w-lg text-sm text-zinc-500">
-                  Upload, build, or edit your CV, then query it with AI grounded
-                  in your real experience.
-                </p>
-              </div>
-            </div>
+    <PageShell>
+      <PageHeader
+        icon={FileText}
+        title="CV Intelligence"
+        description="Upload, build, or edit your CV, then query it with AI grounded in your real experience."
+        relatedLinks={PAGE_RELATED_LINKS["/resume"]}
+        actions={
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${BADGE_STYLES[pageBadge]}`}
+          >
+            <BadgeIcon className="h-3.5 w-3.5" />
+            {PAGE_STATUS_LABELS[pageBadge]}
+          </span>
+        }
+      />
 
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${BADGE_STYLES[pageBadge]}`}
-              >
-                <BadgeIcon className="h-3.5 w-3.5" />
-                {PAGE_STATUS_LABELS[pageBadge]}
-              </span>
-              <button
-                className="flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-600 transition duration-200 hover:bg-zinc-50 hover:text-zinc-900"
-                type="button"
-                onClick={handleSignOut}
-              >
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-6xl px-5 py-6">
+      <div>
         {resumesQuery.error && (
           <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
             {resumesQuery.error.message}
@@ -345,6 +314,6 @@ export function ResumePageClient() {
           </div>
         )}
       </div>
-    </main>
+    </PageShell>
   );
 }

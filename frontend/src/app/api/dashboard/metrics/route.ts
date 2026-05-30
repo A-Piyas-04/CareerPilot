@@ -32,6 +32,7 @@ export async function GET() {
       roadmapsResult,
       completedTasksResult,
       upcomingEventsResult,
+      userSkillsResult,
     ] = await Promise.all([
       supabase
         .from("applications")
@@ -55,6 +56,10 @@ export async function GET() {
         .gt("start_time", nowIso)
         .order("start_time", { ascending: true })
         .limit(5),
+      supabase
+        .from("user_skills")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId),
     ]);
 
     const firstError =
@@ -108,6 +113,7 @@ export async function GET() {
         roadmapProgress,
         tasksCompletedThisWeek,
         weeklyStreak: calculateWeeklyStreak(completedTaskDates),
+        skillsAdded: userSkillsResult.count ?? 0,
       },
       pipeline,
       recentActivity: buildRecentActivity({

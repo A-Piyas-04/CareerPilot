@@ -43,3 +43,48 @@ export function saveRoadmap(payload: {
     },
   });
 }
+
+export type SkillGapAnalysisSummary = {
+  id: string;
+  target_role: string | null;
+  current_skills: string[];
+  required_skills: string[];
+  missing_skills: string[];
+  job_id: string | null;
+  resume_id: string | null;
+  created_at: string;
+};
+
+export type SkillGapAnalysisDetail = SkillGapAnalysisSummary & {
+  recommendations: Record<string, unknown> | null;
+  user_id: string;
+};
+
+export function analyzeSkillGap(payload: {
+  target_role: string;
+  job_description?: string;
+  resume_id?: string | null;
+  job_id?: string | null;
+}) {
+  return apiRequest<SkillGapAnalysisDetail>("/api/v1/career/skill-gap/analyze", {
+    method: "POST",
+    body: {
+      target_role: payload.target_role,
+      job_description: payload.job_description ?? "",
+      resume_id: payload.resume_id ?? undefined,
+      job_id: payload.job_id ?? undefined,
+    },
+  });
+}
+
+export function listSkillGapAnalyses(limit = 50) {
+  return apiRequest<SkillGapAnalysisSummary[]>(
+    `/api/v1/career/skill-gap?limit=${limit}`,
+  );
+}
+
+export function getSkillGapAnalysis(analysisId: string) {
+  return apiRequest<SkillGapAnalysisDetail>(
+    `/api/v1/career/skill-gap/${analysisId}`,
+  );
+}

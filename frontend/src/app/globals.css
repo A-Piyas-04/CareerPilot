@@ -1,8 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f7f9;
-  --foreground: #171717;
+  --background: #f4f6f8;
+  --foreground: #18181b;
+  --cp-page-bg: #f4f6f8;
+  --cp-surface: #ffffff;
+  --cp-border: #e4e4e7;
+  --cp-nav-height: 3.5rem;
+  --cp-nav-with-context: 5.75rem;
+
+  /* Brand — emerald primary */
+  --cp-primary: #047857;
+  --cp-primary-hover: #065f46;
+  --cp-primary-soft: #ecfdf5;
+  --cp-primary-muted: #d1fae5;
+  --cp-primary-text: #065f46;
+
+  /* Assistant / AI accent — sky */
+  --cp-accent: #0284c7;
+  --cp-accent-soft: #e0f2fe;
+  --cp-accent-text: #0369a1;
+
+  /* Semantic */
+  --cp-warning-soft: #fffbeb;
+  --cp-warning-text: #92400e;
+  --cp-danger-soft: #fef2f2;
+  --cp-danger-text: #b91c1c;
 }
 
 @theme inline {
@@ -20,6 +43,32 @@ body {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
+}
+
+/* Calendar overrides */
+.rbc-calendar {
+  font-family: inherit;
+}
+
+.rbc-toolbar button {
+  color: #3f3f46;
+}
+
+.rbc-toolbar button.rbc-active,
+.rbc-toolbar button:active,
+.rbc-toolbar button.rbc-active:hover {
+  background-color: var(--cp-primary);
+  border-color: var(--cp-primary);
+  color: white;
+}
+
+.rbc-event {
+  border-radius: 6px;
+}
+
+.rbc-today {
+  background-color: var(--cp-primary-soft);
 }

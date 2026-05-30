@@ -1,96 +1,90 @@
 "use client";
 
-import {
-  BriefcaseBusiness,
-  FileText,
-  LayoutDashboard,
-  Mail,
-  Map,
-  Sparkles,
-  Target,
-} from "lucide-react";
+import { LayoutDashboard, LogOut } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
-const NAV_ITEMS = [
-  {
-    href: "/tracker",
-    label: "Job Tracker",
-    icon: BriefcaseBusiness,
-  },
-  {
-    href: "/jobs",
-    label: "Job Hunter",
-    icon: Sparkles,
-  },
-  {
-    href: "/resume",
-    label: "CV Intelligence",
-    icon: FileText,
-  },
-  {
-    href: "/goals",
-    label: "Goals",
-    icon: Target,
-  },
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    href: "/roadmap",
-    label: "Roadmap",
-    icon: Map,
-  },
-  {
-    href: "/cover-letters",
-    label: "Cover Letters",
-    icon: Mail,
-  },
-] as const;
+import { MobileNavDrawer, MobileNavTrigger } from "@/components/nav/MobileNavDrawer";
+import { NavContextBar } from "@/components/nav/NavContextBar";
+import { NavGroupMenu } from "@/components/nav/NavGroupMenu";
+import { createClient } from "@/lib/supabase/client";
+import { ALL_NAV_ITEMS, NAV_GROUPS } from "@/lib/navigation-config";
 
 export function AppNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  async function handleSignOut() {
+    await createClient().auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  }
+
+  function toggleGroup(label: string) {
+    setOpenGroup((current) => (current === label ? null : label));
+  }
 
   return (
-    <nav className="flex items-center gap-1 px-4 py-2 bg-white border-b border-zinc-200 sticky top-0 z-30 shadow-sm">
-      {/* Brand */}
-      <Link
-        href="/tracker"
-        className="flex items-center gap-1.5 mr-4 shrink-0"
-      >
-        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-700">
-          <LayoutDashboard className="h-4 w-4 text-white" />
-        </div>
-        <span className="text-sm font-bold text-zinc-900 tracking-tight hidden sm:block">
-          CareerPilot
-        </span>
-      </Link>
+    <>
+      <nav className="sticky top-0 z-40 border-b border-zinc-200/90 bg-white/95 shadow-sm backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-[1560px] items-center gap-3 px-4">
+          <Link
+            href="/"
+            className="flex shrink-0 items-center gap-2.5 rounded-xl py-1 pr-2 transition hover:bg-zinc-50"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 shadow-sm shadow-emerald-900/15">
+              <LayoutDashboard className="h-4 w-4 text-white" />
+            </div>
+            <span className="hidden text-sm font-bold tracking-tight text-zinc-900 sm:block">
+              CareerPilot
+            </span>
+          </Link>
 
-      {/* Divider */}
-      <div className="h-5 w-px bg-zinc-200 mr-3 hidden sm:block" />
+          <div className="hidden h-7 w-px shrink-0 bg-zinc-200 lg:block" />
 
-      {/* Nav links */}
-      <div className="flex items-center gap-0.5">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href || pathname.startsWith(href + "/");
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-emerald-50 text-emerald-800"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-              }`}
+          <div className="hidden min-w-0 flex-1 items-center gap-2 lg:flex">
+            {NAV_GROUPS.map((group) => (
+              <NavGroupMenu
+                key={group.label}
+                group={group}
+                pathname={pathname}
+                isOpen={openGroup === group.label}
+                onToggle={() => toggleGroup(group.label)}
+                onClose={() => setOpenGroup(null)}
+              />
+            ))}
+          </div>
+
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <MobileNavTrigger onOpen={() => setMobileOpen(true)} />
+
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="hidden h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3.5 text-sm font-semibold text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 hover:shadow-sm sm:inline-flex"
+              title="Sign out"
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:block">{label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+              <LogOut className="h-4 w-4" />
+              <span className="hidden md:inline">Sign out</span>
+            </button>
+          </div>
+        </div>
+
+        <NavContextBar pathname={pathname} />
+      </nav>
+
+      <MobileNavDrawer
+        isOpen={mobileOpen}
+        pathname={pathname}
+        onClose={() => setMobileOpen(false)}
+        onSignOut={handleSignOut}
+      />
+    </>
   );
 }
+
+/** Flat list for mobile menus or tests */
+export { ALL_NAV_ITEMS };

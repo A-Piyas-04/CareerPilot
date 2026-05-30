@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 
 import { buildSystemPrompt } from "@/lib/assistant/buildSystemPrompt";
 import { detectAssistantIntent } from "@/lib/assistant/detectIntent";
+import { getJobContext } from "@/lib/assistant/getJobContext";
 import { getResumeContext } from "@/lib/assistant/getResumeContext";
 import { buildIntentPrompt } from "@/lib/assistant/intentPrompts";
 import { loadConversationMemory } from "@/lib/assistant/loadConversationMemory";
@@ -20,10 +21,15 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as {
       conversationId?: unknown;
       message?: unknown;
+      jobId?: unknown;
     };
     const conversationId =
       typeof body.conversationId === "string" ? body.conversationId : "";
     const message = typeof body.message === "string" ? body.message.trim() : "";
+    const jobId =
+      typeof body.jobId === "string" && isUuid(body.jobId.trim())
+        ? body.jobId.trim()
+        : null;
 
     if (!conversationId) {
       return jsonError("Missing conversationId", 400);
@@ -69,7 +75,7 @@ export async function POST(request: NextRequest) {
     const intentDetection = await detectAssistantIntent(message);
     const intent = intentDetection.intent;
 
-    const [profile, resumeContext, memory] = await Promise.all([
+    const [profile, resumeContext, memory, jobContext] = await Promise.all([
       loadProfile(user.id),
       getResumeContext({
         userId: user.id,
@@ -83,6 +89,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         limit: 12,
       }),
+      jobId ? getJobContext({ userId: user.id, jobId }) : Promise.resolve(null),
     ]);
 
     const noResumeGuard =
@@ -94,6 +101,7 @@ export async function POST(request: NextRequest) {
     const baseSystemPrompt = buildSystemPrompt({
       profile,
       resumeContext: resumeContext.text,
+      jobContext: jobContext?.text,
     });
     const intentPrompt = buildIntentPrompt(intent, {
       conversationMemory: memory,
@@ -202,7 +210,7 @@ export async function POST(request: NextRequest) {
                 role: "assistant",
                 content: finalContent,
                 used_resume_chunks: validUuidArray(resumeContext.usedResumeChunks),
-                used_job_id: null,
+                used_job_id: jobContext?.jobId ?? null,
                 metadata: {
                   model: geminiModel,
                   streamed: true,
@@ -219,6 +227,10 @@ export async function POST(request: NextRequest) {
                   user_skills: resumeContext.userSkills,
                   empty_reason: resumeContext.emptyReason,
                   source_user_message: message,
+                  job_id: jobContext?.jobId ?? null,
+                  job_title: jobContext?.title ?? null,
+                  job_company: jobContext?.company ?? null,
+                  job_fit_score: jobContext?.fitScore ?? null,
                   can_save_roadmap:
                     intent === "roadmap_generation" && resumeContext.hasResume,
                   can_save_cover_letter:

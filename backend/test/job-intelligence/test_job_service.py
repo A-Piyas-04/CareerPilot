@@ -65,6 +65,15 @@ class _TableStub:
         self._filters.append((col, val))
         return self
 
+    def in_(self, col: str, val) -> "_TableStub":
+        self._filters.append(("in", col, val))
+        return self
+
+    def update(self, payload):
+        self._payload = payload
+        self._mode = "update"
+        return self
+
     def limit(self, n: int) -> "_TableStub":
         self._limit = n
         return self
@@ -122,7 +131,7 @@ class TestSearchAndMatch:
         source = _fake_source([
             JobCreate(title="Backend", description="Python", source="jsearch", source_url="u1"),
         ])
-        # Force user_skills lookup to return one skill row
+        supabase.select_responses["resumes"] = [[{"id": _RESUME_ID, "status": "processed"}]]
         supabase.select_responses["user_skills"] = [
             [{"skill_name": "Python"}],
         ]
@@ -152,6 +161,7 @@ class TestSearchAndMatch:
             JobCreate(title="Backend", description="Python", source="jsearch", source_url="u1"),
             JobCreate(title="Frontend", description="React", source="jsearch", source_url="u2"),
         ])
+        supabase.select_responses["resumes"] = [[{"id": _RESUME_ID, "status": "processed"}]]
         supabase.select_responses["user_skills"] = [[{"skill_name": "Python"}]]
         with patch(
             "app.job_intelligence.services.job_service.score_job",
@@ -178,6 +188,7 @@ class TestSearchAndMatch:
             JobCreate(title="Backend", description="Python", source="jsearch", source_url="u1"),
             JobCreate(title="Frontend", description="React", source="jsearch", source_url="u2"),
         ])
+        supabase.select_responses["resumes"] = [[{"id": _RESUME_ID, "status": "processed"}]]
         supabase.select_responses["user_skills"] = [[{"skill_name": "Python"}]]
         with patch(
             "app.job_intelligence.services.job_service.score_job",
@@ -209,6 +220,7 @@ class TestSearchAndMatch:
             JobCreate(title="A", description="x", source="jsearch", source_url="ua"),
             JobCreate(title="B", description="y", source="jsearch", source_url="ub"),
         ])
+        supabase.select_responses["resumes"] = [[{"id": _RESUME_ID, "status": "processed"}]]
         supabase.select_responses["user_skills"] = [[{"skill_name": "Python"}]]
         scores = iter([
             {**_SCORE_RESULT, "fit_score": 40.0},
@@ -233,6 +245,7 @@ class TestSearchAndMatch:
 
     def test_empty_search_results_returns_empty_matches(self, supabase):
         source = _fake_source([])
+        supabase.select_responses["resumes"] = [[{"id": _RESUME_ID, "status": "processed"}]]
         supabase.select_responses["user_skills"] = [[{"skill_name": "Python"}]]
         result = job_service.search_and_match(
             user_id=_USER_ID,
@@ -251,8 +264,22 @@ class TestSaveToTracker:
     def test_inserts_application_with_job_and_match_ids(self, supabase):
         # Existing match lookup returns a row
         supabase.select_responses["job_matches"] = [[
-            {"id": _MATCH_ID, "user_id": _USER_ID, "job_id": _JOB_ID, "resume_id": _RESUME_ID},
+            {
+                "id": _MATCH_ID,
+                "user_id": _USER_ID,
+                "job_id": _JOB_ID,
+                "resume_id": _RESUME_ID,
+                "fit_score": 75.5,
+                "missing_skills": ["Go"],
+                "jobs": {
+                    "title": "Backend Engineer",
+                    "company": "Acme",
+                    "location": "Berlin",
+                    "deadline": None,
+                },
+            },
         ]]
+        supabase.select_responses["applications"] = [[]]
         application = job_service.save_to_tracker(
             user_id=_USER_ID,
             match_id=_MATCH_ID,
@@ -264,7 +291,45 @@ class TestSaveToTracker:
         assert inserted["job_id"] == _JOB_ID
         assert inserted["job_match_id"] == _MATCH_ID
         assert inserted["status"] == "saved"
+        assert inserted["manual_job_title"] == "Backend Engineer"
+        assert inserted["manual_company"] == "Acme"
         assert application["id"] == "applications-id-0"
+        assert application["already_saved"] is False
+
+    def test_existing_application_returns_already_saved(self, supabase):
+        supabase.select_responses["job_matches"] = [[
+            {
+                "id": _MATCH_ID,
+                "user_id": _USER_ID,
+                "job_id": _JOB_ID,
+                "resume_id": _RESUME_ID,
+                "fit_score": 75.5,
+                "missing_skills": [],
+                "jobs": {"title": "Backend Engineer", "company": "Acme", "location": None, "deadline": None},
+            },
+        ]]
+        supabase.select_responses["applications"] = [[
+            {"id": "app-existing", "user_id": _USER_ID, "job_id": _JOB_ID, "status": "saved"},
+        ]]
+        result = job_service.save_to_tracker(
+            user_id=_USER_ID,
+            match_id=_MATCH_ID,
+            supabase=supabase,
+        )
+        assert result["already_saved"] is True
+        assert result["id"] == "app-existing"
+        assert not any(name == "applications" for name, _ in supabase.inserts)
+
+    def test_validate_resume_for_scoring_requires_processed(self, supabase):
+        supabase.select_responses["resumes"] = [[
+            {"id": _RESUME_ID, "status": "processing"},
+        ]]
+        with pytest.raises(ValueError, match="Upload and process"):
+            job_service.validate_resume_for_scoring(
+                user_id=_USER_ID,
+                resume_id=_RESUME_ID,
+                supabase=supabase,
+            )
 
     def test_unknown_match_raises_404(self, supabase):
         supabase.select_responses["job_matches"] = [[]]

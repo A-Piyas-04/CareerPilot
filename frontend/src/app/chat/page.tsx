@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
+import { AppNav } from "@/components/nav/AppNav";
 import { ChatWorkspace } from "@/components/chat/ChatWorkspace";
 import { createClient } from "@/lib/supabase/server";
 
@@ -13,5 +15,12 @@ export default async function ChatPage() {
     redirect("/login?next=/chat");
   }
 
-  return <ChatWorkspace />;
+  return (
+    <>
+      <AppNav />
+      <Suspense fallback={null}>
+        <ChatWorkspace />
+      </Suspense>
+    </>
+  );
 }

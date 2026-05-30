@@ -4,6 +4,7 @@ import { trackerKeys } from "@/features/tracker/hooks";
 
 import {
   addManualJob,
+  getMatchDetail,
   listMatches,
   saveMatchToTracker,
   searchJobs,
@@ -11,14 +12,32 @@ import {
 import type { JobSearchRequest, ManualJobRequest } from "./types";
 
 export const jobsKeys = {
-  matches: (resumeId: string | null) => ["job-matches", resumeId] as const,
+  matches: (resumeId: string | null, searchId?: string | null) =>
+    ["job-matches", resumeId, searchId ?? "all"] as const,
+  matchDetail: (matchId: string | null) => ["job-match", matchId] as const,
 };
 
-export function useJobMatches(resumeId: string | null) {
+export function useJobMatches(
+  resumeId: string | null,
+  options: { searchId?: string | null; enabled?: boolean } = {},
+) {
+  const { searchId, enabled = true } = options;
   return useQuery({
-    queryKey: jobsKeys.matches(resumeId),
-    queryFn: () => listMatches({ resume_id: resumeId ?? undefined }),
-    enabled: Boolean(resumeId),
+    queryKey: jobsKeys.matches(resumeId, searchId),
+    queryFn: () =>
+      listMatches({
+        resume_id: resumeId ?? undefined,
+        search_id: searchId ?? undefined,
+      }),
+    enabled: Boolean(resumeId) && enabled,
+  });
+}
+
+export function useMatchDetail(matchId: string | null) {
+  return useQuery({
+    queryKey: jobsKeys.matchDetail(matchId),
+    queryFn: () => getMatchDetail(matchId!),
+    enabled: Boolean(matchId),
   });
 }
 

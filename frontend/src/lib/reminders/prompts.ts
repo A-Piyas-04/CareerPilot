@@ -15,6 +15,8 @@ Rules:
 - Each nudge must include: type, title, message, actionLabel, actionHref.
 - Allowed type values: application, task, deadline, roadmap, general.
 - Allowed actionHref values: /jobs, /tracker, /goals, /calendar, /roadmap, /dashboard.
+- If highFitUnsavedMatches >= 1, consider a nudge like "3 openings match your profile — review your top fits." with actionHref /jobs.
+- Use topMatchTitles and recentSearchQuery when relevant; never invent job titles.
 - If there is nothing meaningful to nudge, return {"nudges":[]}.
 
 Activity summary:

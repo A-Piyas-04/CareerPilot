@@ -12,6 +12,7 @@ import { parseNudgesJson } from "@/lib/reminders/parser";
 import {
   NUDGE_GENERATION_FAILED_MESSAGE,
   QUOTA_EXCEEDED_MESSAGE,
+  type AiNudge,
   type NudgeActivitySummary,
 } from "@/lib/reminders/types";
 import { createClient } from "@/lib/supabase/server";
@@ -41,7 +42,14 @@ export async function POST(request: Request) {
       systemPrompt: NUDGE_SYSTEM_PROMPT,
       temperature: 0.25,
     });
-    const nudges = parseNudgesJson(rawResponse);
+    const generatedNudges = parseNudgesJson(rawResponse);
+    const deterministic = buildDeterministicJobMatchNudge(summary);
+    const nudges = deterministic
+      ? [
+          deterministic,
+          ...generatedNudges.filter((nudge) => nudge.id !== deterministic.id),
+        ].slice(0, 3)
+      : generatedNudges;
 
     return Response.json({
       cached: false,
@@ -84,10 +92,12 @@ async function collectActivitySummary(
     eventsResult,
     roadmapsResult,
     goalsResult,
+    jobMatchesResult,
+    jobSearchesResult,
   ] = await Promise.all([
     supabase
       .from("applications")
-      .select("id, status, applied_at, created_at")
+      .select("id, status, applied_at, created_at, job_id")
       .eq("user_id", userId),
     supabase
       .from("tasks")
@@ -109,6 +119,19 @@ async function collectActivitySummary(
       .from("goals")
       .select("id, status, target_date")
       .eq("user_id", userId),
+    supabase
+      .from("job_matches")
+      .select("job_id, fit_score, jobs(title)")
+      .eq("user_id", userId)
+      .gte("fit_score", 70)
+      .order("fit_score", { ascending: false })
+      .limit(20),
+    supabase
+      .from("job_searches")
+      .select("query")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1),
   ]);
 
   const firstCoreError =
@@ -123,6 +146,30 @@ async function collectActivitySummary(
   const events = rows(eventsResult.data);
   const roadmaps = roadmapsResult.error ? null : rows(roadmapsResult.data);
   const goals = goalsResult.error ? null : rows(goalsResult.data);
+  const jobMatches = jobMatchesResult.error ? [] : rows(jobMatchesResult.data);
+  const trackedJobIds = new Set(
+    applications
+      .map((application) => stringValue(application.job_id))
+      .filter(Boolean),
+  );
+  const unsavedHighFit = jobMatches.filter((match) => {
+    const jobId = stringValue(match.job_id);
+    return Boolean(jobId && !trackedJobIds.has(jobId));
+  });
+  const topMatchTitles = unsavedHighFit
+    .map((match) => {
+      const jobs = match.jobs;
+      const job = Array.isArray(jobs) ? jobs[0] : jobs;
+      return stringValue((job as DbRow | undefined)?.title) || "Untitled role";
+    })
+    .filter(Boolean)
+    .slice(0, 3);
+  const recentSearchRow = jobSearchesResult.error
+    ? null
+    : row(jobSearchesResult.data);
+  const recentSearchQuery = recentSearchRow
+    ? nullableString(recentSearchRow.query)
+    : null;
   const roadmapIds =
     roadmaps?.map((roadmap) => stringValue(roadmap.id)).filter(Boolean) ?? [];
   const roadmapItems = await fetchRoadmapItems(supabase, userId, roadmapIds);
@@ -209,6 +256,9 @@ async function collectActivitySummary(
       startTime: stringValue(event.start_time),
       title: stringValue(event.title) || "Untitled event",
     })),
+    highFitUnsavedMatches: unsavedHighFit.length,
+    topMatchTitles,
+    recentSearchQuery,
   };
 }
 
@@ -239,6 +289,37 @@ function averageProgress(roadmaps: DbRow[]) {
     0,
   );
   return Math.round(total / roadmaps.length);
+}
+
+function buildDeterministicJobMatchNudge(
+  summary: NudgeActivitySummary,
+): AiNudge | null {
+  if (summary.highFitUnsavedMatches < 1) {
+    return null;
+  }
+
+  const count = summary.highFitUnsavedMatches;
+  const preview = summary.topMatchTitles.slice(0, 2).join(", ");
+  const suffix = preview ? ` Top fits include ${preview}.` : "";
+
+  return {
+    id: "job-match-deterministic",
+    type: "general",
+    title:
+      count >= 3
+        ? `${count} openings match your profile`
+        : "Strong job matches waiting",
+    message: `You have ${count} high-fit job match${
+      count === 1 ? "" : "es"
+    } not yet saved to your tracker.${suffix}`,
+    actionLabel: "Review matches",
+    actionHref: "/jobs",
+  };
+}
+
+function row(data: unknown) {
+  const items = rows(data);
+  return items[0] ?? null;
 }
 
 function isQuotaError(error: unknown) {

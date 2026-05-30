@@ -9,20 +9,19 @@ import {
 } from "react-big-calendar";
 import { format, getDay, parse, startOfWeek } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
-import { Briefcase, CalendarPlus, ListTodo, LogOut } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { CalendarDays, CalendarPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Calendar } from "react-big-calendar";
 
-import { createClient } from "@/lib/supabase/client";
+import { PageHeader, PageShell } from "@/components/layout";
+import { Skeleton } from "@/components/ui";
 import type {
   CalendarDisplayEvent,
   CalendarEventType,
 } from "@/lib/hooks/useCalendarEvents";
 import { useCalendarEvents } from "@/lib/hooks/useCalendarEvents";
-
-import { Skeleton } from "@/components/ui";
+import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
+import { btnPrimary, surfaceCard } from "@/lib/ui-theme";
 
 import { EventModal } from "./EventModal";
 import { EventPopover } from "./EventPopover";
@@ -41,7 +40,6 @@ const localizer = dateFnsLocalizer({
 });
 
 export function CalendarView() {
-  const router = useRouter();
   const eventsQuery = useCalendarEvents();
   const [view, setView] = useState<View>(Views.MONTH);
   const [selectedEvent, setSelectedEvent] = useState<CalendarDisplayEvent | null>(
@@ -54,12 +52,6 @@ export function CalendarView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const events = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
-
-  async function handleSignOut() {
-    await createClient().auth.signOut();
-    router.replace("/login");
-    router.refresh();
-  }
 
   function handleAddEvent(start: Date | null = null) {
     setSelectedEvent(null);
@@ -80,53 +72,26 @@ export function CalendarView() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f6f7f9]">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-[1560px] flex-wrap items-center justify-between gap-3 px-5 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              CareerPilot
-            </p>
-            <h1 className="text-2xl font-semibold text-zinc-950">Calendar</h1>
-          </div>
+    <PageShell width="wide">
+      <PageHeader
+        icon={CalendarDays}
+        title="Calendar"
+        description="See deadlines, interviews, and roadmap milestones alongside your goals and tracker."
+        relatedLinks={PAGE_RELATED_LINKS["/calendar"]}
+        actions={
+          <button
+            className={btnPrimary}
+            type="button"
+            onClick={() => handleAddEvent()}
+          >
+            <CalendarPlus className="h-4 w-4" />
+            Add Event
+          </button>
+        }
+      />
 
-          <div className="flex items-center gap-2">
-            <Link
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-              href="/goals"
-            >
-              <ListTodo className="h-4 w-4" />
-              Goals
-            </Link>
-            <Link
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-              href="/tracker"
-            >
-              <Briefcase className="h-4 w-4" />
-              Tracker
-            </Link>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-              type="button"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
-              type="button"
-              onClick={() => handleAddEvent()}
-            >
-              <CalendarPlus className="h-4 w-4" />
-              Add Event
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <section className="mx-auto flex w-full max-w-[1560px] flex-1 flex-col gap-5 px-5 py-5 xl:flex-row">
-        <div className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-1 flex-col gap-5 xl:flex-row">
+        <div className={`min-w-0 flex-1 p-4 ${surfaceCard}`}>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex rounded-md border border-zinc-300 bg-white p-1">
               <button
@@ -193,7 +158,7 @@ export function CalendarView() {
           selectedEventId={selectedEvent?.id ?? null}
           onSelectEvent={handleSelectEvent}
         />
-      </section>
+      </div>
 
       <EventModal
         event={editingEvent}
@@ -205,7 +170,7 @@ export function CalendarView() {
           setIsModalOpen(false);
         }}
       />
-    </main>
+    </PageShell>
   );
 }
 

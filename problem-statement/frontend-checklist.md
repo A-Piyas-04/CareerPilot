@@ -103,7 +103,7 @@
 | JSearch error feedback | `search-form.tsx` + toasts | ✅ | Subscription/key/quota errors surfaced via `JSearchError` → Sonner toast |
 | Source selector | `search-form.tsx` | ⚠️ | Type supports `manual`; UI only lists **JSearch** |
 | Match list | `jobs-page-client.tsx` | ✅ | `ListCardSkeleton` loading, empty state, error state |
-| Match card | `match-card.tsx` | ⚠️ | Title, company, location, fit %, explanation, matched/missing skills, external link, `SpinnerButton` save — **no salary or deadline row** |
+| Match card | `match-card.tsx` | ✅ | Fit tier badge, salary/deadline row, matched/gap sections, expandable why + evidence, save/in-tracker state |
 | Fit score badge | `match-card.tsx` | ✅ | Color by score tier |
 | Resume selector | `search-form.tsx` | ✅ | Dropdown of user resumes |
 
@@ -111,21 +111,21 @@
 
 | UI | Status | Notes |
 |----|--------|-------|
-| Manual job paste modal / drawer | ❌ | API `addManualJob()` exists; no form UI |
-| Job detail modal | ❌ | Full JD view only via external “View posting” link |
-| Fit score breakdown modal | ❌ | Explanation inline only |
+| Manual job paste modal / drawer | ✅ | `manual-job-drawer.tsx` tab on search panel |
+| Job detail modal | ✅ | `match-detail-drawer.tsx` — JD, fit breakdown, evidence, save |
+| Fit score breakdown modal | ✅ | Inline expandable panel + detail drawer with skills/similarity bars |
 
 ### User flows
 
 | Flow | Status | Steps |
 |------|--------|-------|
 | Search jobs with NL query | ✅ | Pick resume → enter query (+ location) → Search → toast with count → match cards (**live JSearch verified**) |
-| View fit & reasoning | ⚠️ | Read `explanation` + skill chips on card; no dedicated “why” panel |
-| Save job to tracker | ✅ | “Save to Tracker” on `MatchCard` → Kanban `saved` column |
+| View fit & reasoning | ✅ | Expandable why panel + match detail drawer with CV evidence |
+| Save job to tracker | ✅ | Save with idempotency; tracker shows real title/company |
 | Open original posting | ✅ | “View posting” when `source_url` present |
 | Search without CV | ✅ | Blocked with amber banner + link to upload |
-| Paste JD for fit (manual) | ❌ | No UI |
-| Filter/sort matches | ❌ | List order from API only |
+| Paste JD for fit (manual) | ✅ | Paste a posting tab → manual drawer |
+| Filter/sort matches | ✅ | `match-filters.tsx` on current search results |
 | View past searches | ❌ | No search history UI |
 
 ---
@@ -289,7 +289,7 @@
 | Open application details | ✅ | Click card → drawer → edit / change status |
 | View status history | ✅ | Timeline in detail drawer |
 | Delete application | ✅ | Drawer delete + confirm |
-| Add from Job Hunter save | ✅ | Starts in `saved` via match save (cross-pillar) |
+| Add from Job Hunter save | ✅ | Kanban shows job title/company; deadline from save or job join |
 
 ### Panels & components — Goals & tasks
 
@@ -375,9 +375,9 @@
 
 | UI | Status | Notes |
 |----|--------|-------|
-| Skills-added widget | ❌ | Not on dashboard |
+| Skills-added widget | ✅ | `skillsAdded` on `/dashboard` from `user_skills` count |
 | Global nudge toast / on-login banner | ❌ | Dashboard section only |
-| “3 jobs matching your profile” prompt | ❌ | Not tied to `job_matches` yet |
+| “3 jobs matching your profile” prompt | ✅ | Deterministic + LLM nudges via `highFitUnsavedMatches` in reminder summary |
 
 ---
 
@@ -391,11 +391,11 @@
 | `AppNav` includes Roadmap | ✅ | `/roadmap` link present |
 | `AppNav` includes Cover Letters | ✅ | `/cover-letters` link present |
 | `AppNav` includes Dashboard | ✅ | `/dashboard` link present |
-| `AppNav` includes Chat | ❌ | Chat only via landing / direct URL |
-| `AppNav` includes Calendar | ❌ | Calendar via goals header or direct URL |
-| Landing lists Job Hunter | ❌ | Missing from `corePages` |
-| Landing lists Roadmap | ❌ | Built at `/roadmap` but still under “Coming next” on `/` |
-| Brand logo target | ⚠️ | `AppNav` logo → `/tracker` not `/` |
+| `AppNav` includes Chat | ✅ | `/chat` in AppNav |
+| `AppNav` includes Calendar | ✅ | `/calendar` in AppNav |
+| Landing lists Job Hunter | ✅ | `/jobs` in `corePages` |
+| Landing lists Roadmap | ✅ | `/roadmap` in `corePages` |
+| Brand logo target | ✅ | AppNav logo → `/` |
 
 ### Shared UX patterns
 
@@ -415,7 +415,7 @@
 
 | Feature | Dedicated page | In-chat only | Status |
 |---------|----------------|--------------|--------|
-| Skill Gap Analysis | ❌ | ⚠️ intent | ❌ / ⚠️ |
+| Skill Gap Analysis | ✅ `/skill-gap` | ⚠️ intent + save | ✅ |
 | Roadmap Generator | ✅ `/roadmap` | ⚠️ + save btn | ✅ / ⚠️ |
 | Cover Letter Studio | ✅ `/cover-letters` | ⚠️ + save btn | ✅ / ⚠️ |
 | Progress Dashboard | ✅ `/dashboard` | — | ✅ |

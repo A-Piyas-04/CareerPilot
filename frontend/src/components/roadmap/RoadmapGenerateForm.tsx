@@ -1,14 +1,20 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { SpinnerButton } from "@/components/ui";
 import type { GenerateRoadmapRequest } from "@/lib/roadmap/types";
+import { surfaceCard } from "@/lib/ui-theme";
 
 type RoadmapGenerateFormProps = {
   isGenerating: boolean;
   onGenerate: (payload: GenerateRoadmapRequest) => void;
+  initialValues?: {
+    targetRole?: string;
+    jobDescription?: string;
+  };
+  prefillLabel?: string | null;
 };
 
 const DURATIONS = [4, 8, 12] as const;
@@ -16,11 +22,22 @@ const DURATIONS = [4, 8, 12] as const;
 export function RoadmapGenerateForm({
   isGenerating,
   onGenerate,
+  initialValues,
+  prefillLabel,
 }: RoadmapGenerateFormProps) {
-  const [targetRole, setTargetRole] = useState("");
+  const [targetRole, setTargetRole] = useState(initialValues?.targetRole ?? "");
   const [durationWeeks, setDurationWeeks] =
     useState<GenerateRoadmapRequest["durationWeeks"]>(8);
-  const [jobDescription, setJobDescription] = useState("");
+  const [jobDescription, setJobDescription] = useState(
+    initialValues?.jobDescription ?? "",
+  );
+
+  useEffect(() => {
+    if (initialValues?.targetRole) setTargetRole(initialValues.targetRole);
+    if (initialValues?.jobDescription) {
+      setJobDescription(initialValues.jobDescription);
+    }
+  }, [initialValues?.targetRole, initialValues?.jobDescription]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -39,16 +56,22 @@ export function RoadmapGenerateForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
+      className={`p-5 ${surfaceCard}`}
     >
       <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold text-zinc-950">
-          Roadmap Generator
-        </h1>
+        <h2 className="text-lg font-semibold text-zinc-950">
+          Generate a learning plan
+        </h2>
         <p className="text-sm text-zinc-600">
           Generate a CV-aware weekly plan for a target role.
         </p>
       </div>
+
+      {prefillLabel ? (
+        <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          Prefilled from Job Hunter — {prefillLabel}
+        </p>
+      ) : null}
 
       <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_220px]">
         <label className="flex flex-col gap-1.5">

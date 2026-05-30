@@ -12,7 +12,7 @@ type SpinnerButtonVariant =
 
 const VARIANT_CLASSES: Record<SpinnerButtonVariant, string> = {
   primary:
-    "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#1A56DB] px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-zinc-300",
+    "inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-zinc-300",
   secondary:
     "inline-flex h-10 items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-55",
   danger:

@@ -2,17 +2,16 @@
 
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, LogOut, Plus } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { BriefcaseBusiness, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { createClient } from "@/lib/supabase/client";
+import { PageHeader, PageShell } from "@/components/layout";
+import { Skeleton } from "@/components/ui";
+import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
+import { alertError, btnPrimary } from "@/lib/ui-theme";
 
 import { AddApplicationDrawer } from "./add-application-drawer";
 import { ApplicationDetailDrawer } from "./application-detail-drawer";
-import { Skeleton } from "@/components/ui";
-
 import { KanbanColumn } from "./kanban-column";
 import {
   trackerKeys,
@@ -23,7 +22,6 @@ import type { Application, ApplicationStatus } from "./types";
 import { APPLICATION_STATUSES, STATUS_LABELS } from "./types";
 
 export function TrackerBoard() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const applicationsQuery = useApplications();
   const statusMutation = useUpdateApplicationStatus();
@@ -43,12 +41,6 @@ export function TrackerBoard() {
 
     return map;
   }, [applicationsQuery.data]);
-
-  async function handleSignOut() {
-    await createClient().auth.signOut();
-    router.replace("/login");
-    router.refresh();
-  }
 
   function handleDragEnd(result: DropResult) {
     const destination = result.destination;
@@ -110,51 +102,27 @@ export function TrackerBoard() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f6f7f9]">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-[1560px] flex-wrap items-center justify-between gap-3 px-5 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              CareerPilot
-            </p>
-            <h1 className="text-2xl font-semibold text-zinc-950">
-              Application Tracker
-            </h1>
-          </div>
+    <PageShell width="wide">
+      <PageHeader
+        icon={BriefcaseBusiness}
+        title="Application Tracker"
+        description="Drag applications across stages, open details for fit scores, and jump to cover letters or the assistant."
+        relatedLinks={PAGE_RELATED_LINKS["/tracker"]}
+        actions={
+          <button
+            className={btnPrimary}
+            type="button"
+            onClick={() => setIsAddOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Add Application
+          </button>
+        }
+      />
 
-          <div className="flex items-center gap-2">
-            <Link
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-              href="/calendar"
-            >
-              <CalendarDays className="h-4 w-4" />
-              Calendar
-            </Link>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-              type="button"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
-              type="button"
-              onClick={() => setIsAddOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              Add Application
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <section className="mx-auto flex w-full max-w-[1560px] flex-1 flex-col gap-4 px-5 py-5">
+      <div className="flex flex-col gap-4">
         {statusError ? (
-          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {statusError}
-          </p>
+          <p className={alertError}>{statusError}</p>
         ) : null}
 
         {applicationsQuery.isLoading ? (
@@ -167,7 +135,7 @@ export function TrackerBoard() {
             ))}
           </div>
         ) : applicationsQuery.error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className={`${alertError} p-4`}>
             {applicationsQuery.error.message}
           </div>
         ) : (
@@ -184,7 +152,7 @@ export function TrackerBoard() {
             </div>
           </DragDropContext>
         )}
-      </section>
+      </div>
 
       <AddApplicationDrawer
         isOpen={isAddOpen}
@@ -194,6 +162,6 @@ export function TrackerBoard() {
         application={selectedApplication}
         onClose={() => setSelectedApplication(null)}
       />
-    </main>
+    </PageShell>
   );
 }

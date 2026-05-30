@@ -8,11 +8,30 @@ export const APPLICATION_STATUSES = [
 
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
+export type LinkedJobSummary = {
+  id: string | null;
+  title: string | null;
+  company: string | null;
+  location: string | null;
+  source_url: string | null;
+  salary_range: string | null;
+  deadline: string | null;
+};
+
+export type LinkedJobMatchSummary = {
+  fit_score: number | null;
+  matched_skills: string[];
+  missing_skills: string[];
+  explanation: string | null;
+};
+
 export type Application = {
   id: string;
   user_id: string;
   job_id: string | null;
   job_match_id: string | null;
+  job: LinkedJobSummary | null;
+  job_match: LinkedJobMatchSummary | null;
   manual_job_title: string | null;
   manual_company: string | null;
   manual_location: string | null;
@@ -54,3 +73,20 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   offer: "Offer",
   rejected: "Rejected",
 };
+
+export function resolveApplicationFields(application: {
+  manual_job_title: string | null;
+  manual_company: string | null;
+  manual_location: string | null;
+  deadline?: string | null;
+  job?: LinkedJobSummary | null;
+}) {
+  const job = application.job;
+  return {
+    title: application.manual_job_title ?? job?.title ?? null,
+    company: application.manual_company ?? job?.company ?? null,
+    location: application.manual_location ?? job?.location ?? null,
+    deadline: application.deadline ?? job?.deadline ?? null,
+    sourceUrl: job?.source_url ?? null,
+  };
+}

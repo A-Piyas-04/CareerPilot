@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { AppNav } from "@/components/nav/AppNav";
 import { RoadmapPageClient } from "@/components/roadmap/RoadmapPageClient";
@@ -17,7 +18,9 @@ export default async function RoadmapPage() {
   return (
     <>
       <AppNav />
-      <RoadmapPageClient />
+      <Suspense fallback={null}>
+        <RoadmapPageClient />
+      </Suspense>
     </>
   );
 }

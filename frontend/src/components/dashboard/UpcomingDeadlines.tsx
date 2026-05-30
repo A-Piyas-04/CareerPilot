@@ -38,7 +38,7 @@ export function UpcomingDeadlines({ events }: UpcomingDeadlinesProps) {
                       {validDate ? format(date, "MMM d, h:mm a") : "Time not set"}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold capitalize text-[#1A56DB]">
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold capitalize text-emerald-800">
                     {event.eventType}
                   </span>
                 </div>
