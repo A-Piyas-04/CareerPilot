@@ -1,7 +1,8 @@
 # CareerPilot — Frontend GUI Checklist
 
 > UI audit of `frontend/src` — **May 30, 2026**  
-> Companion: [`checklist.md`](./checklist.md) (full product requirements)
+> Companion: [`checklist.md`](./checklist.md) (full product requirements)  
+> Includes Part 2 cross-module flows + grouped navigation / `PageShell` theme polish
 
 ## Legend
 
@@ -15,19 +16,20 @@
 
 | Route | Page file | Auth gate | `AppNav` |
 |-------|-----------|-----------|----------|
-| `/` | `app/page.tsx` | Public | ❌ |
+| `/` | `app/page.tsx` | Public | ❌ (landing has own nav) |
 | `/login` | `app/login/page.tsx` | Public | ❌ |
 | `/tracker` | `app/tracker/page.tsx` | ✅ `?next=` | ✅ |
 | `/dashboard` | `app/dashboard/page.tsx` | ✅ | ✅ |
 | `/jobs` | `app/jobs/page.tsx` | ✅ | ✅ |
 | `/resume` | `app/resume/page.tsx` | ✅ | ✅ |
+| `/skill-gap` | `app/skill-gap/page.tsx` | ✅ | ✅ |
 | `/cover-letters` | `app/cover-letters/page.tsx` | ✅ | ✅ |
 | `/cover-letters/[id]` | `app/cover-letters/[id]/page.tsx` | ✅ | ✅ |
 | `/roadmap` | `app/roadmap/page.tsx` | ✅ | ✅ |
 | `/roadmap/[id]` | `app/roadmap/[id]/page.tsx` | ✅ | ✅ |
 | `/goals` | `app/goals/page.tsx` | ✅ | ✅ |
-| `/calendar` | `app/calendar/page.tsx` | ✅ | ❌ |
-| `/chat` | `app/chat/page.tsx` | ✅ | ❌ |
+| `/calendar` | `app/calendar/page.tsx` | ✅ | ✅ |
+| `/chat` | `app/chat/page.tsx` | ✅ | ✅ |
 
 ---
 
@@ -37,21 +39,26 @@
 
 | Page | Path | Status | Notes |
 |------|------|--------|-------|
-| Landing / marketing hub | `/` | ✅ | Hero, workspace cards, “Coming next” section |
-| Sign in / sign up | `/login` | ✅ | Email + password; `?next=` redirect after auth |
+| Landing / marketing hub | `/` | ✅ | Hero, 11 live module cards, minimal “coming next” (AI nudges only) |
+| Sign in / sign up | `/login` | ✅ | Email + password; `?next=` redirect; branded header |
 | — | — | — | No `/settings` or `/profile` pages |
 
 ### Layout & global UI
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Root layout (`app/layout.tsx`) | ✅ | Geist fonts, `Providers` wrapper |
+| Root layout (`app/layout.tsx`) | ✅ | Geist fonts, `Providers`, `--cp-page-bg` token |
 | React Query provider | ✅ | 20s default `staleTime` |
 | Sonner toasts | ✅ | Global success/error feedback |
-| Global `AppNav` | ⚠️ | On tracker, jobs, resume, goals, **roadmap**, **cover-letters** — **not** on `/chat`, `/calendar`, landing |
-| Per-page headers | ✅ | Custom headers on chat, calendar, resume, jobs, tracker, goals |
-| Sign out | ⚠️ | On resume, tracker, goals, calendar headers — **not** on jobs page header |
-| Responsive layout | ⚠️ | Mobile-friendly grids; chat sidebar stacks on `lg` |
+| Shared design tokens | ✅ | `lib/ui-theme.ts` — `pageShell`, `surfaceCard`, `btnPrimary`, alerts |
+| Page shell component | ✅ | `PageShell` + `PageHeader` with icon, description, related-link pills |
+| Global `AppNav` | ✅ | All authenticated routes; grouped dropdowns (Discover / Plan / Track) |
+| Nav context sub-bar | ✅ | `NavContextBar` — sibling links within active section (desktop) |
+| Mobile navigation | ✅ | `MobileNavDrawer` + hamburger trigger; grouped sections + sign out |
+| Nav color hierarchy | ✅ | Emerald (Discover), sky (Plan), violet (Track); hover + active states |
+| Per-page duplicate headers | ✅ | Removed redundant headers / sign-out from tracker, goals, calendar, resume |
+| Sign out | ✅ | Centralized in `AppNav` (desktop) + mobile drawer |
+| Responsive layout | ✅ | Mobile drawer; chat sidebar stacks; nav no longer horizontally cramped |
 | Dark mode | ❌ | Light theme only |
 | Error boundary page | ❌ | No dedicated `error.tsx` / `not-found.tsx` branded pages |
 
@@ -60,7 +67,7 @@
 | UI | Status | Notes |
 |----|--------|-------|
 | Browser `confirm()` dialogs | ⚠️ | Used for delete conversation, application, task, goal, calendar event |
-| Dedicated confirm modal component | ❌ | No shared `ConfirmDialog` |
+| Dedicated confirm modal component | ❌ | No shared `ConfirmDialog` (CV/cover-letter delete use dedicated dialogs) |
 
 ### User flows (general)
 
@@ -69,17 +76,18 @@
 | First visit → sign up | ✅ | `/` → Sign in → Sign up tab → redirect `?next=` (default `/tracker`) |
 | Return visit → sign in | ✅ | `/login` auto-redirect if session exists |
 | Protected route without session | ✅ | Server `getUser()` → `/login?next=<path>` |
-| Discover modules from landing | ⚠️ | 8 live module cards incl. **Progress Dashboard**; **Job Hunter (`/jobs`) not listed** on landing |
-| Cross-module navigation via `AppNav` | ✅ | Tracker, Job Hunter, CV, Goals, Roadmap, Cover Letters, **Dashboard** |
-| Cross-module via page headers | ✅ | Calendar ↔ Goals ↔ Tracker links; resume/jobs link in empty states |
+| Discover modules from landing | ✅ | 11 live cards incl. Job Hunter, Skill Gap, Roadmap, Dashboard |
+| Cross-module navigation via `AppNav` | ✅ | Group menus → all 10 workspace routes |
+| Cross-module via related links | ✅ | `PageHeader` pills per route (`PAGE_RELATED_LINKS`) |
+| Cross-module from Job Hunter | ✅ | Match card / drawer actions → cover letter, gap, roadmap, chat, tracker |
 
 ### Landing page sections (`app/page.tsx`)
 
 | Section | Status | Notes |
 |---------|--------|-------|
 | Hero + CTAs | ✅ | Links to `/login`, `/login?next=/tracker` |
-| Live module cards (`corePages`) | ⚠️ | Chat, Tracker, Goals, Calendar, Tasks, Resume, Cover Letter Studio, **Progress Dashboard** — **no Job Hunter or Roadmap card** |
-| “Coming next” cards | ⚠️ | Skill gap, **roadmap** (page exists at `/roadmap` but landing still lists as future), **AI nudges** (partial on `/dashboard`) |
+| Live module cards (`corePages`) | ✅ | Job Hunter, Chat, Tracker, Skill Gap, Roadmap, Goals, Calendar, Tasks, Resume, Cover Letters, Dashboard |
+| “Coming next” cards | ⚠️ | Only **AI Nudges** listed (partial on `/dashboard` today) |
 | Proof points strip | ✅ | Static feature bullets |
 
 ---
@@ -90,20 +98,21 @@
 
 | Page | Path | Status | Notes |
 |------|------|--------|-------|
-| Job Hunter | `/jobs` | ✅ | `JobsPageClient` + `AppNav` |
+| Job Hunter | `/jobs` | ✅ | `JobsPageClient` + `PageShell` + `AppNav` |
 
 ### Panels & components
 
 | Component | File | Status | Notes |
 |-----------|------|--------|-------|
-| Page header | `jobs-page-client.tsx` | ✅ | Title “Job Hunter” |
+| Page header | `jobs-page-client.tsx` | ✅ | `PageHeader` + 3-step onboarding strip + related links |
 | No-CV empty state | `jobs-page-client.tsx` | ✅ | Link to `/resume` |
 | Job search form | `search-form.tsx` | ✅ | Query, location, resume picker, JSearch source, `SpinnerButton` submit |
-| JSearch live search | `search-form.tsx` → `POST /api/v1/jobs/search` | ✅ | Wired to backend `JSearchAdapter`; **verified E2E** with `JSEARCH_API_KEY` + RapidAPI subscription |
-| JSearch error feedback | `search-form.tsx` + toasts | ✅ | Subscription/key/quota errors surfaced via `JSearchError` → Sonner toast |
-| Source selector | `search-form.tsx` | ⚠️ | Type supports `manual`; UI only lists **JSearch** |
-| Match list | `jobs-page-client.tsx` | ✅ | `ListCardSkeleton` loading, empty state, error state |
-| Match card | `match-card.tsx` | ✅ | Fit tier badge, salary/deadline row, matched/gap sections, expandable why + evidence, save/in-tracker state |
+| JSearch live search | `search-form.tsx` → `POST /api/v1/jobs/search` | ✅ | Wired to backend `JSearchAdapter`; **verified E2E** |
+| JSearch error feedback | `search-form.tsx` + toasts | ✅ | Subscription/key/quota errors via `JSearchError` → Sonner |
+| Source selector | `search-form.tsx` | ⚠️ | Type supports `manual`; UI only lists **JSearch** (manual via drawer) |
+| Match list | `jobs-page-client.tsx` | ✅ | `ListCardSkeleton`, empty state, previous matches accordion |
+| Match card | `match-card.tsx` | ✅ | Fit tier, salary/deadline, skills, evidence, save state, **cross-module actions** |
+| Cross-module actions | `match-job-actions.tsx` | ✅ | Cover letter, skill gap, roadmap, assistant, tracker links with `jobId` |
 | Fit score badge | `match-card.tsx` | ✅ | Color by score tier |
 | Resume selector | `search-form.tsx` | ✅ | Dropdown of user resumes |
 
@@ -111,22 +120,23 @@
 
 | UI | Status | Notes |
 |----|--------|-------|
-| Manual job paste modal / drawer | ✅ | `manual-job-drawer.tsx` tab on search panel |
-| Job detail modal | ✅ | `match-detail-drawer.tsx` — JD, fit breakdown, evidence, save |
-| Fit score breakdown modal | ✅ | Inline expandable panel + detail drawer with skills/similarity bars |
+| Manual job paste drawer | ✅ | `manual-job-drawer.tsx` |
+| Job detail drawer | ✅ | `match-detail-drawer.tsx` — JD, fit breakdown, evidence, save, **MatchJobActions** |
+| Fit score breakdown | ✅ | Expandable panel + drawer with skills/similarity bars |
 
 ### User flows
 
 | Flow | Status | Steps |
 |------|--------|-------|
-| Search jobs with NL query | ✅ | Pick resume → enter query (+ location) → Search → toast with count → match cards (**live JSearch verified**) |
-| View fit & reasoning | ✅ | Expandable why panel + match detail drawer with CV evidence |
-| Save job to tracker | ✅ | Save with idempotency; tracker shows real title/company |
+| Search jobs with NL query | ✅ | Pick resume → query (+ location) → Search → match cards |
+| View fit & reasoning | ✅ | Expandable why + detail drawer with CV evidence |
+| Save job to tracker | ✅ | Idempotent save; tracker shows title/company + fit join |
 | Open original posting | ✅ | “View posting” when `source_url` present |
-| Search without CV | ✅ | Blocked with amber banner + link to upload |
-| Paste JD for fit (manual) | ✅ | Paste a posting tab → manual drawer |
-| Filter/sort matches | ✅ | `match-filters.tsx` on current search results |
-| View past searches | ❌ | No search history UI |
+| Search without CV | ✅ | Amber banner + link to upload |
+| Paste JD for fit (manual) | ✅ | Manual job drawer |
+| Filter/sort matches | ✅ | `match-filters.tsx` |
+| Jump to cover letter / gap / roadmap / chat | ✅ | Actions on card + drawer with URL prefill |
+| View past searches | ❌ | No search history UI (stored matches accordion only) |
 
 ---
 
@@ -136,57 +146,28 @@
 
 | Page | Path | Status | Notes |
 |------|------|--------|-------|
-| CV Intelligence | `/resume` | ✅ | `ResumePageClient` + `AppNav`; polished hero + layout |
-| In-app CV builder | ✅ | Upload \| Build \| **Manual** tabs; `resume-builder-card.tsx` + `manual-resume-editor.tsx` |
+| CV Intelligence | `/resume` | ✅ | `ResumePageClient` + `PageShell` + `AppNav` |
 
 ### Panels & components
 
 | Component | File | Status | Notes |
 |-----------|------|--------|-------|
-| Page header + status badge | `resume-page-client.tsx` | ✅ | `no_cv` / `processing` / `failed` / `rag_ready` |
+| Page header + status badge | `resume-page-client.tsx` | ✅ | `PageHeader`; RAG status badge in actions slot |
 | Multi-resume selector | `resume-page-client.tsx` | ✅ | Shown when >1 resume |
-| Upload card (drag-and-drop) | `resume-upload-card.tsx` | ✅ | PDF/DOCX, drag state, file clear, upload progress strip, opens preview drawer |
-| Upload validation errors | `resume-upload-card.tsx` | ✅ | Client-side before API |
-| Resume summary | `resume-summary.tsx` | ✅ | Skeleton, sections (expand/collapse), skills by category, delete |
-| Delete resume | `resume-summary.tsx` | ✅ | `ResumeDeleteDialog` + mutation + toast |
-| Failed / re-upload CTA | `resume-summary.tsx` | ✅ | Scroll to upload card |
-| Ask about CV panel | `resume-answer-box.tsx` | ✅ | Textarea, sample question chips, answer + evidence |
-| Evidence cards (CV page) | `resume-answer-box.tsx` | ✅ | Shared `ChunkEvidenceCard` variant=full |
-| Semantic query box (advanced) | `resume-query-box.tsx` | ✅ | Mounted below main grid; collapsible; `POST /query` |
-| Chunk evidence card (shared) | `chunk-evidence-card.tsx` | ✅ | Chat (compact) + CV page (full with similarity bar) |
-| Upload preview drawer | `resume-upload-preview-drawer.tsx` | ✅ | File meta, upload lifecycle, post-parse stats |
-| Section full-screen viewer | `resume-section-viewer-drawer.tsx` | ✅ | “View full” on long sections; metadata block |
-| Delete confirm dialog | `resume-delete-dialog.tsx` | ✅ | Centered modal with resume name + warning |
-| CV builder card | `resume-builder-card.tsx` | ✅ | Section rows, create + edit, preview drawer on success |
-| Manual CV editor | `manual-resume-editor.tsx` | ✅ | Structured form (personal, experience, education, etc.); create + update |
-| Manual resume hooks | `hooks.ts` | ✅ | `useCreateManualResume`, `useUpdateManualResume` → `POST/PUT /api/v1/resumes/manual` |
-| Shared UI tokens | `resume-ui.ts` | ✅ | Cards, buttons, tabs, inputs — consistent polish |
-| Sign out | `resume-page-client.tsx` | ✅ | Header button |
-
-### Modals / drawers
-
-| UI | Status | Notes |
-|----|--------|-------|
-| Delete resume confirm | ✅ | `ResumeDeleteDialog` — filename, cancel, destructive confirm |
-| Upload preview drawer | ✅ | Right drawer on file select; success stats from `ResumeDetail` |
-| Section full-screen viewer | ✅ | Right drawer via “View full”; inline expand preserved |
+| Upload card (drag-and-drop) | `resume-upload-card.tsx` | ✅ | PDF/DOCX, progress strip, preview drawer |
+| Resume summary | `resume-summary.tsx` | ✅ | Sections, skills, delete, edit-in-builder/manual |
+| Ask about CV panel | `resume-answer-box.tsx` | ✅ | Sample chips, answer + evidence |
+| Semantic query box | `resume-query-box.tsx` | ✅ | Collapsible advanced panel |
+| CV builder + manual editor | ✅ | Upload \| Build \| Manual tabs |
+| Shared UI tokens | `resume-ui.ts` + `ui-theme.ts` | ✅ | Consistent cards, buttons, inputs |
 
 ### User flows
 
 | Flow | Status | Steps |
 |------|--------|-------|
-| Upload CV (click) | ✅ | Select file → preview drawer → Upload → success stats → summary refreshes |
-| Upload CV (drag-and-drop) | ✅ | Drop → preview drawer → same flow as click |
-| View parsed sections & skills | ✅ | Inline expand + “View full” drawer; category-colored skill chips |
-| Ask grounded question about CV | ✅ | Pick/enter question → Ask → answer + collapsible evidence |
-| Switch active resume | ✅ | Dropdown when multiple resumes |
-| Delete CV | ✅ | Trash → delete dialog → confirm → list refresh |
-| Recover from failed parse | ✅ | Error state + re-upload scroll |
-| Raw semantic chunk search | ✅ | Advanced panel → query → chunks with scores + expand |
-| Build CV in browser | ✅ | Build tab → sections → Save & index; Edit in builder on overview |
-| Edit CV in builder | ✅ | Overview → Edit in builder → Update & re-index |
-| Create CV via manual form | ✅ | Manual tab → fill sections → Save → indexed as `file_type: manual` |
-| Edit manual CV | ✅ | Overview → Edit in manual editor (manual resumes) → Update |
+| Upload / build / manual CV | ✅ | Full pipeline to indexed RAG |
+| Ask grounded question | ✅ | Answer + evidence cards |
+| Raw semantic chunk search | ✅ | Advanced panel on `/resume` |
 
 ---
 
@@ -196,53 +177,39 @@
 
 | Page | Path | Status | Notes |
 |------|------|--------|-------|
-| AI Career Assistant | `/chat` | ✅ | `ChatWorkspace` — sidebar + thread |
-| Skill Gap Analysis page | ❌ | Landing “coming next” only; chat intent only |
-| Cover Letter Studio | `/cover-letters` | ✅ | List, generate form, detail view, edit, regenerate, delete |
-| Cover Letter detail | `/cover-letters/[id]` | ✅ | `CoverLetterDetailClient` |
-| Roadmap hub | `/roadmap` | ✅ | List saved roadmaps + `RoadmapGenerateForm` |
-| Roadmap detail | `/roadmap/[id]` | ✅ | `RoadmapDetailClient` + week timeline |
+| AI Career Assistant | `/chat` | ✅ | `ChatWorkspace` + `AppNav`; sky accent sidebar |
+| Skill Gap Analysis | `/skill-gap` | ✅ | Analyze form, saved list, detail panel, Job Hunter prefill |
+| Cover Letter Studio | `/cover-letters` | ✅ | Generate + list; `?jobId=` prefill |
+| Cover Letter detail | `/cover-letters/[id]` | ✅ | Edit, regenerate, delete |
+| Roadmap hub | `/roadmap` | ✅ | Generate + list; URL prefill (`targetRole`, `jobDescription`, `company`) |
+| Roadmap detail | `/roadmap/[id]` | ✅ | Timeline, task/calendar actions |
 
 ### Panels & components
 
 | Component | File | Status | Notes |
 |-----------|------|--------|-------|
-| Conversation sidebar | `ConversationSidebar.tsx` | ✅ | List, new chat, delete, loading/error |
-| Chat thread | `ChatThread.tsx` | ✅ | Messages, empty states, auto-scroll |
-| Message bubbles | `ChatMessage.tsx` | ✅ | User plain text; assistant Markdown |
-| Streaming composer | `MessageComposer.tsx` | ✅ | Disabled when no conversation; send while streaming |
-| Suggested prompts (empty thread) | `ChatThread.tsx` | ⚠️ | Generic prompts — **not** benchmark-specific (readiness, gap, roadmap, cover letter) |
+| Conversation sidebar | `ConversationSidebar.tsx` | ✅ | Grouped list, new chat, delete, related-link pills |
+| Chat thread | `ChatThread.tsx` | ✅ | Job context chip, CV-grounded badge, streaming |
+| Message bubbles | `ChatMessage.tsx` | ✅ | User sky bubbles; assistant Markdown + evidence |
+| Streaming composer | `MessageComposer.tsx` | ✅ | Sky focus ring |
+| Suggested prompts | `ChatThread.tsx` | ✅ | Generic defaults; **job-specific benchmark prompts** when `?jobId=` set |
 | No-CV banner | `ChatMessage.tsx` | ✅ | Links to `/resume` |
-| CV evidence section in reply | `ChatMessage.tsx` | ✅ | Collapsible `ChunkEvidenceCard` list |
-| Save Cover Letter action | `ChatMessage.tsx` | ✅ | Button when `can_save_cover_letter` metadata |
-| Save Roadmap action | `ChatMessage.tsx` | ✅ | Button when `can_save_roadmap` metadata |
-| Intent badge / label in UI | ❌ | Intent stored in metadata but not shown to user |
-| Phase badge | `ChatThread.tsx` | ⚠️ | “Phase 2.2” label (dev placeholder) |
-
-### Modals / drawers
-
-| UI | Status | Notes |
-|----|--------|-------|
-| Delete conversation confirm | ⚠️ | `confirm()` in `ChatWorkspace` |
-| New conversation naming | ❌ | Default title “New conversation”; no rename UI |
-| JD paste side panel for readiness | ❌ | User must paste role/JD in free text |
+| Save Cover Letter / Roadmap | `ChatMessage.tsx` | ✅ | Metadata-driven action buttons |
+| Skill gap analyze form | `skill-gap-analyze-form.tsx` | ✅ | Prefill from Job Hunter; preview missing skills |
+| Skill gap history | `skill-gap-list.tsx` | ✅ | Select prior analyses |
+| Intent badge in UI | ❌ | Intent in metadata only |
 
 ### User flows
 
 | Flow | Status | Steps |
 |------|--------|-------|
-| Create conversation | ✅ | Sidebar “New” → temp ID → persisted on first message |
-| Select conversation | ✅ | Sidebar click → load messages |
-| Send message (streaming) | ✅ | Composer → `POST /api/assistant/chat` SSE → tokens render live |
-| Multi-turn memory in session | ✅ | Last 12 messages loaded server-side |
-| Readiness check (“Am I ready for…”) | ⚠️ | Works via free-text + intent routing; no guided form |
-| Skill gap analysis | ⚠️ | Chat response only; **no dedicated results page** or save-from-chat for gap |
-| Roadmap generation | ✅ | `/roadmap` generate form (Gemini) or chat **Save Roadmap** → list + detail timeline |
-| Cover letter draft | ✅ | `/cover-letters` generate form or chat save → list + detail editor |
-| View saved cover letters / roadmaps | ✅ | `/cover-letters`, `/roadmap` list pages + detail routes |
-| Regenerate cover letter | ✅ | `RegenerateCoverLetterDialog` on detail page |
-| Delete conversation | ✅ | Sidebar delete + confirm |
-| Chat without CV | ⚠️ | Allowed with warning banner; grounded quality limited |
+| Create / select conversation | ✅ | Sidebar |
+| Send message (streaming) | ✅ | SSE via `/api/assistant/chat` |
+| Chat with job context | ✅ | `/chat?jobId=` → chip + grounded prompts + `used_job_id` |
+| Skill gap dedicated page | ✅ | `/skill-gap` analyze → save → revisit in list/detail |
+| Cover letter with job prefill | ✅ | From `/jobs` action or `?jobId=` on `/cover-letters` |
+| Roadmap with role/JD prefill | ✅ | From jobs action or URL params |
+| Readiness / gap / roadmap / letter via chat | ⚠️ | Free-text + intents work; no guided multi-step wizard |
 
 ---
 
@@ -252,182 +219,82 @@
 
 | Page | Path | Status | Notes |
 |------|------|--------|-------|
-| Application Tracker (Kanban) | `/tracker` | ✅ | `TrackerBoard` + `AppNav` |
-| Goals | `/goals` | ✅ | `GoalsWorkspace` + `AppNav` |
-| Standalone tasks (section) | `/goals#tasks` | ✅ | `TaskList` has `id="tasks"` (right column) |
-| Calendar | `/calendar` | ✅ | `CalendarView` — own header, no `AppNav` |
-| Progress dashboard | `/dashboard` | ✅ | `DashboardPageClient` + `AppNav` |
-| AI nudges UI | `/dashboard` (`AiNudges`) | ⚠️ | Gemini-generated nudges card + refresh; **not global/on-login** |
+| Application Tracker | `/tracker` | ✅ | `PageShell` + Kanban |
+| Goals | `/goals` | ✅ | `PageShell` + tasks column |
+| Calendar | `/calendar` | ✅ | `PageShell` + `AppNav` (no duplicate header links) |
+| Progress dashboard | `/dashboard` | ✅ | Metrics, pipeline, nudges, activity |
 
-### Panels & components — Tracker
+### Tracker highlights
 
-| Component | File | Status | Notes |
-|-----------|------|--------|-------|
-| Kanban board (5 columns) | `tracker-board.tsx` | ✅ | saved → applied → interviewing → offer → rejected |
-| Drag-and-drop status change | `tracker-board.tsx` | ✅ | `@hello-pangea/dnd` + optimistic update |
-| Application card | `application-card.tsx` | ✅ | Title, company, deadline preview |
-| Kanban column | `kanban-column.tsx` | ✅ | Droppable + count |
-| Add application button | `tracker-board.tsx` | ✅ | Opens add drawer |
-| Link to calendar | `tracker-board.tsx` | ✅ | Header icon link |
-| Status filter via URL | `tracker/page.tsx` | ⚠️ | `?status=` supported in types/hooks if passed — verify UX exposure |
-| Sign out | `tracker-board.tsx` | ✅ | |
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Kanban + DnD | ✅ | 5 columns |
+| Application detail drawer | ✅ | History timeline; **fit score / matched & missing skills** when `job_match` linked |
+| Links from drawer | ✅ | Job Hunter, cover letter, chat when job linked |
+| Add application drawer | ✅ | Manual entry |
 
-### Modals / drawers — Tracker
+### Dashboard
 
-| UI | File | Status | Notes |
-|----|------|--------|-------|
-| Add application drawer | `add-application-drawer.tsx` | ✅ | Manual job title, company, location, deadline, notes |
-| Application detail drawer | `application-detail-drawer.tsx` | ✅ | Edit fields, status dropdown, history timeline, delete |
-| Delete application confirm | `application-detail-drawer.tsx` | ⚠️ | Native `confirm()` |
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Metric cards | ✅ | Incl. **skillsAdded** (emerald icons) |
+| Pipeline chart | ✅ | Emerald bar fill |
+| AI nudges | ✅ | High-fit unsaved matches in reminder summary |
+| Skills-added widget | ✅ | Live count from API |
+| Global on-login nudges | ❌ | Dashboard section only |
 
-### User flows — Tracker
-
-| Flow | Status | Steps |
-|------|--------|-------|
-| Add manual application | ✅ | Add → drawer form → submit → card in `saved` |
-| Move card via drag-and-drop | ✅ | Drag column → status RPC + history note |
-| Open application details | ✅ | Click card → drawer → edit / change status |
-| View status history | ✅ | Timeline in detail drawer |
-| Delete application | ✅ | Drawer delete + confirm |
-| Add from Job Hunter save | ✅ | Kanban shows job title/company; deadline from save or job join |
-
-### Panels & components — Goals & tasks
-
-| Component | File | Status | Notes |
-|-----------|------|--------|-------|
-| Goals list + status filters | `goals-workspace.tsx` | ✅ | All / active / completed / paused / cancelled |
-| Goal card | `goal-card.tsx` | ✅ | Progress bar, expand tasks, status actions, edit |
-| Goal-linked task list | `task-list.tsx` (feature) | ✅ | Inside expanded goal card |
-| Goal task row | `task-row.tsx` | ✅ | Toggle done, edit inline, delete |
-| Goal task form | `task-form.tsx` | ✅ | Inline create/edit under goal |
-| Standalone task list | `components/tasks/TaskList.tsx` | ✅ | Buckets: overdue / today / week / later |
-| Task filters | `TaskList.tsx` | ✅ | All / today / week / overdue |
-| Task quick add | `TaskQuickAdd.tsx` | ✅ | |
-| Task item | `TaskItem.tsx` | ✅ | Edit, complete, delete, priority, due date |
-| Bulk select complete/delete | `TaskList.tsx` | ✅ | Checkbox selection |
-| Goal progress % | `goal-card.tsx` | ✅ | Per-goal task completion bar |
-
-### Modals / drawers — Goals
-
-| UI | File | Status | Notes |
-|----|------|--------|-------|
-| Goal create/edit drawer | `goal-form-drawer.tsx` | ✅ | Title, description, status, target date |
-| Cancel goal confirm | `goal-card.tsx` | ⚠️ | Native `confirm()` |
-| Task delete confirm | `task-row.tsx` | ⚠️ | Native `confirm()` |
-
-### User flows — Goals & tasks
-
-| Flow | Status | Steps |
-|------|--------|-------|
-| Create / edit goal | ✅ | Add Goal → drawer → save |
-| Filter goals by status | ✅ | Tab buttons |
-| Add task under goal | ✅ | Expand goal → task form |
-| Complete / edit / delete goal task | ✅ | `TaskRow` actions |
-| Standalone task CRUD | ✅ | Right column on `/goals` |
-| Jump to tasks from landing | ✅ | `/goals#tasks` scrolls to `TaskList` |
-| Link task to roadmap item | ⚠️ | `POST /api/roadmap/items/[itemId]/create-task` from roadmap detail; not from goals UI |
-| Link task to application | ❌ | DB field exists; limited UI |
-
-### Panels & components — Calendar
-
-| Component | File | Status | Notes |
-|-----------|------|--------|-------|
-| Month / week / day views | `CalendarView.tsx` | ✅ | `react-big-calendar` |
-| Upcoming sidebar | `UpcomingSidebar.tsx` | ✅ | Next events list |
-| Application deadline events (read-only) | `useCalendarEvents.ts` | ✅ | Synthesized from tracker |
-| Event type color coding | `CalendarView.tsx` | ✅ | deadline, interview, reminder, study, etc. |
-| Add event button | `CalendarView.tsx` | ✅ | Opens modal |
-| Header links (Goals, Tracker) | `CalendarView.tsx` | ✅ | |
-| Sign out | `CalendarView.tsx` | ✅ | |
-
-### Modals / popovers — Calendar
-
-| UI | File | Status | Notes |
-|----|------|--------|-------|
-| Event create/edit modal | `EventModal.tsx` | ✅ | Title, type, times, reminder, description |
-| Event quick view popover | `EventPopover.tsx` | ✅ | View / edit / delete (non-read-only events) |
-| Delete event confirm | `EventPopover.tsx` | ⚠️ | Native `confirm()` |
-| Read-only application deadline popover | `EventPopover.tsx` | ✅ | Cannot edit/delete synthetic events |
-
-### User flows — Calendar
-
-| Flow | Status | Steps |
-|------|--------|-------|
-| Create custom event | ✅ | Add / slot select → modal → save (Supabase direct) |
-| Edit / delete event | ✅ | Click event → popover → edit modal or delete |
-| See application deadlines on calendar | ✅ | Auto-imported from applications |
-| Set reminder time on event | ✅ | Field in `EventModal` — **no push notification delivery** |
-| Link event to task or application | ⚠️ | Fields in modal if exposed — optional linking |
-| Create event from roadmap item | ✅ | `AddToCalendarModal` on roadmap timeline → `add-to-calendar` API |
-
-### Dashboard (`/dashboard`)
-
-| Component | File | Status | Notes |
-|-----------|------|--------|-------|
-| Metric cards | `MetricCard.tsx` | ✅ | Jobs applied, active apps, roadmap %, tasks/week, streak, roadmap items done |
-| Pipeline chart | `ApplicationPipelineChart.tsx` | ✅ | Kanban status breakdown |
-| Upcoming deadlines | `UpcomingDeadlines.tsx` | ✅ | Next calendar events |
-| AI nudges panel | `AiNudges.tsx` | ⚠️ | `POST /api/reminders/generate`; cached daily |
-| Recent activity | `RecentActivityFeed.tsx` | ✅ | Application history feed |
-| Loading skeleton | `DashboardSkeleton.tsx` | ✅ | Full-page skeleton |
-
-### Dashboard & nudges (remaining gaps)
-
-| UI | Status | Notes |
-|----|--------|-------|
-| Skills-added widget | ✅ | `skillsAdded` on `/dashboard` from `user_skills` count |
-| Global nudge toast / on-login banner | ❌ | Dashboard section only |
-| “3 jobs matching your profile” prompt | ✅ | Deterministic + LLM nudges via `highFitUnsavedMatches` in reminder summary |
-
----
-
-## Others — Cross-cutting & planned UI
-
-### Navigation consistency
+### Calendar & goals
 
 | Item | Status | Notes |
 |------|--------|-------|
-| `AppNav` includes Job Hunter | ✅ | `/jobs` link present |
-| `AppNav` includes Roadmap | ✅ | `/roadmap` link present |
-| `AppNav` includes Cover Letters | ✅ | `/cover-letters` link present |
-| `AppNav` includes Dashboard | ✅ | `/dashboard` link present |
-| `AppNav` includes Chat | ✅ | `/chat` in AppNav |
-| `AppNav` includes Calendar | ✅ | `/calendar` in AppNav |
-| Landing lists Job Hunter | ✅ | `/jobs` in `corePages` |
-| Landing lists Roadmap | ✅ | `/roadmap` in `corePages` |
-| Brand logo target | ✅ | AppNav logo → `/` |
+| Calendar views + events | ✅ | Month/week; synthetic application deadlines |
+| Goals + standalone tasks | ✅ | `/goals` with `TaskList` |
+| Roadmap → task / calendar | ✅ | From roadmap detail |
 
-### Shared UX patterns
+---
+
+## Navigation & design system (new / updated)
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Grouped nav menus | ✅ | `NavGroupMenu.tsx` — Discover / Plan / Track dropdown panels with descriptions |
+| Section context bar | ✅ | `NavContextBar.tsx` — quick pills within active group (lg+) |
+| Mobile nav drawer | ✅ | `MobileNavDrawer.tsx` — color-coded sections |
+| Nav config single source | ✅ | `lib/navigation-config.ts` — groups, related links |
+| Accent style map | ✅ | `lib/nav-styles.ts` — emerald / sky / violet tokens |
+| Page related links | ✅ | `PageHeader` pills on jobs, resume, tracker, dashboard, etc. |
+| Theme CSS variables | ✅ | `globals.css` — `--cp-primary`, `--cp-accent`, nav heights |
+| Chat sky / brand emerald split | ✅ | Assistant UI sky; primary actions emerald |
+
+### New frontend files (from Part 2 + polish)
+
+| Path | Purpose |
+|------|---------|
+| `lib/navigation-config.ts` | Nav groups, related links |
+| `lib/nav-styles.ts` | Group accent classes, active-route helpers |
+| `lib/ui-theme.ts` | Shared Tailwind class bundles |
+| `components/layout/page-shell.tsx` | `PageShell`, `PageHeader` |
+| `components/nav/NavGroupMenu.tsx` | Desktop dropdown menus |
+| `components/nav/NavContextBar.tsx` | Section sub-navigation |
+| `components/nav/MobileNavDrawer.tsx` | Mobile menu + trigger |
+| `features/jobs/job-actions.ts` | URL builders for cross-module links |
+| `features/jobs/match-job-actions.tsx` | Action buttons on match UI |
+| `features/skill-gap/*` | Skill gap page module |
+| `lib/hooks/useSkillGap.ts` | Skill gap queries + analyze mutation |
+
+---
+
+## Shared UX patterns
 
 | Pattern | Status | Notes |
 |---------|--------|-------|
-| Loading skeletons | ✅ | Shared `Skeleton`, `ListCardSkeleton`, `DetailPageSkeleton`; jobs, goals, chat, resume, dashboard |
-| Spinner buttons | ✅ | Shared `SpinnerButton` on forms/actions (jobs search, save match, login, etc.) |
-| Submission progress | ✅ | `SubmissionProgress` on cover-letter/roadmap/resume long operations |
-| Inline error panels | ✅ | Red bordered messages per feature |
+| Loading skeletons | ✅ | Shared + per-feature |
+| Spinner buttons | ✅ | Emerald primary variant |
+| Submission progress | ✅ | Sky tone on AI generation pages |
 | Empty states with CTA | ✅ | Most lists |
-| Sonner success/error toasts | ✅ | Upload, search, save match, etc. |
-| Custom event toasts (`careerpilot-toast`) | ⚠️ | Some hooks use DOM event; most use Sonner |
-| Markdown rendering | ✅ | Assistant messages (`react-markdown`) |
-| Accessibility (ARIA on drawers) | ⚠️ | Partial; drawer close buttons labeled |
-
-### Planned UI (landing “Coming next” — no routes)
-
-| Feature | Dedicated page | In-chat only | Status |
-|---------|----------------|--------------|--------|
-| Skill Gap Analysis | ✅ `/skill-gap` | ⚠️ intent + save | ✅ |
-| Roadmap Generator | ✅ `/roadmap` | ⚠️ + save btn | ✅ / ⚠️ |
-| Cover Letter Studio | ✅ `/cover-letters` | ⚠️ + save btn | ✅ / ⚠️ |
-| Progress Dashboard | ✅ `/dashboard` | — | ✅ |
-| AI Nudges | ⚠️ `/dashboard` | — | ⚠️ |
-
-### API route (not a page)
-
-| Route | Status | Notes |
-|-------|--------|-------|
-| `POST /api/assistant/chat` | ✅ | Next.js Route Handler — streaming; not visible as UI route |
-| `POST /api/cover-letter/*` | ✅ | Generate, list, get, update, regenerate (BFF → Supabase + Gemini) |
-| `POST /api/roadmap/*` | ✅ | Generate, list, get, item patch, create-task, add-to-calendar |
+| Sonner toasts | ✅ | Search, save, upload, etc. |
+| Markdown in chat | ✅ | `react-markdown` |
+| Shared confirm modal | ❌ | Tracker/chat/goals still use `window.confirm` |
 
 ---
 
@@ -436,27 +303,30 @@
 | Demo step | UI path | Status |
 |-----------|---------|--------|
 | 1. CV upload | `/resume` → upload card | ✅ |
-| 2. Job search | `/jobs` → search form → live JSearch → match cards | ✅ |
-| 3. Fit score visible | Match card badge + explanation | ✅ |
-| 4. AI assistant query | `/chat` → message | ✅ |
-| 5. Cover letter draft | `/cover-letters` generate or `/chat` → save → detail | ✅ |
-| 5b. Roadmap | `/roadmap` generate → timeline → task/calendar | ✅ |
-| 6. Tracker update | `/tracker` → drag card or edit drawer | ✅ |
+| 2. Job search | `/jobs` → search → match cards | ✅ |
+| 3. Fit score visible | Match card + drawer | ✅ |
+| 4. Cross-module from match | Cover letter / skill gap / roadmap / chat actions | ✅ |
+| 5. AI assistant query | `/chat` → message (optional `?jobId=`) | ✅ |
+| 6. Cover letter draft | `/cover-letters` or chat save | ✅ |
+| 7. Skill gap | `/skill-gap` with Job Hunter prefill | ✅ |
+| 8. Roadmap | `/roadmap` → task/calendar | ✅ |
+| 9. Tracker update | `/tracker` → DnD or drawer with fit data | ✅ |
+| 10. Dashboard | `/dashboard` → metrics + nudges | ✅ |
 
 ---
 
 ## Frontend priority backlog
 
-1. ⚠️ **Dashboard polish** — skills-added metric; job-match nudges from `/jobs` matches  
-2. ⚠️ **AI nudges** — on-login or global surface beyond `/dashboard` card  
-3. ⚠️ **Landing parity** — add Job Hunter + Roadmap to `corePages`; move roadmap off “Coming next”  
-4. ⚠️ **Match card** — show `salary_range` and deadline when available  
-5. ❌ **Manual job paste** drawer on `/jobs`  
-6. ❌ **Skill gap** dedicated page (chat intent only today)  
-7. ⚠️ **Chat suggested prompts** — benchmark queries (readiness, gap, roadmap, letter)  
-8. ❌ **Shared confirm modal** (tracker/chat/goals still use `window.confirm`; CV/cover-letter delete use dedicated dialogs)  
-9. ⚠️ **Unify sign-out** on all authenticated pages (add to `/jobs`, `/cover-letters`, `/roadmap` headers)  
-10. ⚠️ **`AppNav` on chat/calendar** for consistent cross-module navigation
+1. ❌ **5-minute demo video** — organizer deliverable (not a UI task).
+2. ❌ **Shared confirm modal** — replace `window.confirm` in tracker/chat/goals/calendar.
+3. ⚠️ **Global nudges** — on-login or app-wide banner beyond `/dashboard`.
+4. ⚠️ **Search history UI** — browse past `job_searches` by query/date.
+5. ⚠️ **Chat intent badge** — surface detected intent in thread header.
+6. ⚠️ **Conversation rename** — edit title in sidebar.
+7. ❌ **Dark mode** — optional polish.
+8. ❌ **Branded `error.tsx` / `not-found.tsx`**.
+9. ⚠️ **Detail pages theme** — `/cover-letters/[id]`, `/roadmap/[id]` still use older blue accent in places.
+10. ⚠️ **Landing hero copy** — align with fully live assistant + nudges story.
 
 ---
 

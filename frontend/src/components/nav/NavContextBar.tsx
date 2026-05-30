@@ -1,8 +1,11 @@
 "use client";
 
-import Link from "next/link";
-
-import { findActiveNavGroup, isNavItemActive, NAV_ACCENT_STYLES } from "@/lib/nav-styles";
+import { TransitionLink } from "@/components/navigation/navigation-transition";
+import {
+  findActiveNavGroup,
+  isNavItemActive,
+  NAV_ACCENT_STYLES,
+} from "@/lib/nav-styles";
 
 type NavContextBarProps = {
   pathname: string;
@@ -33,7 +36,7 @@ export function NavContextBar({ pathname }: NavContextBarProps) {
           {group.items.map(({ href, label, icon: Icon, shortLabel }) => {
             const isActive = isNavItemActive(pathname, href);
             return (
-              <Link
+              <TransitionLink
                 key={href}
                 href={href}
                 className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 ${
@@ -45,7 +48,7 @@ export function NavContextBar({ pathname }: NavContextBarProps) {
                 <Icon className="h-3.5 w-3.5 shrink-0" />
                 <span className="hidden sm:inline">{label}</span>
                 <span className="sm:hidden">{shortLabel ?? label}</span>
-              </Link>
+              </TransitionLink>
             );
           })}
         </div>

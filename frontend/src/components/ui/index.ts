@@ -1,5 +1,6 @@
 export { Skeleton, SkeletonText } from "./skeleton";
 export {
+  ContentPageSkeleton,
   DetailPageSkeleton,
   DrawerSkeleton,
   ListCardSkeleton,

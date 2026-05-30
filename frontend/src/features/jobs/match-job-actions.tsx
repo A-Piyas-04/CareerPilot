@@ -7,7 +7,7 @@ import {
   MessageSquareText,
   BriefcaseBusiness,
 } from "lucide-react";
-import Link from "next/link";
+import { TransitionLink } from "@/components/navigation/navigation-transition";
 
 import type { JobActionKey, JobActionLink } from "./job-actions";
 import { getMatchJobActions } from "./job-actions";
@@ -60,7 +60,7 @@ function JobActionLinkButton({
   const label = variant === "compact" ? action.shortLabel : action.label;
 
   return (
-    <Link
+    <TransitionLink
       href={action.href}
       className={
         variant === "compact"
@@ -70,6 +70,6 @@ function JobActionLinkButton({
     >
       <Icon className={variant === "compact" ? "h-3.5 w-3.5" : "h-4 w-4"} />
       {label}
-    </Link>
+    </TransitionLink>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+
+import { TransitionLink } from "@/components/navigation/navigation-transition";
 
 import type { NavGroup } from "@/lib/navigation-config";
 import {
@@ -105,7 +106,7 @@ export function NavGroupMenu({
               const isActive = isNavItemActive(pathname, href);
               return (
                 <li key={href}>
-                  <Link
+                  <TransitionLink
                     href={href}
                     role="menuitem"
                     onClick={onClose}
@@ -136,7 +137,7 @@ export function NavGroupMenu({
                         </span>
                       ) : null}
                     </span>
-                  </Link>
+                  </TransitionLink>
                 </li>
               );
             })}

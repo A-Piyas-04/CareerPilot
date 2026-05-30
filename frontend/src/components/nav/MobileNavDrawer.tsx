@@ -1,9 +1,9 @@
 "use client";
 
 import { LogOut, Menu, X } from "lucide-react";
-import Link from "next/link";
 import { useEffect } from "react";
 
+import { TransitionLink } from "@/components/navigation/navigation-transition";
 import type { NavGroup } from "@/lib/navigation-config";
 import { NAV_GROUPS } from "@/lib/navigation-config";
 import {
@@ -126,7 +126,7 @@ function MobileNavSection({
           const isActive = isNavItemActive(pathname, href);
           return (
             <li key={href}>
-              <Link
+              <TransitionLink
                 href={href}
                 onClick={onNavigate}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
@@ -156,7 +156,7 @@ function MobileNavSection({
                     </span>
                   ) : null}
                 </span>
-              </Link>
+              </TransitionLink>
             </li>
           );
         })}

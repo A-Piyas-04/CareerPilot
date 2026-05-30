@@ -1,7 +1,8 @@
 # CareerPilot — Hackathon Checklist
 
 > Derived from [`Problem-statement.md`](./Problem-statement.md)  
-> Codebase audit: **May 30, 2026** (monorepo: Next.js 16 + FastAPI + Supabase + Gemini + JSearch)
+> Codebase audit: **May 30, 2026** (monorepo: Next.js 16 + FastAPI + Supabase + Gemini + JSearch)  
+> Last cross-module / UI polish pass: grouped `AppNav`, `PageShell`, Job Hunter deep links, `/skill-gap` page
 
 ## Legend
 
@@ -19,9 +20,11 @@
 |------|------------------------|--------|-------|
 | Core idea | RAG over user's CV is single source of truth for all agents | ✅ | `resume_chunks` + pgvector; shared `rag_context_service` + `/api/v1/rag/context` |
 | Core idea | No agent hallucinates user background | ⚠️ | Guardrails in assistant + CV answer prompts; quality depends on retrieval + user having uploaded CV |
-| Platform | End-to-end agentic career co-pilot in one platform | ⚠️ | Four pillars largely present; Pillar 4 dashboard live, nudges partial |
+| Platform | End-to-end agentic career co-pilot in one platform | ✅ | Four pillars wired with cross-module flows (jobs → cover letter / gap / roadmap / chat → tracker → dashboard) |
 | Platform | Working web or mobile app | ✅ | Next.js web app; Docker Compose runnable |
-| Platform | All four pillars implemented or prototyped | ⚠️ | Pillars 1–3 strong; Pillar 4 dashboard ✅; AI nudges on dashboard ⚠️ |
+| Platform | All four pillars implemented or prototyped | ✅ | Pillars 1–4 live; dashboard + job-match nudges on `/dashboard` |
+| Cross-module UX | Job Hunter actions deep-link to other pillars with prefill | ✅ | `job-actions.ts` → cover letters, skill gap, roadmap, chat, tracker; URL/query prefill on target pages |
+| Shared navigation | Consistent app shell across authenticated routes | ✅ | Grouped `AppNav` (Discover / Plan / Track), context sub-nav, mobile drawer; sign-out centralized |
 
 ---
 
@@ -42,8 +45,9 @@
 | Error handling | Actionable JSearch / RapidAPI failures | ✅ | `JSearchError` maps 403 (not subscribed), 401/403 (bad key), 429 (quota) to clear API responses |
 | Fit score | Computed programmatically (not LLM-only) | ✅ | `0.6 × skills_overlap + 0.4 × chunk_similarity` in `job_scorer.py` |
 | Persistence | Search results stored | ✅ | `job_searches`, `jobs`, `job_matches` |
-| Tracker link | Save match → application tracker | ✅ | Denormalized title/company/location/deadline on save; idempotent; tracker joins `jobs` fallback |
+| Tracker link | Save match → application tracker | ✅ | Denormalized title/company/location/deadline on save; idempotent; tracker joins `jobs` + `job_matches` fit data |
 | Manual JD | Paste job description for scoring | ✅ | `ManualJobDrawer` on `/jobs` → `POST /api/v1/jobs/manual` |
+| Cross-pillar actions | Open cover letter / skill gap / roadmap / assistant from a match | ✅ | `MatchJobActions` on card + detail drawer with `jobId` prefill |
 
 ---
 
@@ -74,14 +78,16 @@
 
 | Item | Requirement / Constraint | Status | Notes |
 |------|------------------------|--------|-------|
-| Interface | Conversational UI with user context | ✅ | `/chat` — `ChatWorkspace`, streaming SSE |
+| Interface | Conversational UI with user context | ✅ | `/chat` — `ChatWorkspace`, streaming SSE, `AppNav` |
 | Context | Knows user before they speak (profile + CV) | ✅ | Profile + `getResumeContext()` → live `POST /api/v1/rag/context` |
+| Job context in chat | Optional grounding from Job Hunter selection | ✅ | `?jobId=` → `getJobContext` + benchmark prompts + `used_job_id` in API |
 | Memory | Conversational memory within a session | ✅ | `loadConversationMemory` — last 12 messages per conversation |
 | Persistence | Conversations & messages saved | ✅ | `assistant_conversations`, `assistant_messages` |
-| Query | “Am I ready for this data engineer role?” → verdict + reasoning | ✅ | `readiness_check` intent + grounded prompts |
-| Query | “What skills am I missing for a Google internship?” → skill gap | ✅ | Chat intent + `POST /api/v1/career/skill-gap/analyze` + dedicated `/skill-gap` page with Job Hunter prefill |
-| Query | “Build me a 3-month roadmap…” → weekly plan + resources | ✅ | `/roadmap` generate + detail timeline; chat **Save Roadmap**; items → task/calendar APIs |
-| Query | “Draft a cover letter…” → personalized from real experience | ✅ | `/cover-letters` studio (generate, edit, regenerate) + chat save path |
+| Query | “Am I ready for this data engineer role?” → verdict + reasoning | ✅ | `readiness_check` intent + grounded prompts; job-context prompts when `jobId` set |
+| Query | “What skills am I missing for a Google internship?” → skill gap | ✅ | Chat intent + `POST /api/v1/career/skill-gap/analyze` + dedicated `/skill-gap` page with Job Hunter prefill + history |
+| Query | “Build me a 3-month roadmap…” → weekly plan + resources | ✅ | `/roadmap` generate + detail timeline; chat **Save Roadmap**; items → task/calendar APIs; URL prefill from jobs |
+| Query | “Draft a cover letter…” → personalized from real experience | ✅ | `/cover-letters` studio (generate, edit, regenerate) + chat save path; `?jobId=` prefill |
+| Skill gap page | Dedicated analysis UI + saved history | ✅ | `/skill-gap` — analyze form, list, detail; `GET /career/skill-gap` list/detail APIs |
 | Cover letter metadata | Job title, company, tone, JD stored on letter | ✅ | `cover_letters` columns + Pydantic models; migration `20260529000000` |
 | Roadmap ↔ resume | Roadmap linked to active CV | ✅ | `roadmaps.resume_id` FK; generate form can pass resume |
 | RAG grounding | Responses grounded in actual CV chunks | ✅ | RAG context in system prompt; `ChunkEvidenceCard` in chat when chunks used |
@@ -95,7 +101,7 @@
 
 | Item | Requirement / Constraint | Status | Notes |
 |------|------------------------|--------|-------|
-| Calendar | Calendar view with events | ✅ | `/calendar` — `react-big-calendar` |
+| Calendar | Calendar view with events | ✅ | `/calendar` — `react-big-calendar` + `AppNav` |
 | Calendar | Deadline reminders on events | ⚠️ | `reminder_time` field + event types; **no push/email/scheduled nudge delivery** |
 | Calendar | Application deadlines surfaced | ✅ | Synthetic `application_deadline` events from tracker |
 | To-Do | To-do items per day/week | ✅ | Standalone `TaskList` buckets (overdue/today/week/later) |
@@ -104,6 +110,7 @@
 | Goals | Per-goal progress % | ⚠️ | Task completion % on goal cards only; not platform-wide |
 | Application tracker | Kanban: Applied / Interviewing / Offer / Rejected | ✅ | `/tracker` + DnD; includes `saved` column |
 | Application tracker | Full application history | ✅ | `application_history` + timeline in detail drawer |
+| Application tracker | Fit score / gaps when linked to Job Hunter | ✅ | `job_matches` join on application detail; links back to jobs / cover letter / chat |
 | Dashboard | Progress dashboard (weekly stats) | ✅ | `/dashboard` — `DashboardPageClient` + `GET /api/dashboard/metrics` |
 | Dashboard | Applications sent, skills added, roadmap % complete | ✅ | Jobs applied, active apps, **skillsAdded** from `user_skills`, roadmap %, tasks/week, pipeline chart |
 | Dashboard | Streak counter | ✅ | `calculateWeeklyStreak` — weeks with ≥1 completed task |
@@ -130,10 +137,10 @@
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Working app with all four pillars implemented or prototyped | ⚠️ | Pillar 4 dashboard ✅; AI nudges partial |
+| 1 | Working app with all four pillars implemented or prototyped | ✅ | All pillars + cross-module demo path documented |
 | 2 | CV upload pipeline: PDF/DOCX → chunk → embed → vector DB | ✅ | End-to-end in `resume_service.process_resume()` |
-| 3 | Job Hunter with live search + structured cards | ✅ | Live JSearch + filters/sort + 10/20/25 results + parallel scoring |
-| 4 | Fit score: % match + explanation for a posting | ✅ | Score + `explanation` + skills on match cards |
+| 3 | Job Hunter with live search + structured cards | ✅ | Live JSearch + filters/sort + parallel scoring + match actions |
+| 4 | Fit score: % match + explanation for a posting | ✅ | Score + `explanation` + skills + evidence on match cards |
 | 5 | AI Assistant chat with RAG across benchmark query types | ✅ | Chat intents + job context from Job Hunter; benchmark prompts when job selected |
 | 6 | Calendar + to-do with deadline tracking linked to goals | ✅ | Calendar + goal tasks + standalone tasks |
 | 7 | Kanban application tracker (4+ statuses) | ✅ | saved → applied → interviewing → offer → rejected |
@@ -145,13 +152,13 @@
 
 | Item | Requirement | Status | Notes |
 |------|-------------|--------|-------|
-| **4.1 Application** | Working demo covering all four pillars | ⚠️ | Runnable via `docker compose up`; pillar gaps above |
+| **4.1 Application** | Working demo covering all four pillars | ✅ | Runnable via `docker compose up`; end-to-end flow in README + `Docs/evaluation-suite.md` |
 | **4.1 Application** | Runnable from source by judges | ✅ | `docker-compose.yml`, README setup steps |
 | **4.2 Repository** | Public GitHub with source before deadline | ⚠️ | Repo exists locally; **verify public remote & final commit before submit** |
 | **4.2 Repository** | README: setup, env vars, how to run | ✅ | Updated for Gemini, JSearch, Docker, architecture diagram, demo script |
 | **4.2 Repository** | Architecture diagram: CV upload → agent response | ✅ | Mermaid diagram in README + module docs |
 | **4.3 Demo** | 5-minute recorded video | ❌ | No video file in repo (organizer deliverable) |
-| **4.3 Demo** | Full flow: CV → search → fit → assistant → cover letter → tracker | ✅ | Full path supported including live JSearch on `/jobs`; cover letter via `/cover-letters` or chat; roadmap via `/roadmap` |
+| **4.3 Demo** | Full flow: CV → search → fit → assistant → cover letter → tracker | ✅ | Full path supported including live JSearch on `/jobs`; cover letter via `/cover-letters` or chat; roadmap via `/roadmap`; skill gap via `/skill-gap` |
 
 ---
 
@@ -160,9 +167,9 @@
 | Bonus | What judges check | Status | Notes |
 |-------|-------------------|--------|-------|
 | Live deployment | Public URL; stable during judging | ❌ | No deployment URL documented in repo |
-| System design doc | Data flow, scale to 10k users, cost/user, bottlenecks | ⚠️ | `Docs/db-design.md` (1625 lines) + `present-state.md` — strong schema/flow docs; **missing explicit cost/scaling analysis** per bonus rubric |
+| System design doc | Data flow, scale to 10k users, cost/user, bottlenecks | ⚠️ | `Docs/db-design.md` + `present-state.md` — strong schema/flow docs; **missing explicit cost/scaling analysis** per bonus rubric |
 | Evaluation suite | ≥5 documented test cases (input, expected, actual, pass/fail) | ✅ | [`Docs/evaluation-suite.md`](../Docs/evaluation-suite.md) — 10 cases + demo script |
-| Automated tests | (Supporting) | ⚠️ | pytest: CV + job intelligence + career generation + **career-assistant service/model** tests; Vitest on cover-letter/roadmap/chat API routes |
+| Automated tests | (Supporting) | ⚠️ | pytest: CV + job intelligence + career generation + career-assistant tests; Vitest on cover-letter/roadmap/chat API routes |
 
 ---
 
@@ -186,33 +193,47 @@
 
 ---
 
+## New / supporting work (from Part 2 + UI polish)
+
+| Area | Status | Key paths |
+|------|--------|-----------|
+| Job Hunter deep links | ✅ | `frontend/src/features/jobs/job-actions.ts`, `match-job-actions.tsx` |
+| Skill gap list/detail API | ✅ | `GET /api/v1/career/skill-gap`, `GET .../{id}` |
+| Skill gap frontend | ✅ | `frontend/src/app/skill-gap/`, `features/skill-gap/` |
+| Tracker fit enrichment | ✅ | `applications.py` join on `jobs` + `job_matches`; drawer UI |
+| Dashboard job nudges | ✅ | `reminders/generate` + `highFitUnsavedMatches` |
+| Shared UI shell | ✅ | `components/layout/page-shell.tsx`, `lib/ui-theme.ts` |
+| Grouped navigation | ✅ | `components/nav/AppNav.tsx`, `NavGroupMenu.tsx`, `NavContextBar.tsx`, `MobileNavDrawer.tsx`, `lib/navigation-config.ts`, `lib/nav-styles.ts` |
+| Evaluation doc | ✅ | `Docs/evaluation-suite.md` |
+
+---
+
 ## Quick Score Summary
 
 | Area | Done ✅ | Partial ⚠️ | Missing ❌ |
 |------|---------|------------|------------|
-| Pillar 1 — Job Hunter | 9 | 4 | 1 |
-| Pillar 2 — RAG / CV | 8 | 1 | 2 |
-| Pillar 3 — AI Assistant | 10 | 2 | 0 |
-| Pillar 4 — Productivity | 10 | 4 | 1 |
-| Required features (§3) | 4 | 5 | 0 |
-| Deliverables | 1 | 4 | 1 |
-| Bonus | 0 | 2 | 2 |
+| Pillar 1 — Job Hunter | 11 | 1 | 0 |
+| Pillar 2 — RAG / CV | 13 | 1 | 2 |
+| Pillar 3 — AI Assistant | 15 | 0 | 0 |
+| Pillar 4 — Productivity | 12 | 3 | 0 |
+| Required features (§3) | 8 | 0 | 0 |
+| Deliverables | 5 | 1 | 1 |
+| Bonus | 1 | 2 | 1 |
 
 ---
 
 ## Recommended Next Actions (priority)
 
-1. ⚠️ **Dashboard polish** — add skills-added metric; surface job-match nudges (Pillar 4).
-2. ⚠️ **AI nudges** — expand beyond dashboard card (on-login, job-match prompts).
-3. ⚠️ **Job cards** — display `salary_range`; map/show deadline when API provides it.
-4. ⚠️ **README + architecture diagram** — update stack/env vars; add one diagram for judges (deliverable 4.2).
-5. ❌ **Evaluation suite bonus** — seed 5+ rows in `evaluation_tests` or markdown doc with pass/fail.
-6. ❌ **5-minute demo video** — record full required flow (deliverable 4.3).
-7. ❌ **Live deployment** — Vercel + Railway/Render with env vars (bonus).
-8. ⚠️ **pgvector dimension** — align RPC/column with 768-dim Gemini before judging.
-9. ⚠️ **Manual job paste UI** on `/jobs` for fit score without JSearch.
-10. ❌ **Skill gap dedicated page** — chat/API only; roadmaps + cover letters now have full UI.
-11. ⚠️ **Landing page** — list Job Hunter + Roadmap alongside Cover Letter Studio on `/`.
+1. ❌ **5-minute demo video** — record full required flow (deliverable 4.3).
+2. ❌ **Live deployment** — Vercel + Railway/Render with env vars (bonus).
+3. ⚠️ **pgvector dimension** — align RPC/column with 768-dim Gemini before judging.
+4. ⚠️ **Public GitHub** — confirm remote is public and tagged for submission.
+5. ⚠️ **Global AI nudges** — optional on-login banner beyond `/dashboard` card.
+6. ⚠️ **Push/email reminders** — calendar `reminder_time` has no delivery channel.
+7. ⚠️ **System design bonus** — add cost/scaling section to docs.
+8. ⚠️ **Search history UI** — past `job_searches` not browsable in frontend.
+9. ❌ **Raw CV object storage** — optional; `file_url` unused.
+10. ⚠️ **Landing copy** — refresh hero text (still mentions assistant “coming online” in places).
 
 ---
 

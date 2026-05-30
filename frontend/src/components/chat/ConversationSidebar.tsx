@@ -8,11 +8,8 @@ import {
   parseISO,
 } from "date-fns";
 import { MessageSquarePlus, MessageSquareText, Trash2 } from "lucide-react";
-import Link from "next/link";
-
+import { TransitionLink } from "@/components/navigation/navigation-transition";
 import { ListCardSkeleton } from "@/components/ui";
-import { isTemporaryAssistantConversationId } from "@/lib/hooks/useAssistantConversations";
-import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import type { AssistantConversation } from "@/lib/types/assistant";
 
 type Props = {
@@ -81,13 +78,13 @@ export function ConversationSidebar({
           className="mt-3 flex flex-wrap gap-1.5"
         >
           {PAGE_RELATED_LINKS["/chat"].map((link) => (
-            <Link
+            <TransitionLink
               key={link.href}
               href={link.href}
               className="inline-flex h-7 items-center rounded-full border border-zinc-200 bg-zinc-50 px-2.5 text-[11px] font-medium text-zinc-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800"
             >
               {link.label}
-            </Link>
+            </TransitionLink>
           ))}
         </nav>
       </header>

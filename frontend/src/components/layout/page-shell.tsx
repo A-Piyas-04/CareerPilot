@@ -1,6 +1,9 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
+
+import { TransitionLink } from "@/components/navigation/navigation-transition";
 
 import {
   pageContainer,
@@ -83,13 +86,13 @@ export function PageHeader({
           className="mt-4 flex flex-wrap gap-2"
         >
           {relatedLinks.map((link) => (
-            <Link
+            <TransitionLink
               key={link.href}
               href={link.href}
               className="inline-flex h-8 items-center rounded-full border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
             >
               {link.label}
-            </Link>
+            </TransitionLink>
           ))}
         </nav>
       ) : null}

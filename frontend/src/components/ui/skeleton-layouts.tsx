@@ -51,7 +51,7 @@ export function DetailPageSkeleton({
 }: DetailPageSkeletonProps) {
   return (
     <main
-      className="min-h-[calc(100vh-49px)] bg-zinc-50 px-6 py-6"
+      className="min-h-full bg-[var(--cp-page-bg)] px-5 py-6"
       aria-busy="true"
     >
       <div className="mx-auto max-w-5xl">
@@ -82,7 +82,10 @@ type PageSkeletonVariant =
   | "tracker"
   | "jobs"
   | "calendar"
-  | "chat";
+  | "chat"
+  | "dashboard";
+
+export type { PageSkeletonVariant };
 
 type PageSkeletonProps = {
   variant?: PageSkeletonVariant;
@@ -91,26 +94,35 @@ type PageSkeletonProps = {
 
 export function PageSkeleton({
   variant = "singleColumn",
-  showNav = true,
+  showNav = false,
 }: PageSkeletonProps) {
   return (
     <>
       {showNav ? <NavStripSkeleton /> : null}
-      {variant === "chat" ? <ChatPageSkeleton /> : null}
-      {variant === "twoColumn" ? <TwoColumnPageSkeleton /> : null}
-      {variant === "resume" ? <ResumePageSkeleton /> : null}
-      {variant === "tracker" ? <TrackerPageSkeleton /> : null}
-      {variant === "jobs" ? <JobsPageSkeleton /> : null}
-      {variant === "calendar" ? <CalendarPageSkeleton /> : null}
-      {variant === "singleColumn" ? <SingleColumnPageSkeleton /> : null}
+      <ContentPageSkeleton variant={variant} />
     </>
   );
+}
+
+export function ContentPageSkeleton({
+  variant = "singleColumn",
+}: {
+  variant?: PageSkeletonVariant;
+}) {
+  if (variant === "chat") return <ChatPageSkeleton />;
+  if (variant === "twoColumn") return <TwoColumnPageSkeleton />;
+  if (variant === "resume") return <ResumePageSkeleton />;
+  if (variant === "tracker") return <TrackerPageSkeleton />;
+  if (variant === "jobs") return <JobsPageSkeleton />;
+  if (variant === "calendar") return <CalendarPageSkeleton />;
+  if (variant === "dashboard") return <DashboardPageSkeleton />;
+  return <SingleColumnPageSkeleton />;
 }
 
 function PageShell({ children }: { children: ReactNode }) {
   return (
     <main
-      className="min-h-[calc(100vh-49px)] bg-zinc-50 px-6 py-6"
+      className="min-h-full bg-[var(--cp-page-bg)] px-5 py-6 lg:min-h-[calc(100vh-var(--cp-nav-with-context)-3.5rem)]"
       aria-busy="true"
     >
       {children}
@@ -234,7 +246,10 @@ function CalendarPageSkeleton() {
 
 function ChatPageSkeleton() {
   return (
-    <div className="flex h-screen bg-zinc-50" aria-busy="true">
+    <div
+      className="flex min-h-[calc(100vh-var(--cp-nav-height))] bg-[var(--cp-page-bg)] lg:min-h-[calc(100vh-var(--cp-nav-with-context))]"
+      aria-busy="true"
+    >
       <aside className="w-72 border-r border-zinc-200 bg-white p-4">
         <Skeleton className="h-9 w-full rounded-md" />
         <div className="mt-4 space-y-2">
@@ -260,6 +275,25 @@ function ChatPageSkeleton() {
         </div>
       </div>
     </div>
+  );
+}
+
+function DashboardPageSkeleton() {
+  return (
+    <PageShell>
+      <div className="mx-auto max-w-[1400px]">
+        <Skeleton className="h-16 max-w-md rounded-xl" />
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} className="h-32 rounded-xl" />
+          ))}
+        </div>
+        <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.75fr)]">
+          <Skeleton className="h-96 rounded-xl" />
+          <Skeleton className="h-96 rounded-xl" />
+        </div>
+      </div>
+    </PageShell>
   );
 }
 
