@@ -1,7 +1,7 @@
 "use client";
 
 import { PenLine, Plus, Save, Trash2 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 
 import { SpinnerButton, SubmissionProgress } from "@/components/ui";
 import { useSimulatedProgress } from "@/hooks/useSimulatedProgress";
@@ -95,13 +95,6 @@ export function ResumeBuilderCard({
     isActive: isPending,
     steps: [...RESUME_UPLOAD_STEPS],
   });
-
-  useEffect(() => {
-    if (initialDetail) {
-      setTitle(initialDetail.resume.file_name);
-      setRows(detailToRows(initialDetail));
-    }
-  }, [initialDetail]);
 
   function validateForm(): BuildResumeRequest | null {
     setLocalError(null);

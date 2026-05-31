@@ -148,6 +148,7 @@ export type ManualResumePayload = {
   personal: ManualPersonalDetails;
   summary: string;
   skills: ManualSkillInput[];
+  tools: string[];
   experience: ManualExperienceInput[];
   education: ManualEducationInput[];
   projects: ManualProjectInput[];

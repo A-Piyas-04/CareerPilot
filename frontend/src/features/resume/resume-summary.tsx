@@ -7,7 +7,6 @@ import {
   FileText,
   Layers,
   Loader2,
-  PenLine,
   RefreshCw,
   Search,
   Sparkles,
@@ -120,7 +119,6 @@ type ResumeSummaryProps = {
   error: Error | null;
   hasResumes: boolean;
   onRequestReupload?: () => void;
-  onEditInBuilder?: (detail: ResumeDetail) => void;
   onEditInManual?: (detail: ResumeDetail) => void;
 };
 
@@ -130,7 +128,6 @@ export function ResumeSummary({
   error,
   hasResumes,
   onRequestReupload,
-  onEditInBuilder,
   onEditInManual,
 }: ResumeSummaryProps) {
   const groupedSkills = useMemo(
@@ -226,25 +223,14 @@ export function ResumeSummary({
         </div>
       </div>
 
-      {isProcessed && onEditInBuilder && resume.file_type === "builder" && (
-        <button
-          className={`${resumeSecondaryButton} mt-4 w-full sm:w-auto`}
-          type="button"
-          onClick={() => onEditInBuilder(detail)}
-        >
-          <PenLine className="h-4 w-4" />
-          Edit in builder
-        </button>
-      )}
-
-      {isProcessed && onEditInManual && resume.file_type === "manual" && (
+      {isProcessed && onEditInManual && (
         <button
           className={`${resumeSecondaryButton} mt-4 w-full sm:w-auto`}
           type="button"
           onClick={() => onEditInManual(detail)}
         >
           <FileText className="h-4 w-4" />
-          Edit in manual editor
+          Edit structured CV
         </button>
       )}
 

@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { createClient } from "@/lib/supabase/server";
+
 const corePages = [
   {
     title: "AI Career Assistant",
@@ -120,7 +122,13 @@ const proofPoints = [
   "Calendar deadline visibility",
 ];
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isLoggedIn = Boolean(user);
+
   return (
     <main className="min-h-screen bg-[#f6f7f9] text-zinc-950">
       <section className="border-b border-zinc-200 bg-white">
@@ -155,19 +163,23 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link
-              className="hidden h-10 items-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 sm:flex"
-              href="/login"
-            >
-              Sign in
-            </Link>
-            <Link
-              className="flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
-              href="/login?next=/tracker"
-            >
-              Open workspace
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            {!isLoggedIn && (
+              <Link
+                className="hidden h-10 items-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 sm:flex"
+                href="/login"
+              >
+                Sign in
+              </Link>
+            )}
+            {isLoggedIn && (
+              <Link
+                className="flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                href="/tracker"
+              >
+                Open workspace
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
           </div>
         </nav>
       </section>
@@ -191,7 +203,7 @@ export default function Home() {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 className="flex h-12 items-center gap-2 rounded-md bg-emerald-500 px-5 text-sm font-bold text-zinc-950 transition hover:bg-emerald-400"
-                href="/login?next=/tracker"
+                href={isLoggedIn ? "/tracker" : "/login?next=/tracker"}
               >
                 Start tracking
                 <ArrowRight className="h-4 w-4" />
@@ -276,13 +288,15 @@ export default function Home() {
               Your active CareerPilot modules
             </h2>
           </div>
-          <Link
-            className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-            href="/login"
-          >
-            Sign in to continue
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+          {!isLoggedIn && (
+            <Link
+              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
+              href="/login"
+            >
+              Sign in to continue
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">

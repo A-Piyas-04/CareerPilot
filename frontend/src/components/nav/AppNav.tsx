@@ -8,6 +8,7 @@ import {
   Map,
   Sparkles,
   Target,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -48,6 +49,11 @@ const NAV_ITEMS = [
     label: "Cover Letters",
     icon: Mail,
   },
+  {
+    href: "/chat",
+    label: "Chat",
+    icon: MessageSquare,
+  },
 ] as const;
 
 export function AppNav() {
@@ -56,10 +62,7 @@ export function AppNav() {
   return (
     <nav className="flex items-center gap-1 px-4 py-2 bg-white border-b border-zinc-200 sticky top-0 z-30 shadow-sm">
       {/* Brand */}
-      <Link
-        href="/tracker"
-        className="flex items-center gap-1.5 mr-4 shrink-0"
-      >
+      <Link href="/" className="flex items-center gap-1.5 mr-4 shrink-0">
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-700">
           <LayoutDashboard className="h-4 w-4 text-white" />
         </div>

@@ -114,9 +114,6 @@ export function TrackerBoard() {
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex max-w-[1560px] flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              CareerPilot
-            </p>
             <h1 className="text-2xl font-semibold text-zinc-950">
               Application Tracker
             </h1>

@@ -4,7 +4,6 @@ import {
   AlertCircle,
   FileText,
   LogOut,
-  PenLine,
   Sparkles,
   Upload,
 } from "lucide-react";
@@ -16,7 +15,6 @@ import { createClient } from "@/lib/supabase/client";
 import { useResume, useResumes } from "./hooks";
 import { ManualResumeEditor } from "./manual-resume-editor";
 import { ResumeAnswerBox } from "./resume-answer-box";
-import { ResumeBuilderCard } from "./resume-builder-card";
 import { ResumeQueryBox } from "./resume-query-box";
 import { ResumeSummary } from "./resume-summary";
 import { ResumeUploadCard } from "./resume-upload-card";
@@ -27,14 +25,14 @@ import {
   resumeSegmentGroup,
   resumeSegmentTab,
 } from "./resume-ui";
-import type { ResumeDetail } from "./types";
 import {
   getPageStatusBadge,
   PAGE_STATUS_LABELS,
   pickPrimaryResume,
 } from "./types";
+import type { ResumeDetail } from "./types";
 
-type CvInputMode = "upload" | "build" | "manual";
+type CvInputMode = "upload" | "manual";
 
 const BADGE_STYLES: Record<
   ReturnType<typeof getPageStatusBadge>,
@@ -64,38 +62,45 @@ function resumeTypeLabel(fileType: string | null | undefined): string {
 
 function ResumeEmptyState({
   onUpload,
-  onBuild,
   onManual,
 }: {
   onUpload: () => void;
-  onBuild: () => void;
   onManual: () => void;
 }) {
   return (
-    <section className={`${resumeCard} text-center`}>
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-indigo-100">
-        <FileText className="h-7 w-7 text-emerald-700" />
-      </div>
-      <h2 className="mt-4 text-lg font-semibold text-zinc-950">
-        Start your career profile
-      </h2>
-      <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-500">
-        Upload an existing resume, build section-by-section, or fill out a
-        structured form. We&apos;ll index it for AI answers and job matching.
-      </p>
-      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <button className={resumePrimaryButton} type="button" onClick={onUpload}>
-          <Upload className="h-4 w-4" />
-          Upload file
-        </button>
-        <button className={resumeSecondaryButton} type="button" onClick={onBuild}>
-          <PenLine className="h-4 w-4" />
-          Build from scratch
-        </button>
-        <button className={resumeSecondaryButton} type="button" onClick={onManual}>
-          <FileText className="h-4 w-4" />
-          Manual editor
-        </button>
+    <section className={resumeCard}>
+      <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr] md:items-center">
+        <div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100">
+            <FileText className="h-6 w-6 text-emerald-700" />
+          </div>
+          <h2 className="mt-4 text-lg font-semibold text-zinc-950">
+            Start your career profile
+          </h2>
+          <p className="mt-2 max-w-md text-sm leading-6 text-zinc-500">
+            Upload a resume for AI-assisted parsing, or enter your CV details
+            manually in a structured editor. Both paths create searchable
+            sections, skills, and chunks.
+          </p>
+        </div>
+        <div className="grid gap-2">
+          <button
+            className={`${resumePrimaryButton} justify-start px-4`}
+            type="button"
+            onClick={onUpload}
+          >
+            <Upload className="h-4 w-4" />
+            Upload and parse CV
+          </button>
+          <button
+            className={`${resumeSecondaryButton} justify-start px-4`}
+            type="button"
+            onClick={onManual}
+          >
+            <FileText className="h-4 w-4" />
+            Create manually
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -106,10 +111,6 @@ export function ResumePageClient() {
   const resumesQuery = useResumes();
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState<CvInputMode>("upload");
-  const [builderEditDetail, setBuilderEditDetail] = useState<ResumeDetail | null>(
-    null,
-  );
-  const [builderEditId, setBuilderEditId] = useState<string | null>(null);
   const inputAreaRef = useRef<HTMLDivElement>(null);
 
   const resumes = useMemo(() => resumesQuery.data ?? [], [resumesQuery.data]);
@@ -134,8 +135,7 @@ export function ResumePageClient() {
 
   function handleCvSuccess(resumeId: string) {
     setSelectedResumeId(resumeId);
-    setBuilderEditId(null);
-    setBuilderEditDetail(null);
+    setInputMode("manual");
   }
 
   function handleManualSaveSuccess(resumeId: string) {
@@ -147,22 +147,10 @@ export function ResumePageClient() {
     inputAreaRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
-  function handleEditInBuilder(detail: ResumeDetail) {
-    setBuilderEditDetail(detail);
-    setBuilderEditId(detail.resume.id);
-    setInputMode("build");
-    inputAreaRef.current?.scrollIntoView({ behavior: "smooth" });
-  }
-
   function handleEditInManual(detail: ResumeDetail) {
     setSelectedResumeId(detail.resume.id);
     setInputMode("manual");
     inputAreaRef.current?.scrollIntoView({ behavior: "smooth" });
-  }
-
-  function handleClearBuilderEdit() {
-    setBuilderEditDetail(null);
-    setBuilderEditId(null);
   }
 
   const showEmptyHero = resumes.length === 0 && !resumesQuery.isLoading;
@@ -181,7 +169,7 @@ export function ResumePageClient() {
                   CV Intelligence
                 </h1>
                 <p className="mt-0.5 max-w-lg text-sm text-zinc-500">
-                  Upload, build, or edit your CV, then query it with AI grounded
+                  Upload, parse, or edit your CV, then query it with AI grounded
                   in your real experience.
                 </p>
               </div>
@@ -242,17 +230,13 @@ export function ResumePageClient() {
         {showEmptyHero && (
           <div className="mb-6">
             <ResumeEmptyState
-              onBuild={() => {
-                setInputMode("build");
-                handleClearBuilderEdit();
-              }}
               onManual={() => setInputMode("manual")}
               onUpload={() => setInputMode("upload")}
             />
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
           <div className="space-y-6">
             <div ref={inputAreaRef}>
               <div
@@ -268,17 +252,7 @@ export function ResumePageClient() {
                   onClick={() => setInputMode("upload")}
                 >
                   <Upload className="h-4 w-4" />
-                  Upload
-                </button>
-                <button
-                  className={resumeSegmentTab(inputMode === "build")}
-                  role="tab"
-                  type="button"
-                  aria-selected={inputMode === "build"}
-                  onClick={() => setInputMode("build")}
-                >
-                  <PenLine className="h-4 w-4" />
-                  Build CV
+                  Upload & Parse
                 </button>
                 <button
                   className={resumeSegmentTab(inputMode === "manual")}
@@ -288,7 +262,7 @@ export function ResumePageClient() {
                   onClick={() => setInputMode("manual")}
                 >
                   <FileText className="h-4 w-4" />
-                  Manual
+                  Manual Editor
                 </button>
               </div>
 
@@ -296,16 +270,6 @@ export function ResumePageClient() {
                 <ResumeUploadCard
                   onUploadSuccess={handleCvSuccess}
                   uploadDetail={detailQuery.data}
-                />
-              )}
-              {inputMode === "build" && (
-                <ResumeBuilderCard
-                  key={`${builderEditId ?? "new"}-${builderEditDetail?.resume.updated_at ?? "blank"}`}
-                  buildDetail={detailQuery.data}
-                  editResumeId={builderEditId}
-                  initialDetail={builderEditDetail}
-                  onBuildSuccess={handleCvSuccess}
-                  onClearEdit={handleClearBuilderEdit}
                 />
               )}
               {inputMode === "manual" && (
@@ -323,8 +287,9 @@ export function ResumePageClient() {
                 error={detailQuery.error}
                 hasResumes={resumes.length > 0}
                 isLoading={resumesQuery.isLoading || detailQuery.isLoading}
-                onEditInBuilder={handleEditInBuilder}
-                onEditInManual={handleEditInManual}
+                onEditInManual={() => {
+                  if (detailQuery.data) handleEditInManual(detailQuery.data);
+                }}
                 onRequestReupload={handleRequestReupload}
               />
             )}

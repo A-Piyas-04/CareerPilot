@@ -22,6 +22,23 @@ type Props = {
   onSaveSuccess: (resumeId: string) => void;
 };
 
+type EditorSectionKey =
+  | "personal"
+  | "skills"
+  | "experience"
+  | "education"
+  | "projects"
+  | "extras";
+
+const EDITOR_SECTIONS: Array<{ key: EditorSectionKey; label: string }> = [
+  { key: "personal", label: "Personal" },
+  { key: "skills", label: "Skills & Tools" },
+  { key: "experience", label: "Experience" },
+  { key: "education", label: "Education" },
+  { key: "projects", label: "Projects" },
+  { key: "extras", label: "Extras" },
+];
+
 const emptyPersonal = {
   full_name: "",
   email: "",
@@ -80,6 +97,7 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
   const updateMutation = useUpdateManualResume();
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const resumeId = detail?.resume.id;
+  const [activeSection, setActiveSection] = useState<EditorSectionKey>("personal");
 
   function setField<K extends keyof ManualResumePayload>(
     key: K,
@@ -138,7 +156,7 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
         </SpinnerButton>
       </div>
 
-      <div className="mt-5 space-y-6">
+      <div className="mt-5 space-y-5">
         <Field
           label="CV title"
           value={payload.title}
@@ -146,59 +164,103 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
           placeholder="Manual CV"
         />
 
-        <EditorBlock title="Personal details">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {PERSONAL_FIELDS.map((field) => (
-              <Field
-                key={field.key}
-                label={field.label}
-                value={payload.personal[field.key]}
-                onChange={(value) => setPersonalField(field.key, value)}
-                placeholder={field.placeholder}
+        <div
+          className="flex gap-1 overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-50 p-1"
+          role="tablist"
+          aria-label="Manual CV sections"
+        >
+          {EDITOR_SECTIONS.map((section) => (
+            <button
+              key={section.key}
+              className={`whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold transition ${
+                activeSection === section.key
+                  ? "bg-white text-[#1A56DB] shadow-sm"
+                  : "text-zinc-500 hover:bg-white/70 hover:text-zinc-900"
+              }`}
+              type="button"
+              role="tab"
+              aria-selected={activeSection === section.key}
+              onClick={() => setActiveSection(section.key)}
+            >
+              {section.label}
+            </button>
+          ))}
+        </div>
+
+        {activeSection === "personal" && (
+          <div className="space-y-4">
+            <EditorBlock title="Personal details">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {PERSONAL_FIELDS.map((field) => (
+                  <Field
+                    key={field.key}
+                    label={field.label}
+                    value={payload.personal[field.key]}
+                    onChange={(value) => setPersonalField(field.key, value)}
+                    placeholder={field.placeholder}
+                  />
+                ))}
+              </div>
+            </EditorBlock>
+
+            <EditorBlock title="Professional summary">
+              <Textarea
+                label="Summary"
+                value={payload.summary}
+                onChange={(value) => setField("summary", value)}
+                placeholder="Short overview of your background, target role, and strengths."
+                rows={4}
               />
-            ))}
+            </EditorBlock>
           </div>
-        </EditorBlock>
+        )}
 
-        <EditorBlock title="Professional summary">
-          <Textarea
-            label="Summary"
-            value={payload.summary}
-            onChange={(value) => setField("summary", value)}
-            placeholder="Short overview of your background, target role, and strengths."
-            rows={4}
+        {activeSection === "skills" && (
+          <div className="space-y-4">
+            <SkillsEditor
+              items={payload.skills}
+              onChange={(items) => setField("skills", items)}
+            />
+            <ToolsEditor
+              items={payload.tools}
+              onChange={(items) => setField("tools", items)}
+            />
+          </div>
+        )}
+
+        {activeSection === "experience" && (
+          <ExperienceEditor
+            items={payload.experience}
+            onChange={(items) => setField("experience", items)}
           />
-        </EditorBlock>
+        )}
 
-        <SkillsEditor
-          items={payload.skills}
-          onChange={(items) => setField("skills", items)}
-        />
+        {activeSection === "education" && (
+          <EducationEditor
+            items={payload.education}
+            onChange={(items) => setField("education", items)}
+          />
+        )}
 
-        <ExperienceEditor
-          items={payload.experience}
-          onChange={(items) => setField("experience", items)}
-        />
+        {activeSection === "projects" && (
+          <ProjectEditor
+            items={payload.projects}
+            onChange={(items) => setField("projects", items)}
+          />
+        )}
 
-        <EducationEditor
-          items={payload.education}
-          onChange={(items) => setField("education", items)}
-        />
-
-        <ProjectEditor
-          items={payload.projects}
-          onChange={(items) => setField("projects", items)}
-        />
-
-        <CertificationEditor
-          items={payload.certifications}
-          onChange={(items) => setField("certifications", items)}
-        />
-
-        <LanguageEditor
-          items={payload.languages}
-          onChange={(items) => setField("languages", items)}
-        />
+        {activeSection === "extras" && (
+          <div className="space-y-4">
+            <CertificationEditor
+              items={payload.certifications}
+              onChange={(items) => setField("certifications", items)}
+            />
+            <LanguageEditor
+              items={payload.languages}
+              onChange={(items) => setField("languages", items)}
+            />
+          </div>
+        )}
       </div>
     </section>
   );
@@ -254,6 +316,77 @@ function SkillsEditor({
           </RepeatableRow>
         ))}
       </div>
+    </EditorBlock>
+  );
+}
+
+function ToolsEditor({
+  items,
+  onChange,
+}: {
+  items: string[];
+  onChange: (items: string[]) => void;
+}) {
+  const [toolName, setToolName] = useState("");
+
+  function addTool() {
+    const value = toolName.trim();
+    if (!value) return;
+    const exists = items.some((item) => item.toLowerCase() === value.toLowerCase());
+    if (!exists) {
+      onChange([...items, value]);
+    }
+    setToolName("");
+  }
+
+  return (
+    <EditorBlock title="Tools & technologies">
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input
+          className="h-10 flex-1 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-950 outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+          placeholder="Docker, GitHub, VS Code"
+          value={toolName}
+          onChange={(event) => setToolName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              addTool();
+            }
+          }}
+        />
+        <button
+          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100"
+          type="button"
+          onClick={addTool}
+        >
+          <Plus className="h-4 w-4" />
+          Add tool
+        </button>
+      </div>
+      {items.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {items.map((item) => (
+            <span
+              key={item}
+              className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800"
+            >
+              {item}
+              <button
+                className="text-blue-500 transition hover:text-red-600"
+                type="button"
+                aria-label={`Remove ${item}`}
+                onClick={() => onChange(items.filter((value) => value !== item))}
+              >
+                x
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-xs font-medium text-zinc-500">
+          Add tools separately so CareerPilot can search and match them later.
+        </p>
+      )}
     </EditorBlock>
   );
 }
@@ -574,11 +707,16 @@ function payloadFromDetail(detail?: ResumeDetail): ManualResumePayload {
       "",
     skills:
       formData<ManualSkillInput[]>("skills") ??
-      detail.skills.map((skill) => ({
-        category: skill.category ?? "",
-        proficiency: skill.proficiency ?? "",
-        skill_name: skill.skill_name,
-      })),
+      detail.skills
+        .filter((skill) => skill.category !== "tool")
+        .map((skill) => ({
+          category: skill.category ?? "",
+          proficiency: skill.proficiency ?? "",
+          skill_name: skill.skill_name,
+        })),
+    tools:
+      formData<string[]>("tools") ??
+      toolsFromDetail(detail, section("tools")?.content),
     experience:
       formData<ManualExperienceInput[]>("experience") ??
       sectionFallback(section("experience")?.content, emptyExperience, "description"),
@@ -611,12 +749,31 @@ function blankPayload(): ManualResumePayload {
     personal: { ...emptyPersonal },
     summary: "",
     skills: [],
+    tools: [],
     experience: [],
     education: [],
     projects: [],
     certifications: [],
     languages: [],
   };
+}
+
+function toolsFromDetail(detail: ResumeDetail, toolsContent?: string): string[] {
+  const toolSkills = detail.skills
+    .filter((skill) => skill.category === "tool")
+    .map((skill) => skill.skill_name)
+    .filter(Boolean);
+
+  if (toolSkills.length > 0) {
+    return uniqueStrings(toolSkills);
+  }
+
+  return uniqueStrings(
+    toolsContent
+      ?.split(/,|\n/)
+      .map((item) => item.trim())
+      .filter(Boolean) ?? [],
+  );
 }
 
 function sectionFallback<T extends Record<string, unknown>>(
@@ -635,12 +792,27 @@ function normalizePayload(payload: ManualResumePayload): ManualResumePayload {
     ...payload,
     title: payload.title.trim() || "Manual CV",
     skills: payload.skills.filter((skill) => skill.skill_name.trim()),
+    tools: uniqueStrings(payload.tools),
     experience: payload.experience.filter((item) => hasAnyValue(item)),
     education: payload.education.filter((item) => hasAnyValue(item)),
     projects: payload.projects.filter((item) => hasAnyValue(item)),
     certifications: payload.certifications.filter((item) => hasAnyValue(item)),
     languages: payload.languages.filter((item) => hasAnyValue(item)),
   };
+}
+
+function uniqueStrings(items: string[]) {
+  const seen = new Set<string>();
+  const values: string[] = [];
+  for (const item of items) {
+    const value = item.trim();
+    const key = value.toLowerCase();
+    if (value && !seen.has(key)) {
+      seen.add(key);
+      values.push(value);
+    }
+  }
+  return values;
 }
 
 function hasAnyValue(value: Record<string, unknown>) {

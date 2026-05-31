@@ -20,6 +20,7 @@ from app.cv_intelligence.services.embedding_service import embed_batch
 from app.cv_intelligence.services.resume_parser import extract_text, validate_file
 from app.cv_intelligence.services.section_detector import SECTION_HEADINGS, detect_sections
 from app.cv_intelligence.services.skill_extractor import extract_skills
+from app.cv_intelligence.services.structured_resume_parser import parse_structured_resume
 
 # Match section_detector canonical names (+ general fallback from parsing).
 ALLOWED_BUILDER_SECTIONS = frozenset(SECTION_HEADINGS.keys()) | {"general"}
@@ -245,6 +246,8 @@ def _ingest_sections(
     resume_id: str,
     sections: list[dict[str, Any]],
     raw_text: str,
+    skills: Optional[list[dict[str, Any]]] = None,
+    parsed_source: str = "heuristic",
 ) -> Resume:
     """
     Shared pipeline: insert sections ? chunk ? embed ? skills ? deactivate others
@@ -291,7 +294,7 @@ def _ingest_sections(
     ]
     supabase.table("resume_chunks").insert(chunk_rows).execute()
 
-    skills = extract_skills(raw_text)
+    skills = skills if skills is not None else extract_skills(raw_text)
 
     if skills:
         skill_rows = [
@@ -324,6 +327,7 @@ def _ingest_sections(
         "chunk_count": len(chunks),
         "skill_count": len(skills),
         "section_names": [s["section_name"] for s in sections],
+        "source": parsed_source,
     }
     update_resp = (
         supabase.table("resumes")
@@ -384,8 +388,31 @@ def process_resume(user_id: str, filename: str, file_bytes: bytes) -> Resume:
 
     try:
         raw_text = extract_text(filename, file_bytes)
+        structured_payload = parse_structured_resume(raw_text)
+        if structured_payload:
+            _generated_text, sections, skills = _manual_payload_to_resume_parts(
+                structured_payload,
+                source="gemini_structured",
+            )
+            return _ingest_sections(
+                supabase,
+                user_id,
+                resume_id,
+                sections,
+                raw_text,
+                skills=skills,
+                parsed_source="gemini_structured",
+            )
+
         sections = detect_sections(raw_text)
-        return _ingest_sections(supabase, user_id, resume_id, sections, raw_text)
+        return _ingest_sections(
+            supabase,
+            user_id,
+            resume_id,
+            sections,
+            raw_text,
+            parsed_source="heuristic",
+        )
 
     except HTTPException:
         _mark_failed(supabase, resume_id, user_id, "Resume processing failed.")
@@ -670,7 +697,6 @@ def _replace_resume_generated_content(
         .delete()
         .eq("resume_id", resume_id)
         .eq("user_id", user_id)
-        .eq("source", "manual")
         .execute()
     )
 
@@ -783,65 +809,83 @@ def _manual_title(payload: dict[str, Any]) -> str:
 
 def _manual_payload_to_resume_parts(
     payload: dict[str, Any],
+    source: str = "manual",
 ) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
     sections: list[dict[str, Any]] = []
     personal = payload.get("personal") or {}
     skills = _manual_skills(payload.get("skills") or [])
+    tools = _manual_tools(payload.get("tools") or [])
+    skill_rows = skills + tools
 
     _append_section(
         sections,
         "personal",
         _format_personal(personal),
         {"form_data": personal},
+        source=source,
     )
     _append_section(
         sections,
         "summary",
         _clean(payload.get("summary")),
         {"form_data": {"summary": _clean(payload.get("summary"))}},
+        source=source,
     )
     _append_section(
         sections,
         "skills",
         _format_skills(skills),
         {"form_data": payload.get("skills") or []},
+        source=source,
+    )
+    _append_section(
+        sections,
+        "tools",
+        _format_tools(tools),
+        {"form_data": payload.get("tools") or []},
+        source=source,
     )
     _append_section(
         sections,
         "experience",
         _format_experience(payload.get("experience") or []),
         {"form_data": payload.get("experience") or []},
+        source=source,
     )
     _append_section(
         sections,
         "education",
         _format_education(payload.get("education") or []),
         {"form_data": payload.get("education") or []},
+        source=source,
     )
     _append_section(
         sections,
         "projects",
         _format_projects(payload.get("projects") or []),
         {"form_data": payload.get("projects") or []},
+        source=source,
     )
     _append_section(
         sections,
         "certifications",
         _format_certifications(payload.get("certifications") or []),
         {"form_data": payload.get("certifications") or []},
+        source=source,
     )
     _append_section(
         sections,
         "languages",
         _format_languages(payload.get("languages") or []),
         {"form_data": payload.get("languages") or []},
+        source=source,
     )
 
     raw_text = "\n\n".join(
         f"{section['section_name'].upper()}\n{section['content']}"
         for section in sections
     )
-    return raw_text, sections, skills
+    return raw_text, sections, skill_rows
 
 
 def _append_section(
@@ -849,6 +893,7 @@ def _append_section(
     section_name: str,
     content: str,
     metadata: dict[str, Any],
+    source: str = "manual",
 ) -> None:
     if not content.strip():
         return
@@ -857,7 +902,7 @@ def _append_section(
             "section_name": section_name,
             "section_order": len(sections),
             "content": content.strip(),
-            "metadata": {"source": "manual", **metadata},
+            "metadata": {"source": source, **metadata},
         }
     )
 
@@ -882,6 +927,26 @@ def _manual_skills(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return skills
 
 
+def _manual_tools(items: list[Any]) -> list[dict[str, Any]]:
+    tools: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in items:
+        tool_name = _clean(item)
+        key = tool_name.lower()
+        if not tool_name or key in seen:
+            continue
+        seen.add(key)
+        tools.append(
+            {
+                "skill_name": tool_name,
+                "category": "tool",
+                "proficiency": None,
+                "evidence": f"Listed tool or technology: {tool_name}",
+            }
+        )
+    return tools
+
+
 def _format_personal(personal: dict[str, Any]) -> str:
     lines = [
         _clean(personal.get("full_name")),
@@ -897,6 +962,10 @@ def _format_personal(personal: dict[str, Any]) -> str:
 
 def _format_skills(skills: list[dict[str, Any]]) -> str:
     return ", ".join(skill["skill_name"] for skill in skills)
+
+
+def _format_tools(tools: list[dict[str, Any]]) -> str:
+    return ", ".join(tool["skill_name"] for tool in tools)
 
 
 def _format_experience(items: list[dict[str, Any]]) -> str:

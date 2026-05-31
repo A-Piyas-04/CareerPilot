@@ -87,6 +87,7 @@ class ManualResumePayload(BaseModel):
     personal: ManualPersonalDetails = Field(default_factory=ManualPersonalDetails)
     summary: str = ""
     skills: list[ManualSkillInput] = Field(default_factory=list)
+    tools: list[str] = Field(default_factory=list)
     experience: list[ManualExperienceInput] = Field(default_factory=list)
     education: list[ManualEducationInput] = Field(default_factory=list)
     projects: list[ManualProjectInput] = Field(default_factory=list)
