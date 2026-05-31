@@ -12,6 +12,7 @@ export type ParsedSummary = {
   chunk_count?: number;
   skill_count?: number;
   section_names?: string[];
+  source?: string;
 };
 
 export type Resume = {

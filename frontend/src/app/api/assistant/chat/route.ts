@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { buildSystemPrompt } from "@/lib/assistant/buildSystemPrompt";
 import { detectAssistantIntent } from "@/lib/assistant/detectIntent";
 import { getResumeContext } from "@/lib/assistant/getResumeContext";
+import { checkCareerPrompt } from "@/lib/assistant/guardrails";
 import { buildIntentPrompt } from "@/lib/assistant/intentPrompts";
 import { loadConversationMemory } from "@/lib/assistant/loadConversationMemory";
 import type { AssistantProfile } from "@/lib/assistant/types";
@@ -56,6 +57,18 @@ export async function POST(request: NextRequest) {
 
     if (conversationError || !conversation) {
       return jsonError("Conversation not found", 404);
+    }
+
+    const guardrail = checkCareerPrompt(message);
+    if (!guardrail.allowed) {
+      return handleGuardrailResponse({
+        conversationId,
+        conversationTitle: conversation.title,
+        guardrail,
+        message,
+        supabase,
+        userId: user.id,
+      });
     }
 
     const {
@@ -261,6 +274,72 @@ export async function POST(request: NextRequest) {
     const status = error instanceof GeminiApiError ? error.status : 500;
     return jsonError(message, status);
   }
+}
+
+async function handleGuardrailResponse({
+  conversationId,
+  conversationTitle,
+  guardrail,
+  message,
+  supabase,
+  userId,
+}: {
+  conversationId: string;
+  conversationTitle: string | null;
+  guardrail: { allowed: false; message: string; reason: string };
+  message: string;
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  userId: string;
+}) {
+  const now = new Date().toISOString();
+  const nextTitle = shouldGenerateTitle(conversationTitle)
+    ? titleFromMessage(message)
+    : conversationTitle;
+
+  const { error: userMessageError } = await supabase
+    .from("assistant_messages")
+    .insert({
+      content: message,
+      conversation_id: conversationId,
+      metadata: { blocked_by_guardrail: true, reason: guardrail.reason },
+      role: "user",
+      user_id: userId,
+    });
+
+  if (userMessageError) {
+    return jsonError(userMessageError.message, 500);
+  }
+
+  const { error: assistantMessageError } = await supabase
+    .from("assistant_messages")
+    .insert({
+      content: guardrail.message,
+      conversation_id: conversationId,
+      metadata: {
+        blocked_by_guardrail: true,
+        reason: guardrail.reason,
+        source: "careerpilot-guardrail",
+      },
+      role: "assistant",
+      user_id: userId,
+    });
+
+  if (assistantMessageError) {
+    return jsonError(assistantMessageError.message, 500);
+  }
+
+  await supabase
+    .from("assistant_conversations")
+    .update({ title: nextTitle, updated_at: now })
+    .eq("id", conversationId)
+    .eq("user_id", userId);
+
+  return new Response(guardrail.message, {
+    headers: {
+      "Cache-Control": "no-cache, no-transform",
+      "Content-Type": "text/plain; charset=utf-8",
+    },
+  });
 }
 
 async function loadProfile(userId: string): Promise<AssistantProfile | null> {

@@ -1,10 +1,13 @@
 import { NextRequest } from "next/server";
 
 import { GeminiApiError, GEMINI_MODEL, createGeminiText } from "@/lib/gemini";
+import { checkCareerPrompt } from "@/lib/assistant/guardrails";
 import { parseRoadmapJson } from "@/lib/roadmap/parseRoadmapJson";
 import {
   getAuthenticatedRoadmapUser,
+  isMissingColumnError,
   jsonError,
+  isMissingRoadmapItemUserIdError,
   loadRoadmapResumeContext,
   normalizeRoadmap,
   normalizeRoadmapItem,
@@ -34,6 +37,11 @@ export async function POST(request: NextRequest) {
       return jsonError("Duration must be 4, 8, or 12 weeks.", 400);
     }
 
+    const guardrail = checkCareerPrompt(`${targetRole}\n${jobDescription}`);
+    if (!guardrail.allowed) {
+      return jsonError(guardrail.message, 400);
+    }
+
     const { supabase, user } = await getAuthenticatedRoadmapUser();
     const [{ data: profile }, resumeContext] = await Promise.all([
       supabase
@@ -59,26 +67,45 @@ export async function POST(request: NextRequest) {
     });
     const generated = parseRoadmapJson(rawRoadmap, durationWeeks);
     const now = new Date().toISOString();
-    const { data: roadmap, error: roadmapError } = await supabase
+    let roadmapInsert: Record<string, unknown> = {
+      duration_weeks: durationWeeks,
+      overview: generated.overview,
+      progress_percent: 0,
+      resume_id: resumeContext.resumeId,
+      target_role: targetRole,
+      updated_at: now,
+      user_id: user.id,
+    };
+    let { data: roadmap, error: roadmapError } = await supabase
       .from("roadmaps")
-      .insert({
-        duration_weeks: durationWeeks,
-        overview: generated.overview,
-        progress_percent: 0,
-        resume_id: resumeContext.resumeId,
-        target_role: targetRole,
-        updated_at: now,
-        user_id: user.id,
-      })
+      .insert(roadmapInsert)
       .select("*")
       .single();
+
+    for (const optionalColumn of ["resume_id", "overview", "updated_at"]) {
+      if (!roadmapError || !isMissingColumnError(roadmapError, optionalColumn, "roadmaps")) {
+        continue;
+      }
+
+      const nextInsert = { ...roadmapInsert };
+      delete nextInsert[optionalColumn];
+      roadmapInsert = nextInsert;
+      const retry = await supabase
+        .from("roadmaps")
+        .insert(roadmapInsert)
+        .select("*")
+        .single();
+
+      roadmap = retry.data;
+      roadmapError = retry.error;
+    }
 
     if (roadmapError || !roadmap) {
       return jsonError(roadmapError?.message ?? "Could not save roadmap.", 500);
     }
 
     const roadmapId = String(roadmap.id);
-    const { data: items, error: itemError } = await supabase
+    let { data: items, error: itemError } = await supabase
       .from("roadmap_items")
       .insert(
         generated.items.map((item) => ({
@@ -92,6 +119,25 @@ export async function POST(request: NextRequest) {
         })),
       )
       .select("*");
+
+    if (itemError && isMissingRoadmapItemUserIdError(itemError)) {
+      const retry = await supabase
+        .from("roadmap_items")
+        .insert(
+          generated.items.map((item) => ({
+            description: item.description,
+            resources: item.resources,
+            roadmap_id: roadmapId,
+            status: "todo",
+            title: item.title,
+            week_number: item.week_number,
+          })),
+        )
+        .select("*");
+
+      items = retry.data;
+      itemError = retry.error;
+    }
 
     if (itemError || !items) {
       await supabase

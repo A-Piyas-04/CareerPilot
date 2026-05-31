@@ -23,6 +23,10 @@ export type MatchSummary = {
   matched_skills: string[];
   missing_skills: string[];
   explanation: string;
+  evidence_chunk_count?: number | null;
+  evidence_chunks?: unknown[] | null;
+  recommendation?: string | null;
+  source?: string | null;
 };
 
 export type JobSearchRequest = {

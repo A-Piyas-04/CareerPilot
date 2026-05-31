@@ -145,7 +145,7 @@ export function SubmissionProgress({
             </li>
           ))}
         </ul>
-      ) : mode === "indeterminate" && label ? (
+      ) : mode === "indeterminate" && label && label !== resolvedLabel ? (
         <p className={cn("mt-1 text-xs", styles.sub)}>{label}</p>
       ) : null}
     </div>

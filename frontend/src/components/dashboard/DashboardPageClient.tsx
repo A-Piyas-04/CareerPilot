@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowRight,
   BriefcaseBusiness,
   CalendarCheck2,
   CheckCircle2,
@@ -8,6 +9,7 @@ import {
   Map,
   Target,
 } from "lucide-react";
+import Link from "next/link";
 
 import { AiNudges } from "@/components/dashboard/AiNudges";
 import { ApplicationPipelineChart } from "@/components/dashboard/ApplicationPipelineChart";
@@ -34,7 +36,8 @@ export function DashboardPageClient() {
     );
   }
 
-  const { metrics, pipeline, recentActivity, upcomingEvents } = dashboard.data;
+  const { metrics, nextActions, pipeline, recentActivity, upcomingEvents } =
+    dashboard.data;
 
   return (
     <main className="min-h-[calc(100vh-49px)] bg-zinc-50 px-6 py-6">
@@ -93,6 +96,44 @@ export function DashboardPageClient() {
             value={metrics.roadmapItemsDone}
           />
         </section>
+
+        {nextActions.length > 0 ? (
+          <section className="mt-6 rounded-lg border border-blue-100 bg-blue-50/70 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-950">
+                  Recommended next actions
+                </h2>
+                <p className="mt-1 text-sm text-zinc-600">
+                  Based on your current tasks, calendar, and roadmap progress.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              {nextActions.map((action) => (
+                <Link
+                  key={action.id}
+                  href={action.href}
+                  className="rounded-lg border border-white bg-white p-3 shadow-sm transition hover:border-[#1A56DB]"
+                >
+                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#1A56DB]">
+                    {action.type}
+                  </span>
+                  <p className="mt-2 text-sm font-semibold text-zinc-900">
+                    {action.label}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-zinc-500">
+                    {action.description}
+                  </p>
+                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1A56DB]">
+                    Open
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.75fr)]">
           <ApplicationPipelineChart data={pipeline} />

@@ -28,6 +28,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   language:  "bg-blue-50   border-blue-100  text-blue-900",
   framework: "bg-violet-50 border-violet-100 text-violet-900",
   database:  "bg-orange-50 border-orange-100 text-orange-900",
+  tool:      "bg-cyan-50   border-cyan-100   text-cyan-900",
   devops:    "bg-slate-50  border-slate-200  text-slate-800",
   cloud:     "bg-sky-50    border-sky-100    text-sky-900",
   "ml/ai":   "bg-pink-50   border-pink-100   text-pink-900",
@@ -189,6 +190,7 @@ export function ResumeSummary({
   const isProcessing = resume.status === "processing" || resume.status === "uploaded";
   const isFailed = resume.status === "failed";
   const isProcessed = resume.status === "processed";
+  const extractedCounts = buildExtractedCounts(detail);
 
   const statusBadge = isProcessed
     ? "bg-emerald-100 text-emerald-800"
@@ -267,6 +269,32 @@ export function ResumeSummary({
           <dd className="mt-1 font-semibold text-zinc-900">{chunk_count}</dd>
         </div>
       </dl>
+
+      {isProcessed && (
+        <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/60 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[#1A56DB]">
+              Extracted data
+            </span>
+            {resume.parsed_summary?.source ? (
+              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-zinc-600">
+                {resume.parsed_summary.source.replace("_", " ")}
+              </span>
+            ) : null}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {extractedCounts.map((item) => (
+              <span
+                key={item.label}
+                className="rounded-full border border-white bg-white px-2.5 py-1 text-xs font-semibold text-zinc-700 shadow-sm"
+              >
+                {item.label}:{" "}
+                <span className="text-[#1A56DB]">{item.count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Processing banner */}
       {isProcessing && (
@@ -376,4 +404,32 @@ export function ResumeSummary({
       />
     </section>
   );
+}
+
+function buildExtractedCounts(detail: ResumeDetail) {
+  const structuredCount = (sectionName: string) => {
+    const section = detail.sections.find((item) => item.section_name === sectionName);
+    const formData = section?.metadata?.form_data;
+
+    if (Array.isArray(formData)) {
+      return formData.length;
+    }
+
+    return section?.content.trim() ? 1 : 0;
+  };
+
+  return [
+    { count: detail.sections.length, label: "sections" },
+    {
+      count: detail.skills.filter((skill) => skill.category !== "tool").length,
+      label: "skills",
+    },
+    {
+      count: detail.skills.filter((skill) => skill.category === "tool").length,
+      label: "tools",
+    },
+    { count: structuredCount("experience"), label: "experience" },
+    { count: structuredCount("education"), label: "education" },
+    { count: structuredCount("projects"), label: "projects" },
+  ];
 }

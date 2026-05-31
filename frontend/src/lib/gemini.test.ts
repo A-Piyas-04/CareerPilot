@@ -29,19 +29,19 @@ describe("gemini model cascade", () => {
   it("puts preferred model first in cascade", () => {
     expect(
       resolveModelCascade("gemini-2.0-flash", [
-        "gemini-2.5-pro",
+        "gemini-2.5-flash",
         "gemini-2.0-flash",
-        "gemini-1.5-flash",
+        "gemini-2.0-flash-lite",
       ]),
-    ).toEqual(["gemini-2.0-flash", "gemini-2.5-pro", "gemini-1.5-flash"]);
+    ).toEqual(["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite"]);
   });
 
   it("parses and deduplicates comma-separated fallback model lists", () => {
     expect(
       parseGeminiModelList(
-        " gemini-2.0-flash,gemini-1.5-flash,,gemini-2.0-flash ",
+        " gemini-2.0-flash,gemini-2.0-flash-lite,,gemini-2.0-flash ",
       ),
-    ).toEqual(["gemini-2.0-flash", "gemini-1.5-flash"]);
+    ).toEqual(["gemini-2.0-flash", "gemini-2.0-flash-lite"]);
   });
 
   it("uses configured generation fallback models after the preferred model", () => {
@@ -153,8 +153,8 @@ describe("gemini model cascade", () => {
       systemPrompt: "You are helpful.",
     });
 
-    expect(result.model).toBe("gemini-2.5-pro");
-    expect(fetchMock.mock.calls[1]?.[0]).toContain("gemini-2.5-pro");
+    expect(result.model).toBe("gemini-2.5-flash");
+    expect(fetchMock.mock.calls[1]?.[0]).toContain("gemini-2.5-flash");
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 

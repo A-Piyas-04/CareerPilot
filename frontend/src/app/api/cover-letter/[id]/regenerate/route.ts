@@ -1,4 +1,5 @@
 import { GeminiApiError, GEMINI_MODEL, createGeminiText } from "@/lib/gemini";
+import { checkCareerPrompt } from "@/lib/assistant/guardrails";
 import { parseCoverLetterJson } from "@/lib/cover-letter/parser";
 import { buildCoverLetterPrompt, COVER_LETTER_SYSTEM_PROMPT } from "@/lib/cover-letter/prompts";
 import {
@@ -48,6 +49,13 @@ export async function POST(_request: Request, context: RouteContext) {
         "This cover letter is missing job details needed for regeneration.",
         400,
       );
+    }
+
+    const guardrail = checkCareerPrompt(
+      `${jobTitle}\n${companyName}\n${jobDescription}\n${existing.extra_notes ?? ""}`,
+    );
+    if (!guardrail.allowed) {
+      return jsonError(guardrail.message, 400);
     }
 
     const [profile, resumeContext] = await Promise.all([

@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarPlus, Check, Plus } from "lucide-react";
+import { CalendarPlus, Check, Copy, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import type { RoadmapItem, RoadmapItemStatus } from "@/lib/roadmap/types";
 
@@ -22,6 +23,15 @@ export function RoadmapItemCard({
   onToggleStatus,
 }: RoadmapItemCardProps) {
   const isDone = item.status === "done";
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(formatRoadmapItem(item));
+      toast.success("Roadmap item copied.");
+    } catch {
+      toast.error("Could not copy roadmap item.");
+    }
+  }
 
   return (
     <article className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
@@ -64,37 +74,55 @@ export function RoadmapItemCard({
             {item.title}
           </h3>
           {item.description ? (
-            <p className="mt-2 text-sm leading-6 text-zinc-600">
-              {item.description}
-            </p>
+            <div className="mt-2 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Deliverable
+              </p>
+              <p className="mt-1 text-sm leading-6 text-zinc-600">
+                {item.description}
+              </p>
+            </div>
           ) : null}
 
           {item.resources.length > 0 ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {item.resources.map((resource) =>
-                resource.url ? (
-                  <a
-                    key={`${resource.name}-${resource.url}`}
-                    href={resource.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:border-[#1A56DB] hover:text-[#1A56DB]"
-                  >
-                    {resource.name}
-                  </a>
-                ) : (
-                  <span
-                    key={resource.name}
-                    className="rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600"
-                  >
-                    {resource.name}
-                  </span>
-                ),
-              )}
+            <div className="mt-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Resources
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {item.resources.map((resource) =>
+                  resource.url ? (
+                    <a
+                      key={`${resource.name}-${resource.url}`}
+                      href={resource.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:border-[#1A56DB] hover:text-[#1A56DB]"
+                    >
+                      {resource.name}
+                    </a>
+                  ) : (
+                    <span
+                      key={resource.name}
+                      className="rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-600"
+                    >
+                      {resource.name}
+                    </span>
+                  ),
+                )}
+              </div>
             </div>
           ) : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-medium text-zinc-700 hover:border-[#1A56DB] hover:text-[#1A56DB]"
+            >
+              <Copy className="h-4 w-4" />
+              Copy
+            </button>
             <button
               type="button"
               onClick={() => onCreateTask(item.id)}
@@ -121,4 +149,17 @@ export function RoadmapItemCard({
 
 function statusLabel(status: RoadmapItemStatus) {
   return status.replace("_", " ");
+}
+
+function formatRoadmapItem(item: RoadmapItem) {
+  const resources =
+    item.resources.length > 0
+      ? `\nResources:\n${item.resources
+          .map((resource) =>
+            resource.url ? `- ${resource.name}: ${resource.url}` : `- ${resource.name}`,
+          )
+          .join("\n")}`
+      : "";
+
+  return `Week ${item.week_number}: ${item.title}\n\n${item.description}${resources}`;
 }

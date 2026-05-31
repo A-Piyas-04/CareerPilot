@@ -114,7 +114,6 @@ export async function fetchRoadmapDetail(
     .from("roadmap_items")
     .select("*")
     .eq("roadmap_id", roadmapId)
-    .eq("user_id", userId)
     .order("week_number", { ascending: true });
 
   if (itemsError) {
@@ -136,14 +135,25 @@ export async function fetchRoadmapItemForUser(
     .from("roadmap_items")
     .select("*")
     .eq("id", itemId)
-    .eq("user_id", userId)
     .single();
 
   if (error || !item) {
     throw new RoadmapHttpError("Roadmap item not found", 404);
   }
 
-  return normalizeRoadmapItem(item);
+  const normalized = normalizeRoadmapItem(item);
+  const { data: roadmap, error: roadmapError } = await supabase
+    .from("roadmaps")
+    .select("id")
+    .eq("id", normalized.roadmap_id)
+    .eq("user_id", userId)
+    .single();
+
+  if (roadmapError || !roadmap) {
+    throw new RoadmapHttpError("Roadmap item not found", 404);
+  }
+
+  return normalized;
 }
 
 export async function recalculateRoadmapProgress(
@@ -154,8 +164,7 @@ export async function recalculateRoadmapProgress(
   const { data: items, error } = await supabase
     .from("roadmap_items")
     .select("status")
-    .eq("roadmap_id", roadmapId)
-    .eq("user_id", userId);
+    .eq("roadmap_id", roadmapId);
 
   if (error) {
     throw new RoadmapHttpError(error.message, 500);
@@ -214,6 +223,32 @@ export function normalizeRoadmapItem(row: RoadmapRow): RoadmapItem {
 
 export function jsonError(message: string, status: number) {
   return Response.json({ detail: message }, { status });
+}
+
+export function isMissingRoadmapItemUserIdError(error: unknown) {
+  return isMissingColumnError(error, "user_id", "roadmap_items");
+}
+
+export function isMissingColumnError(
+  error: unknown,
+  column: string,
+  table?: string,
+) {
+  const message = String(
+    (error as { message?: unknown; details?: unknown })?.message ??
+      (error as { details?: unknown })?.details ??
+      "",
+  ).toLowerCase();
+  const normalizedColumn = column.toLowerCase();
+  const normalizedTable = table?.toLowerCase();
+
+  return (
+    (!normalizedTable || message.includes(normalizedTable)) &&
+    message.includes(normalizedColumn) &&
+    (message.includes("column") ||
+      message.includes("schema cache") ||
+      message.includes("could not find"))
+  );
 }
 
 export function isUuid(value: string) {

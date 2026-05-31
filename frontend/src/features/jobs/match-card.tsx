@@ -18,6 +18,13 @@ function scoreBadgeClass(score: number) {
   return "bg-zinc-100 text-zinc-700";
 }
 
+function scoreLabel(score: number) {
+  if (score >= 80) return "Strong fit";
+  if (score >= 65) return "Good fit";
+  if (score >= 45) return "Partial fit";
+  return "Stretch role";
+}
+
 export function MatchCard({ match }: Props) {
   const save = useSaveMatchToTracker();
 
@@ -33,6 +40,12 @@ export function MatchCard({ match }: Props) {
   }
 
   const { job } = match;
+  const evidenceCount =
+    typeof match.evidence_chunk_count === "number"
+      ? match.evidence_chunk_count
+      : Array.isArray(match.evidence_chunks)
+        ? match.evidence_chunks.length
+        : 0;
   return (
     <article className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
       <header className="flex flex-wrap items-start justify-between gap-2">
@@ -47,35 +60,65 @@ export function MatchCard({ match }: Props) {
         <span
           className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${scoreBadgeClass(match.fit_score)}`}
         >
-          Fit {match.fit_score.toFixed(0)}
+          {scoreLabel(match.fit_score)} - {match.fit_score.toFixed(0)}
         </span>
       </header>
 
-      <p className="text-sm text-zinc-700">{match.explanation}</p>
+      <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2">
+        <p className="text-sm font-medium text-zinc-800">
+          {match.recommendation || match.explanation}
+        </p>
+        {match.recommendation && match.explanation ? (
+          <p className="mt-1 text-xs leading-5 text-zinc-500">
+            {match.explanation}
+          </p>
+        ) : null}
+        <div className="mt-2 flex flex-wrap gap-2 text-xs font-medium text-zinc-500">
+          <span>{job.source || match.source || "CareerPilot match"}</span>
+          <span>-</span>
+          <span>
+            {evidenceCount > 0
+              ? `${evidenceCount} CV evidence ${
+                  evidenceCount === 1 ? "chunk" : "chunks"
+                }`
+              : "CV evidence scored"}
+          </span>
+        </div>
+      </div>
 
       {match.matched_skills.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
-          {match.matched_skills.map((s) => (
-            <span
-              key={`m-${s}`}
-              className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800"
-            >
-              {s}
-            </span>
-          ))}
+        <div>
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            Matched skills
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {match.matched_skills.map((s) => (
+              <span
+                key={`m-${s}`}
+                className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800"
+              >
+                {s}
+              </span>
+            ))}
+          </div>
         </div>
       ) : null}
 
       {match.missing_skills.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
-          {match.missing_skills.map((s) => (
-            <span
-              key={`x-${s}`}
-              className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600"
-            >
-              {s} missing
-            </span>
-          ))}
+        <div>
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
+            Missing or weak skills
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {match.missing_skills.map((s) => (
+              <span
+                key={`x-${s}`}
+                className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800"
+              >
+                {s}
+              </span>
+            ))}
+          </div>
         </div>
       ) : null}
 

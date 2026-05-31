@@ -31,7 +31,6 @@ export async function GET() {
       const { data: items, error: itemsError } = await supabase
         .from("roadmap_items")
         .select("roadmap_id, status")
-        .eq("user_id", user.id)
         .in("roadmap_id", roadmapIds);
 
       if (itemsError) {

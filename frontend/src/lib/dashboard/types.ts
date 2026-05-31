@@ -36,8 +36,17 @@ export type RecentActivityItem = {
   timestamp: string;
 };
 
+export type DashboardNextAction = {
+  id: string;
+  type: "application" | "deadline" | "roadmap" | "task";
+  label: string;
+  description: string;
+  href: "/tracker" | "/goals" | "/calendar" | "/roadmap" | "/dashboard";
+};
+
 export type DashboardMetricsResponse = {
   metrics: DashboardMetrics;
+  nextActions: DashboardNextAction[];
   pipeline: PipelineStatusCount[];
   upcomingEvents: UpcomingDashboardEvent[];
   recentActivity: RecentActivityItem[];

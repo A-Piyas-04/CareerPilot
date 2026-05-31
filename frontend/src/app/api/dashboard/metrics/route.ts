@@ -4,6 +4,7 @@ import { calculateWeeklyStreak } from "@/lib/dashboard/calculateWeeklyStreak";
 import {
   PIPELINE_STATUSES,
   type DashboardMetricsResponse,
+  type DashboardNextAction,
   type RecentActivityItem,
   type UpcomingDashboardEvent,
 } from "@/lib/dashboard/types";
@@ -30,7 +31,7 @@ export async function GET() {
     const [
       applicationsResult,
       roadmapsResult,
-      completedTasksResult,
+      tasksResult,
       upcomingEventsResult,
     ] = await Promise.all([
       supabase
@@ -43,10 +44,8 @@ export async function GET() {
         .eq("user_id", userId),
       supabase
         .from("tasks")
-        .select("id, title, completed_at, status")
+        .select("id, title, completed_at, status, due_date")
         .eq("user_id", userId)
-        .eq("status", "done")
-        .not("completed_at", "is", null)
         .order("completed_at", { ascending: false }),
       supabase
         .from("calendar_events")
@@ -59,7 +58,7 @@ export async function GET() {
 
     const firstError =
       applicationsResult.error ||
-      completedTasksResult.error ||
+      tasksResult.error ||
       upcomingEventsResult.error;
 
     if (firstError) {
@@ -68,7 +67,13 @@ export async function GET() {
 
     const applications = asRows(applicationsResult.data);
     const roadmaps = roadmapsResult.error ? [] : asRows(roadmapsResult.data);
-    const completedTasks = asRows(completedTasksResult.data);
+    const tasks = asRows(tasksResult.data);
+    const completedTasks = tasks.filter(
+      (task) =>
+        stringValue(task.status) === "done" && nullableString(task.completed_at),
+    );
+    const upcomingEvents = asRows(upcomingEventsResult.data).map(normalizeEvent);
+    const overdueTaskCount = countOverdueTasks(tasks);
     const roadmapIds = roadmaps
       .map((roadmap) => stringValue(roadmap.id))
       .filter(Boolean);
@@ -109,6 +114,11 @@ export async function GET() {
         tasksCompletedThisWeek,
         weeklyStreak: calculateWeeklyStreak(completedTaskDates),
       },
+      nextActions: buildNextActions({
+        overdueTaskCount,
+        roadmaps,
+        upcomingEvents,
+      }),
       pipeline,
       recentActivity: buildRecentActivity({
         applications,
@@ -117,13 +127,78 @@ export async function GET() {
         jobsById,
         roadmapItems: roadmapItems.items,
       }),
-      upcomingEvents: asRows(upcomingEventsResult.data).map(normalizeEvent),
+      upcomingEvents,
     };
 
     return Response.json(response);
   } catch {
     return jsonError("Could not load dashboard data.", 500);
   }
+}
+
+function countOverdueTasks(tasks: DbRow[]) {
+  const todayDate = new Date().toISOString().slice(0, 10);
+
+  return tasks.filter((task) => {
+    const dueDate = nullableString(task.due_date);
+    return Boolean(
+      dueDate &&
+        dueDate < todayDate &&
+        stringValue(task.status) !== "done",
+    );
+  }).length;
+}
+
+function buildNextActions({
+  overdueTaskCount,
+  roadmaps,
+  upcomingEvents,
+}: {
+  overdueTaskCount: number;
+  roadmaps: DbRow[];
+  upcomingEvents: UpcomingDashboardEvent[];
+}): DashboardNextAction[] {
+  const actions: DashboardNextAction[] = [];
+
+  if (overdueTaskCount > 0) {
+    actions.push({
+      description: `${overdueTaskCount} overdue ${
+        overdueTaskCount === 1 ? "task needs" : "tasks need"
+      } attention.`,
+      href: "/goals",
+      id: "overdue-tasks",
+      label: "Review overdue tasks",
+      type: "task",
+    });
+  }
+
+  const nextEvent = upcomingEvents[0];
+  if (nextEvent) {
+    actions.push({
+      description: `${nextEvent.title} is the next scheduled item.`,
+      href: "/calendar",
+      id: "next-event",
+      label: "Check upcoming calendar",
+      type: "deadline",
+    });
+  }
+
+  const lowProgressCount = roadmaps.filter(
+    (roadmap) => numberValue(roadmap.progress_percent) < 35,
+  ).length;
+  if (lowProgressCount > 0) {
+    actions.push({
+      description: `${lowProgressCount} ${
+        lowProgressCount === 1 ? "roadmap is" : "roadmaps are"
+      } below 35% progress.`,
+      href: "/roadmap",
+      id: "low-roadmap-progress",
+      label: "Continue a roadmap",
+      type: "roadmap",
+    });
+  }
+
+  return actions.slice(0, 3);
 }
 
 async function fetchJobsForApplications(
@@ -162,7 +237,6 @@ async function fetchRoadmapItems(
   const { data, error } = await supabase
     .from("roadmap_items")
     .select("id, title, roadmap_id, status, completed_at")
-    .eq("user_id", userId)
     .eq("status", "done")
     .in("roadmap_id", roadmapIds)
     .not("completed_at", "is", null)
@@ -325,6 +399,11 @@ function stringValue(value: unknown) {
 
 function nullableString(value: unknown) {
   return typeof value === "string" && value ? value : null;
+}
+
+function numberValue(value: unknown) {
+  const numeric = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
 }
 
 function jsonError(message: string, status: number) {

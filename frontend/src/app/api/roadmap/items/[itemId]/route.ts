@@ -50,7 +50,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", itemId)
-      .eq("user_id", user.id)
       .select("*")
       .single();
 

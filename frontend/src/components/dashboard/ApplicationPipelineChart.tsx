@@ -18,7 +18,7 @@ type ApplicationPipelineChartProps = {
 
 export function ApplicationPipelineChart({ data }: ApplicationPipelineChartProps) {
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
       <div>
         <h2 className="text-lg font-semibold text-zinc-950">
           Application Pipeline
@@ -28,8 +28,8 @@ export function ApplicationPipelineChart({ data }: ApplicationPipelineChartProps
         </p>
       </div>
 
-      <div className="mt-5 h-72">
-        <ResponsiveContainer height="100%" width="100%">
+      <div className="mt-5 h-72 min-h-72 min-w-0">
+        <ResponsiveContainer height="100%" minHeight={1} minWidth={1} width="100%">
           <BarChart
             data={data}
             layout="vertical"

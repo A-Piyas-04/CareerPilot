@@ -39,6 +39,28 @@ const EDITOR_SECTIONS: Array<{ key: EditorSectionKey; label: string }> = [
   { key: "extras", label: "Extras" },
 ];
 
+const SKILL_CATEGORIES = [
+  "language",
+  "framework",
+  "database",
+  "tool",
+  "cloud",
+  "devops",
+  "ml/ai",
+  "other",
+] as const;
+
+const SKILL_CATEGORY_STYLES: Record<string, string> = {
+  cloud: "border-sky-100 bg-sky-50 text-sky-800",
+  database: "border-orange-100 bg-orange-50 text-orange-800",
+  devops: "border-slate-200 bg-slate-50 text-slate-700",
+  framework: "border-violet-100 bg-violet-50 text-violet-800",
+  language: "border-blue-100 bg-blue-50 text-blue-800",
+  "ml/ai": "border-pink-100 bg-pink-50 text-pink-800",
+  other: "border-zinc-200 bg-zinc-50 text-zinc-700",
+  tool: "border-cyan-100 bg-cyan-50 text-cyan-800",
+};
+
 const emptyPersonal = {
   full_name: "",
   email: "",
@@ -282,6 +304,7 @@ function SkillsEditor({
       }
     >
       <div className="space-y-3">
+        <SkillPreviewStrip items={items} />
         {items.map((item, index) => (
           <RepeatableRow
             key={index}
@@ -296,13 +319,16 @@ function SkillsEditor({
                 }
                 placeholder="Python"
               />
-              <Field
+              <SelectField
                 label="Category"
                 value={item.category ?? ""}
                 onChange={(value) =>
                   onChange(updateAt(items, index, { ...item, category: value }))
                 }
-                placeholder="language"
+                options={SKILL_CATEGORIES.map((category) => ({
+                  label: category,
+                  value: category,
+                }))}
               />
               <Field
                 label="Proficiency"
@@ -368,11 +394,14 @@ function ToolsEditor({
           {items.map((item) => (
             <span
               key={item}
-              className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800"
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${skillCategoryClass("tool")}`}
             >
               {item}
+              <span className="rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
+                tool
+              </span>
               <button
-                className="text-blue-500 transition hover:text-red-600"
+                className="text-cyan-600 transition hover:text-red-600"
                 type="button"
                 aria-label={`Remove ${item}`}
                 onClick={() => onChange(items.filter((value) => value !== item))}
@@ -405,6 +434,17 @@ function ExperienceEditor({
       onAdd={() => onChange([...items, { ...emptyExperience }])}
     >
       <div className="space-y-4">
+        <ItemPreviewGrid
+          emptyText="Add roles to see a quick experience summary here."
+          items={items}
+          getTitle={(item) => item.role || "Untitled role"}
+          getSubtitle={(item) => item.company}
+          getMeta={(item) =>
+            [item.start_date, item.is_current ? "Present" : item.end_date]
+              .filter(Boolean)
+              .join(" - ")
+          }
+        />
         {items.map((item, index) => (
           <RepeatableRow
             key={index}
@@ -459,6 +499,13 @@ function EducationEditor({
       onAdd={() => onChange([...items, { ...emptyEducation }])}
     >
       <div className="space-y-4">
+        <ItemPreviewGrid
+          emptyText="Add education entries to build this section."
+          items={items}
+          getTitle={(item) => item.degree || "Untitled education"}
+          getSubtitle={(item) => item.institution}
+          getMeta={(item) => [item.start_year, item.end_year].filter(Boolean).join(" - ")}
+        />
         {items.map((item, index) => (
           <RepeatableRow key={index} onRemove={() => onChange(removeAt(items, index))}>
             <div className="grid flex-1 gap-3 sm:grid-cols-2">
@@ -490,6 +537,17 @@ function ProjectEditor({
       onAdd={() => onChange([...items, { ...emptyProject }])}
     >
       <div className="space-y-4">
+        <ItemPreviewGrid
+          emptyText="Add projects to show your strongest proof of work."
+          items={items}
+          getTitle={(item) => item.name || "Untitled project"}
+          getSubtitle={(item) => item.technologies}
+          getMeta={(item) =>
+            item.highlights.length > 0
+              ? `${item.highlights.length} highlights`
+              : item.link
+          }
+        />
         {items.map((item, index) => (
           <RepeatableRow key={index} onRemove={() => onChange(removeAt(items, index))}>
             <div className="flex-1 space-y-3">
@@ -522,6 +580,13 @@ function CertificationEditor({
       onAdd={() => onChange([...items, { ...emptyCertification }])}
     >
       <div className="space-y-3">
+        <ItemPreviewGrid
+          emptyText="Add certifications if they strengthen your target role."
+          items={items}
+          getTitle={(item) => item.name || "Untitled certification"}
+          getSubtitle={(item) => item.issuer}
+          getMeta={(item) => item.date}
+        />
         {items.map((item, index) => (
           <RepeatableRow key={index} onRemove={() => onChange(removeAt(items, index))}>
             <div className="grid flex-1 gap-3 sm:grid-cols-2">
@@ -551,6 +616,12 @@ function LanguageEditor({
       onAdd={() => onChange([...items, { ...emptyLanguage }])}
     >
       <div className="space-y-3">
+        <ItemPreviewGrid
+          emptyText="Add languages and proficiency levels."
+          items={items}
+          getTitle={(item) => item.name || "Untitled language"}
+          getSubtitle={(item) => item.proficiency}
+        />
         {items.map((item, index) => (
           <RepeatableRow key={index} onRemove={() => onChange(removeAt(items, index))}>
             <div className="grid flex-1 gap-3 sm:grid-cols-2">
@@ -561,6 +632,91 @@ function LanguageEditor({
         ))}
       </div>
     </EditorBlock>
+  );
+}
+
+function SkillPreviewStrip({ items }: { items: ManualSkillInput[] }) {
+  const visible = items.filter((item) => item.skill_name.trim());
+
+  if (visible.length === 0) {
+    return (
+      <p className="rounded-lg border border-dashed border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-500">
+        Add skills with categories so matching and CV search stay explainable.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2 rounded-lg border border-zinc-200 bg-white p-3">
+      {visible.map((item, index) => (
+        <span
+          key={`${item.skill_name}-${index}`}
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${skillCategoryClass(item.category)}`}
+        >
+          {item.skill_name}
+          <span className="rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
+            {normalizeSkillCategory(item.category)}
+          </span>
+          {item.proficiency ? (
+            <span className="text-[10px] font-medium opacity-80">
+              {item.proficiency}
+            </span>
+          ) : null}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function ItemPreviewGrid<T extends object>({
+  emptyText,
+  getMeta,
+  getSubtitle,
+  getTitle,
+  items,
+}: {
+  emptyText: string;
+  getMeta?: (item: T) => string;
+  getSubtitle?: (item: T) => string;
+  getTitle: (item: T) => string;
+  items: T[];
+}) {
+  const visible = items.filter((item) => hasAnyValue(item as Record<string, unknown>));
+
+  if (visible.length === 0) {
+    return (
+      <p className="rounded-lg border border-dashed border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-500">
+        {emptyText}
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-2 md:grid-cols-2">
+      {visible.map((item, index) => {
+        const subtitle = getSubtitle?.(item);
+        const meta = getMeta?.(item);
+
+        return (
+          <div
+            key={index}
+            className="rounded-lg border border-zinc-200 bg-white px-3 py-2"
+          >
+            <p className="truncate text-sm font-semibold text-zinc-900">
+              {getTitle(item)}
+            </p>
+            {subtitle ? (
+              <p className="mt-0.5 truncate text-xs font-medium text-zinc-500">
+                {subtitle}
+              </p>
+            ) : null}
+            {meta ? (
+              <p className="mt-1 text-xs text-zinc-400">{meta}</p>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -758,6 +914,35 @@ function blankPayload(): ManualResumePayload {
   };
 }
 
+function SelectField({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  options: Array<{ label: string; value: string }>;
+  value: string;
+}) {
+  return (
+    <label className="block text-xs font-semibold text-zinc-600">
+      {label}
+      <select
+        className="mt-1 h-10 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-950 outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+        value={normalizeSkillCategory(value)}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function toolsFromDetail(detail: ResumeDetail, toolsContent?: string): string[] {
   const toolSkills = detail.skills
     .filter((skill) => skill.category === "tool")
@@ -791,7 +976,12 @@ function normalizePayload(payload: ManualResumePayload): ManualResumePayload {
   return {
     ...payload,
     title: payload.title.trim() || "Manual CV",
-    skills: payload.skills.filter((skill) => skill.skill_name.trim()),
+    skills: payload.skills
+      .filter((skill) => skill.skill_name.trim())
+      .map((skill) => ({
+        ...skill,
+        category: normalizeSkillCategory(skill.category),
+      })),
     tools: uniqueStrings(payload.tools),
     experience: payload.experience.filter((item) => hasAnyValue(item)),
     education: payload.education.filter((item) => hasAnyValue(item)),
@@ -799,6 +989,17 @@ function normalizePayload(payload: ManualResumePayload): ManualResumePayload {
     certifications: payload.certifications.filter((item) => hasAnyValue(item)),
     languages: payload.languages.filter((item) => hasAnyValue(item)),
   };
+}
+
+function normalizeSkillCategory(value: string | null | undefined) {
+  const normalized = value?.trim().toLowerCase() || "other";
+  return SKILL_CATEGORIES.includes(normalized as (typeof SKILL_CATEGORIES)[number])
+    ? normalized
+    : "other";
+}
+
+function skillCategoryClass(value: string | null | undefined) {
+  return SKILL_CATEGORY_STYLES[normalizeSkillCategory(value)] ?? SKILL_CATEGORY_STYLES.other;
 }
 
 function uniqueStrings(items: string[]) {

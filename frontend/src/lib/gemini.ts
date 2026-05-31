@@ -12,17 +12,16 @@ export const GEMINI_INTENT_MODEL =
 
 /** Ordered fallback models for streamed chat replies (matches backend llm_service). */
 export const DEFAULT_GENERATION_CASCADE = [
-  "gemini-2.5-pro",
   "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-1.5-flash",
+  "gemini-2.0-flash-lite",
 ] as const;
 
 /** Lighter models for intent classification. */
 export const DEFAULT_INTENT_CASCADE = [
   "gemini-2.5-flash-lite",
   "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
+  "gemini-2.0-flash",
 ] as const;
 
 const MODEL_LIST_SEPARATOR = ",";

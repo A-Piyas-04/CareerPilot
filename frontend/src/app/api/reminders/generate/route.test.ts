@@ -16,6 +16,11 @@ vi.mock("@/lib/gemini", () => ({
     }
   },
   createGeminiText: vi.fn(),
+  generationModelCascade: vi.fn(() => ["gemini-test", "gemini-fallback"]),
+  isRetryableGeminiError: vi.fn((status: number, message: string) => {
+    const normalized = message.toLowerCase();
+    return status === 429 || normalized.includes("quota");
+  }),
 }));
 
 const { createClient } = await import("@/lib/supabase/server");
@@ -103,6 +108,35 @@ describe("POST /api/reminders/generate", () => {
 
     expect(response.status).toBe(500);
     expect(body.error).toBe("nudge_generation_failed");
+  });
+
+  it("retries another Gemini model when the first model returns invalid JSON", async () => {
+    vi.mocked(createGeminiText)
+      .mockResolvedValueOnce("not-json")
+      .mockResolvedValueOnce(JSON.stringify({ nudges: [] }));
+
+    const response = await route.POST(
+      new Request("http://localhost/api/reminders/generate", { method: "POST" }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.nudges).toEqual([]);
+    expect(createGeminiText).toHaveBeenCalledTimes(2);
+    expect(createGeminiText).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        model: "gemini-test",
+        modelCascade: ["gemini-test"],
+      }),
+    );
+    expect(createGeminiText).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        model: "gemini-fallback",
+        modelCascade: ["gemini-fallback"],
+      }),
+    );
   });
 
   it("does not fail when optional roadmap and goal tables fail", async () => {

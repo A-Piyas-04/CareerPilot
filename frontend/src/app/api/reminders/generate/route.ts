@@ -6,7 +6,13 @@ import {
   addDays,
 } from "date-fns";
 
-import { GeminiApiError, GEMINI_MODEL, createGeminiText } from "@/lib/gemini";
+import {
+  GeminiApiError,
+  GEMINI_MODEL,
+  createGeminiText,
+  generationModelCascade,
+  isRetryableGeminiError,
+} from "@/lib/gemini";
 import { buildNudgePrompt, NUDGE_SYSTEM_PROMPT } from "@/lib/reminders/prompts";
 import { parseNudgesJson } from "@/lib/reminders/parser";
 import {
@@ -34,14 +40,7 @@ export async function POST(request: Request) {
     }
 
     const summary = await collectActivitySummary(supabase, user.id);
-    const rawResponse = await createGeminiText({
-      maxOutputTokens: 900,
-      model: GEMINI_MODEL,
-      prompt: buildNudgePrompt(summary),
-      systemPrompt: NUDGE_SYSTEM_PROMPT,
-      temperature: 0.25,
-    });
-    const nudges = parseNudgesJson(rawResponse);
+    const nudges = await generateNudgesWithFallback(summary);
 
     return Response.json({
       cached: false,
@@ -49,6 +48,8 @@ export async function POST(request: Request) {
       nudges,
     });
   } catch (error) {
+    console.error("[AI nudges] generation failed", error);
+
     if (isQuotaError(error)) {
       return jsonError(
         {
@@ -64,9 +65,48 @@ export async function POST(request: Request) {
         error: "nudge_generation_failed",
         message: NUDGE_GENERATION_FAILED_MESSAGE,
       },
-      error instanceof GeminiApiError ? error.status : 500,
+      500,
     );
   }
+}
+
+async function generateNudgesWithFallback(summary: NudgeActivitySummary) {
+  const prompt = buildNudgePrompt(summary);
+  const models = generationModelCascade(GEMINI_MODEL);
+  let lastError: unknown = null;
+
+  for (const model of models) {
+    try {
+      const rawResponse = await createGeminiText({
+        maxOutputTokens: 900,
+        model,
+        modelCascade: [model],
+        prompt,
+        systemPrompt: NUDGE_SYSTEM_PROMPT,
+        temperature: 0.2,
+      });
+
+      return parseNudgesJson(rawResponse);
+    } catch (error) {
+      lastError = error;
+
+      if (error instanceof GeminiApiError) {
+        if (isRetryableGeminiError(error.status, error.message)) {
+          continue;
+        }
+
+        throw error;
+      }
+
+      // Invalid JSON from one model is retried with the next model. If every
+      // model returns invalid content, the final error is handled below.
+      continue;
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Could not generate valid nudge JSON.");
 }
 
 async function collectActivitySummary(
@@ -224,7 +264,6 @@ async function fetchRoadmapItems(
   const { data, error } = await supabase
     .from("roadmap_items")
     .select("id, status, due_date, completed_at")
-    .eq("user_id", userId)
     .in("roadmap_id", roadmapIds);
 
   return error ? null : rows(data);
