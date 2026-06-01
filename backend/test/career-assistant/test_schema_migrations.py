@@ -27,6 +27,7 @@ def test_grants_exist_for_feature_tables():
         "roadmaps",
         "roadmap_items",
         "cover_letters",
+        "skill_gap_analysis",
     ]:
         assert f"public.{table}" in sql
 
@@ -47,3 +48,13 @@ def test_cover_letter_management_migration_exists():
     for column in ["job_title", "company_name", "job_description", "tone", "extra_notes"]:
         assert f"add column if not exists {column}" in sql
     assert "grant select, insert, update, delete on public.cover_letters" in sql
+
+
+def test_skill_gap_grants_include_postgrest_roles():
+    sql = migration_text()
+
+    assert "grant usage on schema public to authenticated, service_role" in sql
+    assert (
+        "grant select, insert, update, delete on public.skill_gap_analysis "
+        "to authenticated, service_role"
+    ) in sql

@@ -159,29 +159,35 @@ def list_skill_gap_analyses(
     *, user_id: str, limit: int = 50
 ) -> list[dict[str, Any]]:
     supabase = get_supabase_client()
-    response = (
-        supabase.table("skill_gap_analysis")
-        .select(
-            "id, target_role, current_skills, required_skills, missing_skills, "
-            "job_id, resume_id, created_at"
+    response = run_supabase(
+        "list skill gap analyses",
+        lambda: (
+            supabase.table("skill_gap_analysis")
+            .select(
+                "id, target_role, current_skills, required_skills, missing_skills, "
+                "job_id, resume_id, created_at"
+            )
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
         )
-        .eq("user_id", user_id)
-        .order("created_at", desc=True)
-        .limit(limit)
-        .execute()
     )
     return _rows(response)
 
 
 def get_skill_gap_analysis(*, user_id: str, analysis_id: str) -> dict[str, Any]:
     supabase = get_supabase_client()
-    response = (
-        supabase.table("skill_gap_analysis")
-        .select("*")
-        .eq("id", analysis_id)
-        .eq("user_id", user_id)
-        .limit(1)
-        .execute()
+    response = run_supabase(
+        "get skill gap analysis",
+        lambda: (
+            supabase.table("skill_gap_analysis")
+            .select("*")
+            .eq("id", analysis_id)
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        ),
     )
     row = _row(response)
     if not row:

@@ -130,9 +130,7 @@ export function TrackerBoard() {
       />
 
       <div className="flex flex-col gap-4">
-        {statusError ? (
-          <p className={alertError}>{statusError}</p>
-        ) : null}
+        {statusError ? <p className={alertError}>{statusError}</p> : null}
 
         {applicationsQuery.isLoading ? (
           <div className="flex gap-4 overflow-x-auto pb-2" aria-busy="true">
@@ -158,7 +156,11 @@ export function TrackerBoard() {
                 <TransitionLink href="/jobs" className={btnPrimary}>
                   Browse jobs
                 </TransitionLink>
-                <button className={btnSecondary} type="button" onClick={() => setIsAddOpen(true)}>
+                <button
+                  className={btnSecondary}
+                  type="button"
+                  onClick={() => setIsAddOpen(true)}
+                >
                   <Plus className="h-4 w-4" />
                   Add manually
                 </button>
@@ -167,7 +169,7 @@ export function TrackerBoard() {
           />
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="flex gap-4 overflow-x-auto pb-2">
+            <div className="flex gap-4 justify-center pb-2">
               {APPLICATION_STATUSES.map((status) => (
                 <KanbanColumn
                   key={status}
