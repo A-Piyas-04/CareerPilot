@@ -174,6 +174,7 @@ npm test
 | Document | Purpose |
 |---|---|
 | [`Docs/evaluation-suite.md`](Docs/evaluation-suite.md) | Evaluation cases + demo script |
+| [`Docs/system-design.md`](Docs/system-design.md) | Architecture, data flow, scale plan, cost estimate, bottlenecks |
 | [`Docs/present-state.md`](Docs/present-state.md) | Feature matrix |
 | [`Docs/cv-intelligence-implementation.md`](Docs/cv-intelligence-implementation.md) | CV/RAG pipeline reference |
 | [`problem-statement/checklist.md`](problem-statement/checklist.md) | Hackathon requirement checklist |

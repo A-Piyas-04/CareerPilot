@@ -167,7 +167,7 @@
 | Bonus | What judges check | Status | Notes |
 |-------|-------------------|--------|-------|
 | Live deployment | Public URL; stable during judging | ❌ | No deployment URL documented in repo |
-| System design doc | Data flow, scale to 10k users, cost/user, bottlenecks | ⚠️ | `Docs/db-design.md` + `present-state.md` — strong schema/flow docs; **missing explicit cost/scaling analysis** per bonus rubric |
+| System design doc | Data flow, scale to 10k users, cost/user, bottlenecks | ✅ | [`Docs/system-design.md`](../Docs/system-design.md) covers architecture, data flow, 10k-user scaling, estimated cost/user, and bottlenecks |
 | Evaluation suite | ≥5 documented test cases (input, expected, actual, pass/fail) | ✅ | [`Docs/evaluation-suite.md`](../Docs/evaluation-suite.md) — 10 cases + demo script |
 | Automated tests | (Supporting) | ⚠️ | pytest: CV + job intelligence + career generation + career-assistant tests; Vitest on cover-letter/roadmap/chat API routes |
 

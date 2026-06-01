@@ -28,6 +28,7 @@ import { AuthEntryLink } from "@/components/auth/auth-entry-link";
 import { LandingBrandLogo } from "@/components/landing/landing-brand-logo";
 import { LandingMobileNavLinks } from "@/components/landing/landing-mobile-nav-links";
 import { LandingSectionNav } from "@/components/landing/landing-section-nav";
+import { createClient } from "@/lib/supabase/server";
 
 const LANDING_SECTION_SCROLL_MARGIN = "scroll-mt-[88px]";
 
@@ -298,7 +299,7 @@ function BrandLogo({ compact = false }: { compact?: boolean }) {
   return <LandingBrandLogo compact={compact} />;
 }
 
-function LandingNavbar() {
+function LandingNavbar({ isSignedIn }: { isSignedIn: boolean }) {
   return (
     <header className="sticky top-0 z-50">
       <div className="border-b border-zinc-200/90 bg-white/90 shadow-[0_1px_0_0_rgba(255,255,255,0.8)_inset,0_4px_24px_-4px_rgba(6,78,59,0.12)] backdrop-blur-xl backdrop-saturate-150">
@@ -332,19 +333,19 @@ function LandingNavbar() {
                   <LandingMobileNavLinks items={NAV_ANCHORS} />
                 </div>
                 <div className="space-y-2 border-t border-zinc-100 bg-zinc-50/50 p-3">
-                  <AuthEntryLink
-                    className={`flex w-full ${navSignInStyles}`}
-                    href="/login"
-                  >
-                    Sign in
-                  </AuthEntryLink>
-                  <AuthEntryLink
-                    className={`${navCtaPrimary} w-full`}
-                    href={loginNext("/resume")}
-                  >
-                    Start free
-                    <ArrowRight className="h-4 w-4" aria-hidden />
-                  </AuthEntryLink>
+                  {isSignedIn ? (
+                    <Link className={`${navCtaPrimary} w-full`} href="/dashboard">
+                      Go to dashboard
+                      <ArrowRight className="h-4 w-4" aria-hidden />
+                    </Link>
+                  ) : (
+                    <AuthEntryLink
+                      className={`flex w-full ${navSignInStyles}`}
+                      href="/login"
+                    >
+                      Sign in
+                    </AuthEntryLink>
+                  )}
                 </div>
               </div>
             </details>
@@ -354,14 +355,16 @@ function LandingNavbar() {
               aria-hidden
             />
 
-            <AuthEntryLink className={navSignIn} href="/login">
-              Sign in
-            </AuthEntryLink>
-            <AuthEntryLink className={`${navCtaPrimary} shrink-0`} href={loginNext("/resume")}>
-              <span className="hidden sm:inline">Start free</span>
-              <span className="sm:hidden">Get started</span>
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </AuthEntryLink>
+            {isSignedIn ? (
+              <Link className={`${navCtaPrimary} shrink-0`} href="/dashboard">
+                Go to dashboard
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            ) : (
+              <AuthEntryLink className={navSignIn} href="/login">
+                Sign in
+              </AuthEntryLink>
+            )}
           </div>
         </div>
       </div>
@@ -867,10 +870,15 @@ function LandingFooter() {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <main className="min-h-screen bg-zinc-200/50 text-zinc-950">
-      <LandingNavbar />
+      <LandingNavbar isSignedIn={Boolean(user)} />
 
       {/* Hero */}
       <section

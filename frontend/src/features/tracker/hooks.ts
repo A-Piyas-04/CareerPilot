@@ -9,6 +9,7 @@ import {
   updateApplicationStatus,
 } from "./api";
 import type {
+  Application,
   ApplicationStatus,
   CreateApplicationInput,
   UpdateApplicationInput,
