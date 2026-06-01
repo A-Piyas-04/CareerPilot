@@ -154,11 +154,10 @@ def update_application(
         .eq("user_id", user_id)
         .execute()
     )
-    updated = _row(response)
-    if not updated:
+    if not _row(response):
         raise _not_found()
 
-    return Application(**updated)
+    return _get_owned_application(user_id, application_id)
 
 
 def change_application_status(
@@ -185,11 +184,10 @@ def change_application_status(
             raise _not_found() from exc
         raise
 
-    changed = _row(response)
-    if not changed:
-        return _get_owned_application(user_id, application_id)
+    if not _row(response):
+        raise _not_found()
 
-    return Application(**changed)
+    return _get_owned_application(user_id, application_id)
 
 
 def delete_application(user_id: str, application_id: str) -> None:

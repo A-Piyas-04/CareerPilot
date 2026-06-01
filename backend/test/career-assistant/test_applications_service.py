@@ -63,6 +63,9 @@ def test_change_status_uses_rpc_with_user_id_and_note(supabase):
     supabase.rpc_responses["change_application_status"] = [
         [application_row(status="interviewing")],
     ]
+    supabase.select_responses["applications"] = [
+        [application_row(status="interviewing")],
+    ]
 
     changed = applications.change_application_status(
         USER_ID,

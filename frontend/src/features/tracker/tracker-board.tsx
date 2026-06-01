@@ -20,7 +20,11 @@ import {
   useUpdateApplicationStatus,
 } from "./hooks";
 import type { Application, ApplicationStatus } from "./types";
-import { APPLICATION_STATUSES, STATUS_LABELS } from "./types";
+import {
+  APPLICATION_STATUSES,
+  mergeApplicationUpdate,
+  STATUS_LABELS,
+} from "./types";
 
 export function TrackerBoard() {
   const queryClient = useQueryClient();
@@ -87,7 +91,9 @@ export function TrackerBoard() {
             trackerKeys.applications,
             (current) =>
               current?.map((item) =>
-                item.id === updated.id ? updated : item,
+                item.id === updated.id
+                  ? mergeApplicationUpdate(item, updated)
+                  : item,
               ) ?? [updated],
           );
           queryClient.invalidateQueries({

@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { TransitionLink } from "@/components/navigation/navigation-transition";
 
+import { suppressExtensionHydrationProps } from "@/lib/hydration";
 import type { NavGroup } from "@/lib/navigation-config";
 import {
   isNavItemActive,
@@ -62,6 +63,7 @@ export function NavGroupMenu({
   return (
     <div className="relative" ref={rootRef}>
       <button
+        {...suppressExtensionHydrationProps}
         type="button"
         aria-expanded={isOpen}
         aria-controls={menuId}

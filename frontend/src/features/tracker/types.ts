@@ -74,6 +74,18 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   rejected: "Rejected",
 };
 
+export function mergeApplicationUpdate(
+  existing: Application,
+  updated: Application,
+): Application {
+  return {
+    ...existing,
+    ...updated,
+    job: updated.job ?? existing.job,
+    job_match: updated.job_match ?? existing.job_match,
+  };
+}
+
 export function resolveApplicationFields(application: {
   manual_job_title: string | null;
   manual_company: string | null;

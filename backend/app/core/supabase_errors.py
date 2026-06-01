@@ -46,9 +46,10 @@ def raise_http_for_supabase(exc: Exception, *, context: str) -> None:
 
     if code == "42501":
         detail = (
-            "Database permission denied for CV tables. "
-            "Apply Supabase migration 20250526120000_resume_cv_grants.sql "
-            "(GRANT resumes, resume_sections, resume_chunks, user_skills to service_role)."
+            "Database permission denied. Apply Supabase migrations "
+            "20250526120000_resume_cv_grants.sql and "
+            "20260601120000_skill_gap_roadmap_grants.sql "
+            "(GRANT required tables to service_role), then run: npx supabase db push"
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

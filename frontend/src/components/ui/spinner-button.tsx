@@ -3,6 +3,7 @@
 import { Loader2 } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+import { suppressExtensionHydrationProps } from "@/lib/hydration";
 import {
   btnDanger,
   btnGhost,
@@ -53,6 +54,7 @@ export function SpinnerButton({
 
   return (
     <button
+      {...suppressExtensionHydrationProps}
       type={type}
       disabled={isDisabled}
       aria-busy={loading}

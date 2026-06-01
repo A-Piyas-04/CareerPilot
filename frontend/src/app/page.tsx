@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { AuthEntryLink } from "@/components/auth/auth-entry-link";
 import { LandingBrandLogo } from "@/components/landing/landing-brand-logo";
 import { LandingMobileNavLinks } from "@/components/landing/landing-mobile-nav-links";
 import { LandingSectionNav } from "@/components/landing/landing-section-nav";
@@ -331,19 +332,19 @@ function LandingNavbar() {
                   <LandingMobileNavLinks items={NAV_ANCHORS} />
                 </div>
                 <div className="space-y-2 border-t border-zinc-100 bg-zinc-50/50 p-3">
-                  <Link
+                  <AuthEntryLink
                     className={`flex w-full ${navSignInStyles}`}
                     href="/login"
                   >
                     Sign in
-                  </Link>
-                  <Link
+                  </AuthEntryLink>
+                  <AuthEntryLink
                     className={`${navCtaPrimary} w-full`}
                     href={loginNext("/resume")}
                   >
                     Start free
                     <ArrowRight className="h-4 w-4" aria-hidden />
-                  </Link>
+                  </AuthEntryLink>
                 </div>
               </div>
             </details>
@@ -353,14 +354,14 @@ function LandingNavbar() {
               aria-hidden
             />
 
-            <Link className={navSignIn} href="/login">
+            <AuthEntryLink className={navSignIn} href="/login">
               Sign in
-            </Link>
-            <Link className={`${navCtaPrimary} shrink-0`} href={loginNext("/resume")}>
+            </AuthEntryLink>
+            <AuthEntryLink className={`${navCtaPrimary} shrink-0`} href={loginNext("/resume")}>
               <span className="hidden sm:inline">Start free</span>
               <span className="sm:hidden">Get started</span>
               <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
+            </AuthEntryLink>
           </div>
         </div>
       </div>
@@ -555,7 +556,7 @@ function FeatureCard({
   accent,
 }: (typeof FEATURE_MODULES)[number]) {
   return (
-    <Link
+    <AuthEntryLink
       className={`${premiumCard} ${cardHoverLift} group relative flex min-h-[260px] flex-col overflow-hidden p-6 before:absolute before:inset-x-0 before:top-0 before:h-1 before:opacity-0 before:transition-opacity before:duration-300 ${FEATURE_CARD_GLOW[accent]}`}
       href={loginNext(route)}
     >
@@ -582,7 +583,7 @@ function FeatureCard({
           aria-hidden
         />
       </span>
-    </Link>
+    </AuthEntryLink>
   );
 }
 
@@ -822,19 +823,19 @@ function FinalCta() {
         application in one workspace.
       </p>
       <div className="relative mt-8 flex flex-wrap items-center justify-center gap-3">
-        <Link
+        <AuthEntryLink
           className="inline-flex h-12 items-center gap-2 rounded-xl bg-white px-6 text-sm font-bold text-emerald-900 shadow-lg transition duration-300 hover:scale-105 hover:bg-emerald-50 hover:shadow-xl"
           href={loginNext("/resume")}
         >
           Upload CV
           <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
-        <Link
+        </AuthEntryLink>
+        <AuthEntryLink
           className="inline-flex h-12 items-center rounded-xl border-2 border-white/40 px-6 text-sm font-bold text-white backdrop-blur transition duration-300 hover:scale-105 hover:border-white hover:bg-white/15"
           href="/login"
         >
           Sign in
-        </Link>
+        </AuthEntryLink>
       </div>
     </section>
   );
@@ -855,12 +856,12 @@ function LandingFooter() {
         <p className="text-sm text-emerald-100/80">
           © {new Date().getFullYear()} CareerPilot. AI-powered career co-pilot.
         </p>
-        <Link
+        <AuthEntryLink
           className="rounded-lg border border-white/25 px-4 py-2 text-sm font-semibold text-white transition duration-300 hover:scale-105 hover:border-white/50 hover:bg-white/10"
           href="/login"
         >
           Sign in
-        </Link>
+        </AuthEntryLink>
       </div>
     </footer>
   );
@@ -909,16 +910,16 @@ export default function Home() {
               your progress — from first upload to offer.
             </p>
             <div className="relative mt-8 flex flex-wrap items-center gap-3">
-              <Link className={`${btnForest} h-12`} href={loginNext("/resume")}>
+              <AuthEntryLink className={`${btnForest} h-12`} href={loginNext("/resume")}>
                 Upload your CV
                 <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
-              <Link
+              </AuthEntryLink>
+              <AuthEntryLink
                 className="inline-flex h-12 items-center rounded-xl border-2 border-white/30 bg-white/10 px-5 text-sm font-bold text-white backdrop-blur transition duration-300 hover:scale-[1.02] hover:border-white/50 hover:bg-white/20"
                 href={loginNext("/jobs")}
               >
                 Find matching jobs
-              </Link>
+              </AuthEntryLink>
             </div>
           </div>
           <HeroMockPanel />

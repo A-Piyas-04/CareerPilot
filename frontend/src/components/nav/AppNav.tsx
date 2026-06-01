@@ -8,6 +8,7 @@ import { useState } from "react";
 import { MobileNavDrawer, MobileNavTrigger } from "@/components/nav/MobileNavDrawer";
 import { NavContextBar } from "@/components/nav/NavContextBar";
 import { NavGroupMenu } from "@/components/nav/NavGroupMenu";
+import { suppressExtensionHydrationProps } from "@/lib/hydration";
 import { createClient } from "@/lib/supabase/client";
 import { ALL_NAV_ITEMS, NAV_GROUPS } from "@/lib/navigation-config";
 
@@ -62,6 +63,7 @@ export function AppNav() {
             <MobileNavTrigger onOpen={() => setMobileOpen(true)} />
 
             <button
+              {...suppressExtensionHydrationProps}
               type="button"
               onClick={handleSignOut}
               className="hidden h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3.5 text-sm font-semibold text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 hover:shadow-sm sm:inline-flex"

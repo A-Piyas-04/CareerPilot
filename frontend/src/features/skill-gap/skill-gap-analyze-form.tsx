@@ -4,6 +4,7 @@ import { LineChart } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
 import { SpinnerButton } from "@/components/ui";
+import { suppressExtensionHydrationProps } from "@/lib/hydration";
 import {
   formHintPanel,
   inputFieldSky,
@@ -100,6 +101,7 @@ export function SkillGapAnalyzeForm({
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-zinc-800">Target role</span>
           <input
+            {...suppressExtensionHydrationProps}
             value={targetRole}
             onChange={(event) => setTargetRole(event.target.value)}
             placeholder="ML Engineer Intern"
@@ -113,6 +115,7 @@ export function SkillGapAnalyzeForm({
             Job description (optional)
           </span>
           <textarea
+            {...suppressExtensionHydrationProps}
             value={jobDescription}
             onChange={(event) => setJobDescription(event.target.value)}
             placeholder="Paste a job description for more precise gap analysis…"

@@ -9,11 +9,11 @@ import {
   updateApplicationStatus,
 } from "./api";
 import type {
-  Application,
   ApplicationStatus,
   CreateApplicationInput,
   UpdateApplicationInput,
 } from "./types";
+import { mergeApplicationUpdate } from "./types";
 
 export const trackerKeys = {
   applications: ["applications"] as const,
@@ -57,7 +57,9 @@ export function useUpdateApplication(applicationId: string | null) {
         trackerKeys.applications,
         (current) =>
           current?.map((item) =>
-            item.id === application.id ? application : item,
+            item.id === application.id
+              ? mergeApplicationUpdate(item, application)
+              : item,
           ) ?? [application],
       );
       queryClient.invalidateQueries({

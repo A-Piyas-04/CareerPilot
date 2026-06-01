@@ -1,11 +1,14 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { CheckCircle2, Sparkles } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import { LoginBenefitsPanel } from "@/components/layout/error-page-content";
 import { Skeleton } from "@/components/ui";
 
 import { LoginForm } from "./login-form";
+import { sanitizeNextPath } from "@/lib/auth/login-redirect";
+import { createClient } from "@/lib/supabase/server";
 import { btnSecondary, forestGradient } from "@/lib/ui-theme";
 
 const BENEFITS = [
@@ -27,7 +30,28 @@ function LoginFormSkeleton() {
   );
 }
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{ next?: string | string[] }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    const params = await searchParams;
+    const nextParam = params.next;
+    const next =
+      typeof nextParam === "string"
+        ? nextParam
+        : Array.isArray(nextParam)
+          ? nextParam[0]
+          : undefined;
+    redirect(sanitizeNextPath(next));
+  }
+
   return (
     <main className="relative flex min-h-screen flex-col bg-gradient-to-b from-emerald-50/30 via-[var(--cp-page-bg)] to-sky-50/20 px-5 py-6">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>

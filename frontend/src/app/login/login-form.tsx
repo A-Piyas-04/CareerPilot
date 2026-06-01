@@ -3,7 +3,10 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
+import { AuthRedirectOverlay } from "@/components/auth/auth-redirect-overlay";
 import { SpinnerButton } from "@/components/ui";
+import { getOptionalClientUser } from "@/lib/auth/client-session";
+import { sanitizeNextPath } from "@/lib/auth/login-redirect";
 import { createClient } from "@/lib/supabase/client";
 import {
   alertWarning,
@@ -22,16 +25,25 @@ export function LoginForm() {
   const [fullName, setFullName] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const nextPath = searchParams.get("next") ?? "/tracker";
+  const [authChecked, setAuthChecked] = useState(false);
+  const nextPath = sanitizeNextPath(searchParams.get("next"));
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
+
+    void (async () => {
+      const user = await getOptionalClientUser(supabase);
+      if (user) {
         router.replace(nextPath);
+        return;
       }
-    });
+      setAuthChecked(true);
+    })();
   }, [nextPath, router]);
+
+  if (!authChecked) {
+    return <AuthRedirectOverlay destination={nextPath} />;
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
