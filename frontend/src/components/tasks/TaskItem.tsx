@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { FormEvent, useState } from "react";
 
+import { ConfirmDialog } from "@/components/ui";
 import type {
   StandaloneTask,
   StandaloneTaskPriority,
@@ -30,6 +31,7 @@ type Props = {
 
 export function TaskItem({ task, isSelected, onSelectionChange }: Props) {
   const [isEditing, setIsEditing] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const updateMutation = useUpdateStandaloneTask();
   const deleteMutation = useDeleteStandaloneTask();
 
@@ -41,11 +43,8 @@ export function TaskItem({ task, isSelected, onSelectionChange }: Props) {
   }
 
   async function handleDelete() {
-    if (!confirm("Delete this task?")) {
-      return;
-    }
-
     await deleteMutation.mutateAsync(task.id);
+    setDeleteOpen(false);
   }
 
   if (isEditing) {
@@ -147,7 +146,7 @@ export function TaskItem({ task, isSelected, onSelectionChange }: Props) {
         <button
           className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
           type="button"
-          onClick={handleDelete}
+          onClick={() => setDeleteOpen(true)}
           disabled={deleteMutation.isPending}
           title="Delete task"
           aria-label="Delete task"
@@ -155,6 +154,14 @@ export function TaskItem({ task, isSelected, onSelectionChange }: Props) {
           <Trash2 className="h-4 w-4" />
         </button>
       </div>
+      <ConfirmDialog
+        isOpen={deleteOpen}
+        title="Delete this task?"
+        description="This removes the task from your list."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteOpen(false)}
+        onConfirm={() => void handleDelete()}
+      />
     </li>
   );
 }

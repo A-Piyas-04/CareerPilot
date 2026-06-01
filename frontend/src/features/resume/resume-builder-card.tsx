@@ -179,7 +179,7 @@ export function ResumeBuilderCard({
                 <p className={resumeCardSubtext}>
                   {isEdit
                     ? "Update sections and re-index for AI search."
-                    : "Add sections in plain text — indexed like an upload."}
+                    : "Add sections in plain text - indexed like an upload."}
                 </p>
               </div>
             </div>
@@ -265,7 +265,7 @@ export function ResumeBuilderCard({
                 className={`${resumeTextarea} mt-3 min-h-[120px]`}
                 disabled={isPending}
                 maxLength={BUILDER_CONTENT_MAX}
-                placeholder={`Enter your ${row.section_name} content…`}
+                placeholder={`Enter your ${row.section_name} content...`}
                 rows={5}
                 value={row.content}
                 onChange={(e) =>
@@ -315,7 +315,7 @@ export function ResumeBuilderCard({
         <SpinnerButton
           className={`${resumePrimaryButton} mt-5 w-full`}
           loading={isPending}
-          loadingLabel="Indexing…"
+          loadingLabel="Indexing..."
           disabled={isPending}
           type="button"
           onClick={handleSubmit}

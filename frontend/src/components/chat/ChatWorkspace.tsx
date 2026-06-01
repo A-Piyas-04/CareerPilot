@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { ConfirmDialog } from "@/components/ui";
 import {
   isTemporaryAssistantConversationId,
   useAssistantConversations,
@@ -14,6 +15,9 @@ import { ConversationSidebar } from "./ConversationSidebar";
 
 export function ChatWorkspace() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
+    null,
+  );
+  const [deleteConversationId, setDeleteConversationId] = useState<string | null>(
     null,
   );
   const conversationsQuery = useAssistantConversations();
@@ -48,19 +52,16 @@ export function ChatWorkspace() {
   }
 
   async function handleDeleteConversation(conversationId: string) {
-    if (!confirm("Delete this conversation?")) {
-      return;
-    }
-
     await deleteConversationMutation.mutateAsync(conversationId);
 
     if (conversationId === activeConversationId) {
       setActiveConversationId(null);
     }
+    setDeleteConversationId(null);
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f6f7f9] lg:flex-row">
+    <main className="cp-page flex min-h-screen flex-col lg:flex-row">
       <ConversationSidebar
         activeConversationId={activeConversation?.id ?? null}
         conversations={conversations}
@@ -69,10 +70,22 @@ export function ChatWorkspace() {
         isDeleting={deleteConversationMutation.isPending}
         isLoading={conversationsQuery.isLoading}
         onCreateConversation={handleCreateConversation}
-        onDeleteConversation={handleDeleteConversation}
+        onDeleteConversation={setDeleteConversationId}
         onSelectConversation={setActiveConversationId}
       />
       <ChatThread conversation={activeConversation} />
+      <ConfirmDialog
+        isOpen={Boolean(deleteConversationId)}
+        title="Delete conversation?"
+        description="This removes the saved conversation and its messages from your workspace."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteConversationId(null)}
+        onConfirm={() => {
+          if (deleteConversationId) {
+            void handleDeleteConversation(deleteConversationId);
+          }
+        }}
+      />
     </main>
   );
 }

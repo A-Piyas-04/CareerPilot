@@ -259,7 +259,7 @@ function EventModalContent({
               type="submit"
               variant="emerald"
               loading={mutation.isPending}
-              loadingLabel="Saving…"
+              loadingLabel="Saving..."
               icon={<Save className="h-4 w-4" />}
             >
               Save

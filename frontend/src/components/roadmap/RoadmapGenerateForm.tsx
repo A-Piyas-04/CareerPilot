@@ -3,7 +3,7 @@
 import { Sparkles } from "lucide-react";
 import { FormEvent, useState } from "react";
 
-import { SpinnerButton } from "@/components/ui";
+import { Card, Input, Select, SpinnerButton, Textarea } from "@/components/ui";
 import type { GenerateRoadmapRequest } from "@/lib/roadmap/types";
 
 type RoadmapGenerateFormProps = {
@@ -37,72 +37,73 @@ export function RoadmapGenerateForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
-    >
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold text-zinc-950">
-          Roadmap Generator
-        </h1>
-        <p className="text-sm text-zinc-600">
-          Generate a CV-aware weekly plan for a target role.
-        </p>
-      </div>
+    <Card className="p-5">
+      <form onSubmit={handleSubmit}>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-semibold text-[var(--foreground)]">
+            Roadmap Generator
+          </h1>
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Generate a CV-aware weekly plan for a target role.
+          </p>
+        </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_220px]">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">Target role</span>
-          <input
-            value={targetRole}
-            onChange={(event) => setTargetRole(event.target.value)}
-            placeholder="ML Engineer"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
-            required
+        <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_220px]">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-[var(--foreground)]">
+              Target role
+            </span>
+            <Input
+              value={targetRole}
+              onChange={(event) => setTargetRole(event.target.value)}
+              placeholder="ML Engineer"
+              required
+            />
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-[var(--foreground)]">
+              Duration
+            </span>
+            <Select
+              value={durationWeeks}
+              onChange={(event) =>
+                setDurationWeeks(Number(event.target.value) as 4 | 8 | 12)
+              }
+            >
+              {DURATIONS.map((duration) => (
+                <option key={duration} value={duration}>
+                  {duration} weeks
+                </option>
+              ))}
+            </Select>
+          </label>
+        </div>
+
+        <label className="mt-4 flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-[var(--foreground)]">
+            Job description
+          </span>
+          <Textarea
+            value={jobDescription}
+            onChange={(event) => setJobDescription(event.target.value)}
+            placeholder="Paste an optional job description to tailor the roadmap."
+            className="min-h-28 resize-y"
           />
         </label>
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">Duration</span>
-          <select
-            value={durationWeeks}
-            onChange={(event) =>
-              setDurationWeeks(Number(event.target.value) as 4 | 8 | 12)
-            }
-            className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+        <div className="mt-5 flex justify-end">
+          <SpinnerButton
+            type="submit"
+            loading={isGenerating}
+            loadingLabel="Generating..."
+            disabled={isGenerating || !targetRole.trim()}
+            icon={<Sparkles className="h-4 w-4" />}
           >
-            {DURATIONS.map((duration) => (
-              <option key={duration} value={duration}>
-                {duration} weeks
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <label className="mt-4 flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zinc-800">
-          Job description
-        </span>
-        <textarea
-          value={jobDescription}
-          onChange={(event) => setJobDescription(event.target.value)}
-          placeholder="Paste an optional job description to tailor the roadmap."
-          className="min-h-28 resize-y rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
-        />
-      </label>
-
-      <div className="mt-5 flex justify-end">
-        <SpinnerButton
-          type="submit"
-          loading={isGenerating}
-          loadingLabel="Generating…"
-          disabled={isGenerating || !targetRole.trim()}
-          icon={<Sparkles className="h-4 w-4" />}
-        >
-          Generate Roadmap
-        </SpinnerButton>
-      </div>
-    </form>
+            Generate Roadmap
+          </SpinnerButton>
+        </div>
+      </form>
+    </Card>
   );
 }

@@ -1,11 +1,10 @@
 "use client";
 
 import { Search } from "lucide-react";
-
-import { SpinnerButton } from "@/components/ui";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { Input, Select, SpinnerButton } from "@/components/ui";
 import type { Resume } from "@/features/resume/types";
 
 import { useSearchJobs } from "./hooks";
@@ -17,7 +16,11 @@ type Props = {
   onResumeChange: (resumeId: string) => void;
 };
 
-export function JobSearchForm({ resumes, selectedResumeId, onResumeChange }: Props) {
+export function JobSearchForm({
+  resumes,
+  selectedResumeId,
+  onResumeChange,
+}: Props) {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [source, setSource] = useState<JobSourceName>("jsearch");
@@ -55,52 +58,48 @@ export function JobSearchForm({ resumes, selectedResumeId, onResumeChange }: Pro
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm"
+      className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-glass)] p-4 shadow-[var(--shadow-soft)] backdrop-blur-xl"
     >
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_180px]">
-        <input
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_220px]">
+        <Input
           type="text"
           placeholder="e.g. Python backend engineer"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-emerald-600 focus:outline-none"
         />
-        <input
+        <Input
           type="text"
-          placeholder="Location (optional, e.g. Berlin)"
+          placeholder="Location, e.g. Berlin"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-emerald-600 focus:outline-none"
         />
-        <select
+        <Select
           value={source}
           onChange={(e) => setSource(e.target.value as JobSourceName)}
-          className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-emerald-600 focus:outline-none"
         >
-          <option value="jsearch">JSearch (LinkedIn/Indeed)</option>
-        </select>
+          <option value="jsearch">JSearch marketplace</option>
+        </Select>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_180px]">
-        <select
+      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[1fr_190px]">
+        <Select
           value={selectedResumeId ?? ""}
           onChange={(e) => onResumeChange(e.target.value)}
-          className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 focus:border-emerald-600 focus:outline-none"
         >
           <option value="" disabled>
-            Match against resume…
+            Match against resume...
           </option>
           {resumes.map((r) => (
             <option key={r.id} value={r.id}>
               {r.file_name} ({r.status})
             </option>
           ))}
-        </select>
+        </Select>
         <SpinnerButton
           type="submit"
           variant="emerald"
           loading={search.isPending}
-          loadingLabel="Searching…"
+          loadingLabel="Searching..."
           icon={<Search className="h-4 w-4" />}
         >
           Search jobs

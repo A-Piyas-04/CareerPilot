@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { Card } from "@/components/ui";
 import type { PipelineStatusCount } from "@/lib/dashboard/types";
 
 type ApplicationPipelineChartProps = {
@@ -18,12 +19,12 @@ type ApplicationPipelineChartProps = {
 
 export function ApplicationPipelineChart({ data }: ApplicationPipelineChartProps) {
   return (
-    <section className="min-w-0 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+    <Card className="min-w-0 p-5">
       <div>
-        <h2 className="text-lg font-semibold text-zinc-950">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">
           Application Pipeline
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-[var(--muted-foreground)]">
           Count by current Kanban status
         </p>
       </div>
@@ -35,27 +36,33 @@ export function ApplicationPipelineChart({ data }: ApplicationPipelineChartProps
             layout="vertical"
             margin={{ bottom: 8, left: 12, right: 20, top: 8 }}
           >
-            <CartesianGrid horizontal={false} stroke="#e4e4e7" />
-            <XAxis allowDecimals={false} stroke="#71717a" type="number" />
+            <CartesianGrid horizontal={false} stroke="var(--border)" />
+            <XAxis
+              allowDecimals={false}
+              stroke="var(--muted-foreground)"
+              type="number"
+            />
             <YAxis
               dataKey="label"
-              stroke="#71717a"
+              stroke="var(--muted-foreground)"
               tickLine={false}
               type="category"
               width={92}
             />
             <Tooltip
-              cursor={{ fill: "#f4f4f5" }}
+              cursor={{ fill: "var(--surface-subtle)" }}
               contentStyle={{
-                border: "1px solid #e4e4e7",
-                borderRadius: 8,
-                boxShadow: "0 8px 24px rgba(24, 24, 27, 0.08)",
+                background: "var(--surface-raised)",
+                border: "1px solid var(--border)",
+                borderRadius: 14,
+                boxShadow: "var(--shadow-soft)",
+                color: "var(--foreground)",
               }}
             />
-            <Bar dataKey="count" fill="#1A56DB" radius={[0, 6, 6, 0]} />
+            <Bar dataKey="count" fill="var(--primary)" radius={[0, 8, 8, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </section>
+    </Card>
   );
 }

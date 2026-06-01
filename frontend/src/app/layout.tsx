@@ -1,21 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: "CareerPilot",
-  description: "AI-powered career co-pilot — job tracker, CV intelligence, and career planning.",
+  description:
+    "AI-powered career co-pilot for job tracking, CV intelligence, and career planning.",
 };
 
 export default function RootLayout({
@@ -26,9 +16,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className="h-full antialiased"
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-[#f6f7f9]">
+      <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -2,16 +2,13 @@
 
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, LogOut, Plus } from "lucide-react";
+import { CalendarDays, Plus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-
-import { createClient } from "@/lib/supabase/client";
 
 import { AddApplicationDrawer } from "./add-application-drawer";
 import { ApplicationDetailDrawer } from "./application-detail-drawer";
-import { Skeleton } from "@/components/ui";
+import { Button, PageHeader, Skeleton, buttonClassName } from "@/components/ui";
 
 import { KanbanColumn } from "./kanban-column";
 import {
@@ -23,7 +20,6 @@ import type { Application, ApplicationStatus } from "./types";
 import { APPLICATION_STATUSES, STATUS_LABELS } from "./types";
 
 export function TrackerBoard() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const applicationsQuery = useApplications();
   const statusMutation = useUpdateApplicationStatus();
@@ -43,12 +39,6 @@ export function TrackerBoard() {
 
     return map;
   }, [applicationsQuery.data]);
-
-  async function handleSignOut() {
-    await createClient().auth.signOut();
-    router.replace("/login");
-    router.refresh();
-  }
 
   function handleDragEnd(result: DropResult) {
     const destination = result.destination;
@@ -110,46 +100,33 @@ export function TrackerBoard() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f6f7f9]">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-[1560px] flex-wrap items-center justify-between gap-3 px-5 py-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-zinc-950">
-              Application Tracker
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-2">
+    <main className="cp-page flex min-h-screen flex-col">
+      <section className="cp-container py-6">
+        <PageHeader
+          eyebrow="Pipeline"
+          title="Application Tracker"
+          description="Move opportunities through the hiring pipeline with fast drag-and-drop and a clean status history."
+          actions={
+            <>
             <Link
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+              className={buttonClassName({ variant: "secondary" })}
               href="/calendar"
             >
               <CalendarDays className="h-4 w-4" />
               Calendar
             </Link>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-              type="button"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
-              type="button"
-              onClick={() => setIsAddOpen(true)}
-            >
+            <Button onClick={() => setIsAddOpen(true)}>
               <Plus className="h-4 w-4" />
               Add Application
-            </button>
-          </div>
-        </div>
-      </header>
+            </Button>
+            </>
+          }
+        />
+      </section>
 
-      <section className="mx-auto flex w-full max-w-[1560px] flex-1 flex-col gap-4 px-5 py-5">
+      <section className="cp-container flex flex-1 flex-col gap-4 pb-6">
         {statusError ? (
-          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="rounded-2xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">
             {statusError}
           </p>
         ) : null}
@@ -158,18 +135,18 @@ export function TrackerBoard() {
           <div className="flex gap-4 overflow-x-auto pb-2" aria-busy="true">
             {APPLICATION_STATUSES.map((status) => (
               <Skeleton
-                className="h-[520px] w-72 shrink-0 rounded-lg"
+                className="h-[520px] w-72 shrink-0 rounded-[var(--radius-md)]"
                 key={status}
               />
             ))}
           </div>
         ) : applicationsQuery.error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-2xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] p-4 text-sm text-[var(--danger)]">
             {applicationsQuery.error.message}
           </div>
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="flex gap-4 overflow-x-auto pb-2">
+            <div className="no-scrollbar flex gap-4 overflow-x-auto pb-2">
               {APPLICATION_STATUSES.map((status) => (
                 <KanbanColumn
                   key={status}

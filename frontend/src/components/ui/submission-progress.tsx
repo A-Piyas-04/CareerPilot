@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import { useSimulatedProgress } from "@/hooks/useSimulatedProgress";
 
+import { cn } from "./cn";
+
 export type SubmissionProgressMode = "steps" | "simulated" | "indeterminate";
 
 type SubmissionProgressProps = {
@@ -17,30 +19,26 @@ type SubmissionProgressProps = {
   tone?: "amber" | "blue";
 };
 
-function cn(...classes: (string | undefined | false)[]) {
-  return classes.filter(Boolean).join(" ");
-}
-
 const TONE_STYLES = {
   amber: {
-    container: "border-amber-200 bg-amber-50",
-    label: "text-amber-900",
-    sub: "text-amber-700",
-    bar: "bg-amber-500",
-    barTrack: "bg-amber-200",
-    stepActive: "text-amber-900 font-medium",
-    stepDone: "text-amber-600",
-    stepPending: "text-amber-400",
+    container: "border-[var(--warning)]/30 bg-[var(--warning-soft)]",
+    label: "text-[var(--warning)]",
+    sub: "text-[var(--warning)]",
+    bar: "bg-[var(--warning)]",
+    barTrack: "bg-[var(--surface-muted)]",
+    stepActive: "text-[var(--warning)] font-medium",
+    stepDone: "text-[var(--warning)]/80",
+    stepPending: "text-[var(--muted)]",
   },
   blue: {
-    container: "border-blue-200 bg-blue-50",
-    label: "text-blue-900",
-    sub: "text-blue-700",
-    bar: "bg-[#1A56DB]",
-    barTrack: "bg-blue-200",
-    stepActive: "text-blue-900 font-medium",
-    stepDone: "text-blue-600",
-    stepPending: "text-blue-400",
+    container: "border-[var(--primary)]/30 bg-[var(--primary-soft)]",
+    label: "text-[var(--primary)]",
+    sub: "text-[var(--primary)]",
+    bar: "bg-[var(--primary)]",
+    barTrack: "bg-[var(--surface-muted)]",
+    stepActive: "text-[var(--primary)] font-medium",
+    stepDone: "text-[var(--primary)]/80",
+    stepPending: "text-[var(--muted)]",
   },
 };
 
@@ -70,7 +68,7 @@ export function SubmissionProgress({
   useEffect(() => {
     if (!isActive || mode !== "indeterminate") return;
     const id = window.setInterval(() => {
-      setIndeterminateOffset((v) => (v + 15) % 100);
+      setIndeterminateOffset((value) => (value + 15) % 100);
     }, 400);
     return () => window.clearInterval(id);
   }, [isActive, mode]);
@@ -86,8 +84,8 @@ export function SubmissionProgress({
     mode === "simulated"
       ? simulated.currentLabel
       : mode === "steps"
-        ? (stepList[resolvedIndex] ?? label ?? "Processing…")
-        : (label ?? "Processing…");
+        ? (stepList[resolvedIndex] ?? label ?? "Processing...")
+        : (label ?? "Processing...");
 
   const percent =
     mode === "indeterminate"
@@ -96,11 +94,7 @@ export function SubmissionProgress({
 
   return (
     <div
-      className={cn(
-        "rounded-lg border px-3 py-2.5",
-        styles.container,
-        className,
-      )}
+      className={cn("rounded-2xl border px-3 py-2.5", styles.container, className)}
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
@@ -111,11 +105,17 @@ export function SubmissionProgress({
       <p className={cn("text-sm font-medium", styles.label)}>{resolvedLabel}</p>
 
       <div
-        className={cn("mt-2 h-1.5 w-full overflow-hidden rounded-full", styles.barTrack)}
+        className={cn(
+          "mt-2 h-1.5 w-full overflow-hidden rounded-full",
+          styles.barTrack,
+        )}
       >
         {mode === "indeterminate" ? (
           <div
-            className={cn("h-full w-1/3 rounded-full transition-all duration-300", styles.bar)}
+            className={cn(
+              "h-full w-1/3 rounded-full transition-all duration-300",
+              styles.bar,
+            )}
             style={{ marginLeft: `${indeterminateOffset}%` }}
           />
         ) : (
@@ -128,19 +128,23 @@ export function SubmissionProgress({
 
       {mode !== "indeterminate" && stepList.length > 1 ? (
         <ul className="mt-2 space-y-0.5">
-          {stepList.map((step, i) => (
+          {stepList.map((step, index) => (
             <li
               key={step}
               className={cn(
                 "text-xs",
-                i < resolvedIndex
+                index < resolvedIndex
                   ? styles.stepDone
-                  : i === resolvedIndex
+                  : index === resolvedIndex
                     ? styles.stepActive
                     : styles.stepPending,
               )}
             >
-              {i < resolvedIndex ? "✓ " : i === resolvedIndex ? "→ " : "· "}
+              {index < resolvedIndex
+                ? "Done: "
+                : index === resolvedIndex
+                  ? "Now: "
+                  : "- "}
               {step}
             </li>
           ))}

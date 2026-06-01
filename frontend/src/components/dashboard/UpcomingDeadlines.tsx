@@ -2,6 +2,7 @@
 
 import { format, formatDistanceToNow } from "date-fns";
 
+import { Badge, Card, EmptyState } from "@/components/ui";
 import type { UpcomingDashboardEvent } from "@/lib/dashboard/types";
 
 type UpcomingDeadlinesProps = {
@@ -10,14 +11,20 @@ type UpcomingDeadlinesProps = {
 
 export function UpcomingDeadlines({ events }: UpcomingDeadlinesProps) {
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-zinc-950">Upcoming Deadlines</h2>
-      <p className="mt-1 text-sm text-zinc-500">Next calendar items</p>
+    <Card className="p-5">
+      <h2 className="text-lg font-semibold text-[var(--foreground)]">
+        Upcoming Deadlines
+      </h2>
+      <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+        Next calendar items
+      </p>
 
       {events.length === 0 ? (
-        <div className="mt-5 rounded-md border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
-          No upcoming deadlines.
-        </div>
+        <EmptyState
+          className="mt-5 p-5"
+          title="No upcoming deadlines"
+          description="Add interviews, deadlines, reminders, or study blocks to keep your calendar useful."
+        />
       ) : (
         <div className="mt-5 space-y-3">
           {events.map((event) => {
@@ -26,24 +33,24 @@ export function UpcomingDeadlines({ events }: UpcomingDeadlinesProps) {
 
             return (
               <article
-                className="rounded-md border border-zinc-200 p-3"
+                className="rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)] p-3"
                 key={event.id}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-zinc-950">
+                    <p className="truncate text-sm font-semibold text-[var(--foreground)]">
                       {event.title}
                     </p>
-                    <p className="mt-1 text-xs text-zinc-500">
+                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
                       {validDate ? format(date, "MMM d, h:mm a") : "Time not set"}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold capitalize text-[#1A56DB]">
+                  <Badge className="shrink-0 capitalize" tone="primary">
                     {event.eventType}
-                  </span>
+                  </Badge>
                 </div>
                 {validDate ? (
-                  <p className="mt-2 text-xs font-medium text-zinc-500">
+                  <p className="mt-2 text-xs font-medium text-[var(--muted-foreground)]">
                     {formatDistanceToNow(date, { addSuffix: true })}
                   </p>
                 ) : null}
@@ -52,6 +59,6 @@ export function UpcomingDeadlines({ events }: UpcomingDeadlinesProps) {
           })}
         </div>
       )}
-    </section>
+    </Card>
   );
 }

@@ -9,7 +9,7 @@ import {
 } from "date-fns";
 import { MessageSquarePlus, Trash2 } from "lucide-react";
 
-import { ListCardSkeleton } from "@/components/ui";
+import { Button, EmptyState, IconButton, ListCardSkeleton } from "@/components/ui";
 import { isTemporaryAssistantConversationId } from "@/lib/hooks/useAssistantConversations";
 import type { AssistantConversation } from "@/lib/types/assistant";
 
@@ -48,30 +48,29 @@ export function ConversationSidebar({
   const grouped = groupConversations(conversations);
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-zinc-200 bg-white lg:w-80">
-      <header className="border-b border-zinc-200 p-4">
+    <aside className="flex h-full w-full flex-col border-r border-[var(--border)] bg-[var(--surface-glass)] backdrop-blur-xl lg:w-80">
+      <header className="border-b border-[var(--border)] p-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#1A56DB]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--primary)]">
             CareerPilot
           </p>
-          <h1 className="text-xl font-semibold text-zinc-950">
+          <h1 className="text-xl font-semibold text-[var(--foreground)]">
             Career Assistant
           </h1>
         </div>
 
-        <button
-          className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#1A56DB] px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:bg-blue-300"
-          type="button"
+        <Button
+          className="mt-4 w-full"
           onClick={onCreateConversation}
           disabled={isCreating}
         >
           <MessageSquarePlus className="h-4 w-4" />
           New Chat
-        </button>
+        </Button>
       </header>
 
       {errorMessage ? (
-        <p className="m-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="m-3 rounded-2xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
           {errorMessage}
         </p>
       ) : null}
@@ -84,7 +83,7 @@ export function ConversationSidebar({
             {(Object.keys(GROUP_LABELS) as GroupKey[]).map((group) =>
               grouped[group].length ? (
                 <section key={group}>
-                  <h2 className="mb-2 px-2 text-xs font-bold uppercase tracking-wide text-zinc-400">
+                  <h2 className="mb-2 px-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted)]">
                     {GROUP_LABELS[group]}
                   </h2>
                   <ul className="space-y-1">
@@ -108,10 +107,11 @@ export function ConversationSidebar({
             )}
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500">
-            No conversations yet. Start a new chat to save your first career
-            question.
-          </div>
+          <EmptyState
+            className="p-4"
+            title="No conversations yet"
+            description="Start a new chat to save your first career question."
+          />
         )}
       </div>
     </aside>
@@ -135,10 +135,10 @@ function ConversationButton({
 }) {
   return (
     <div
-      className={`group flex items-start gap-2 rounded-md border transition ${
+      className={`group flex items-start gap-2 rounded-2xl border transition ${
         isActive
-          ? "border-blue-200 bg-blue-50"
-          : "border-transparent hover:border-zinc-200 hover:bg-zinc-50"
+          ? "border-[var(--primary)] bg-[var(--primary-soft)]"
+          : "border-transparent hover:border-[var(--border)] hover:bg-[var(--surface-subtle)]"
       }`}
     >
       <button
@@ -147,26 +147,26 @@ function ConversationButton({
         onClick={() => onSelectConversation(conversation.id)}
         disabled={isTemporary}
       >
-        <span className="block truncate text-sm font-semibold text-zinc-950">
+        <span className="block truncate text-sm font-semibold text-[var(--foreground)]">
           {conversation.title?.trim() || "New conversation"}
         </span>
-        <span className="mt-1 block text-xs font-medium text-zinc-500">
+        <span className="mt-1 block text-xs font-medium text-[var(--muted-foreground)]">
           {isTemporary ? "Creating..." : relativeTime(conversation.updated_at)}
         </span>
       </button>
-      <button
-        className="mr-2 mt-2 rounded-md p-1.5 text-zinc-400 opacity-100 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 sm:opacity-0 sm:group-hover:opacity-100"
-        type="button"
-        title="Delete conversation"
+      <IconButton
+        className="mr-2 mt-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+        label="Delete conversation"
+        size="sm"
+        variant="ghost"
         onClick={(event) => {
           event.stopPropagation();
           onDeleteConversation(conversation.id);
         }}
         disabled={isDeleting || isTemporary}
-        aria-label="Delete conversation"
       >
         <Trash2 className="h-4 w-4" />
-      </button>
+      </IconButton>
     </div>
   );
 }

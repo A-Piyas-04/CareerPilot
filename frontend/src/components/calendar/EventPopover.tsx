@@ -2,7 +2,9 @@
 
 import { format } from "date-fns";
 import { CalendarClock, Pencil, Trash2, X } from "lucide-react";
+import { useState } from "react";
 
+import { ConfirmDialog } from "@/components/ui";
 import type {
   CalendarDisplayEvent,
   CalendarEventType,
@@ -17,6 +19,7 @@ type Props = {
 
 export function EventPopover({ event, onClose, onEdit }: Props) {
   const deleteMutation = useDeleteCalendarEvent();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (!event) {
     return null;
@@ -38,11 +41,8 @@ export function EventPopover({ event, onClose, onEdit }: Props) {
       return;
     }
 
-    if (!confirm("Delete this event?")) {
-      return;
-    }
-
     await deleteMutation.mutateAsync(event.resource.event.id);
+    setDeleteOpen(false);
     onClose();
   }
 
@@ -109,7 +109,7 @@ export function EventPopover({ event, onClose, onEdit }: Props) {
           <button
             className="flex h-9 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
             type="button"
-            onClick={handleDelete}
+            onClick={() => setDeleteOpen(true)}
             disabled={deleteMutation.isPending}
           >
             <Trash2 className="h-4 w-4" />
@@ -117,6 +117,14 @@ export function EventPopover({ event, onClose, onEdit }: Props) {
           </button>
         </div>
       )}
+      <ConfirmDialog
+        isOpen={deleteOpen}
+        title="Delete this event?"
+        description="This removes the calendar event from your workspace."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteOpen(false)}
+        onConfirm={() => void handleDelete()}
+      />
     </div>
   );
 }

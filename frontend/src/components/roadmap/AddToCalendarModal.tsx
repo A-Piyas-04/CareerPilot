@@ -90,7 +90,7 @@ export function AddToCalendarModal({
           <SpinnerButton
             type="submit"
             loading={isSaving}
-            loadingLabel="Adding…"
+            loadingLabel="Adding..."
             className="h-9 px-3"
           >
             Add Event

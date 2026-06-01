@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { AppNav } from "@/components/nav/AppNav";
+import { AppShell } from "@/components/nav/AppNav";
 import { JobsPageClient } from "@/features/jobs/jobs-page-client";
 import { createClient } from "@/lib/supabase/server";
 
@@ -15,9 +15,8 @@ export default async function JobsPage() {
   }
 
   return (
-    <>
-      <AppNav />
+    <AppShell>
       <JobsPageClient />
-    </>
+    </AppShell>
   );
 }

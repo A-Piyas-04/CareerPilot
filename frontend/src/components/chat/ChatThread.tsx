@@ -47,18 +47,18 @@ export function ChatThread({ conversation }: Props) {
   }
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col bg-[#f6f7f9]">
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-5">
+    <section className="flex min-h-0 flex-1 flex-col bg-transparent">
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface-glass)] px-5 backdrop-blur-xl">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#1A56DB]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--primary)]">
             Conversation
           </p>
-          <h2 className="truncate text-lg font-semibold text-zinc-950">
+          <h2 className="truncate text-lg font-semibold text-[var(--foreground)]">
             {conversation?.title?.trim() || "No conversation selected"}
           </h2>
         </div>
-        <span className="hidden rounded-md border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-[#1A56DB] sm:inline-flex">
-          Phase 2.2
+        <span className="hidden rounded-full border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-1 text-xs font-bold text-[var(--primary)] sm:inline-flex">
+          AI workspace
         </span>
       </header>
 
@@ -75,7 +75,7 @@ export function ChatThread({ conversation }: Props) {
             className="mx-auto max-w-4xl space-y-4"
           />
         ) : messagesQuery.error ? (
-          <p className="mx-auto max-w-4xl rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="mx-auto max-w-4xl rounded-2xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
             {messagesQuery.error.message}
           </p>
         ) : messages.length ? (
@@ -111,20 +111,20 @@ function EmptyThread({
 }) {
   return (
     <div className="mx-auto flex min-h-[420px] max-w-3xl flex-col items-center justify-center text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-blue-50 text-[#1A56DB]">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]">
         <Bot className="h-7 w-7" />
       </span>
-      <h3 className="mt-4 text-2xl font-semibold text-zinc-950">{title}</h3>
-      <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-600">
+      <h3 className="mt-4 text-2xl font-semibold text-[var(--foreground)]">{title}</h3>
+      <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--muted-foreground)]">
         {description}
       </p>
       <div className="mt-6 grid w-full gap-2 sm:grid-cols-3">
         {suggestedPrompts.map((prompt) => (
           <div
-            className="rounded-lg border border-zinc-200 bg-white p-3 text-left text-sm font-medium text-zinc-700 shadow-sm"
+            className="rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)] p-3 text-left text-sm font-medium text-[var(--foreground)] shadow-sm"
             key={prompt}
           >
-            <Sparkles className="mb-2 h-4 w-4 text-[#1A56DB]" />
+            <Sparkles className="mb-2 h-4 w-4 text-[var(--primary)]" />
             {prompt}
           </div>
         ))}

@@ -13,7 +13,7 @@ type ResumeSectionViewerDrawerProps = {
 };
 
 function formatMetadataValue(value: unknown): string {
-  if (value === null || value === undefined) return "—";
+  if (value === null || value === undefined) return "-";
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
 }
@@ -68,7 +68,7 @@ export function ResumeSectionViewerDrawer({
             <p className="mt-1 text-xs text-zinc-500">
               {section.content.length.toLocaleString()} characters
               {section.section_order > 0
-                ? ` · order ${section.section_order}`
+                ? ` - order ${section.section_order}`
                 : ""}
             </p>
           </div>

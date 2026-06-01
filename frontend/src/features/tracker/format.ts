@@ -30,5 +30,5 @@ export function getCompanyLine(application: {
     Boolean,
   );
 
-  return parts.length ? parts.join(" · ") : "Company not set";
+  return parts.length ? parts.join(" - ") : "Company not set";
 }

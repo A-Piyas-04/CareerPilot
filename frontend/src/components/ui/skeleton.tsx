@@ -1,8 +1,6 @@
 import type { ComponentPropsWithoutRef } from "react";
 
-function cn(...classes: (string | undefined | false)[]) {
-  return classes.filter(Boolean).join(" ");
-}
+import { cn } from "./cn";
 
 type SkeletonProps = ComponentPropsWithoutRef<"div">;
 
@@ -10,7 +8,10 @@ export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
       aria-busy="true"
-      className={cn("animate-pulse rounded bg-zinc-200", className)}
+      className={cn(
+        "animate-pulse rounded bg-[var(--surface-muted)]",
+        className,
+      )}
       {...props}
     />
   );

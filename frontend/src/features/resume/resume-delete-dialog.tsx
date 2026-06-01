@@ -96,7 +96,7 @@ export function ResumeDeleteDialog({
             type="button"
             variant="danger"
             loading={isPending}
-            loadingLabel="Deleting…"
+            loadingLabel="Deleting..."
             onClick={onConfirm}
             className="rounded-lg"
           >

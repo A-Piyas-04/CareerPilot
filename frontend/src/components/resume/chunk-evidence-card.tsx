@@ -22,7 +22,7 @@ function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) {
     return text;
   }
-  return `${text.slice(0, maxLength - 1)}…`;
+  return `${text.slice(0, maxLength - 1)}...`;
 }
 
 function SimilarityBar({ score }: { score: number }) {
@@ -77,7 +77,7 @@ export function ChunkEvidenceCard({
       </div>
       <p className="mt-2 text-xs leading-relaxed text-zinc-600">
         {expanded ? chunk.chunk_text : preview}
-        {hasMore && !expanded && "…"}
+        {hasMore && !expanded && "..."}
       </p>
       {hasMore && (
         <button

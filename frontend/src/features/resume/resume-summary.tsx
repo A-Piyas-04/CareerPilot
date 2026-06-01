@@ -76,7 +76,7 @@ function SectionCard({
           </span>
           <span className="truncate text-xs text-zinc-500">
             {!expanded && preview}
-            {!expanded && hasMore && "…"}
+            {!expanded && hasMore && "..."}
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -207,9 +207,9 @@ export function ResumeSummary({
           <p className="mt-0.5 truncate text-sm text-zinc-500">
             {resume.file_name}
             {resume.file_type === "builder"
-              ? " · built in app"
+              ? " - built in app"
               : resume.file_type === "manual"
-                ? " · manual entry"
+                ? " - manual entry"
                 : ""}
           </p>
         </div>
@@ -300,7 +300,7 @@ export function ResumeSummary({
       {isProcessing && (
         <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
           <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-          Processing your CV — this may take a few seconds…
+          Processing your CV - this may take a few seconds...
         </div>
       )}
 

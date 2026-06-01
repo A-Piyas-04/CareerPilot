@@ -6,6 +6,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 import { ChunkEvidenceCard } from "@/components/resume/chunk-evidence-card";
+import { Button } from "@/components/ui";
 import type { AssistantIntent } from "@/lib/assistant/detectIntent";
 import { saveCoverLetter, saveRoadmap } from "@/lib/career-api";
 import type { AssistantMessage } from "@/lib/types/assistant";
@@ -25,7 +26,7 @@ export function ChatMessage({ message }: Props) {
   if (message.role === "system") {
     return (
       <div className="flex justify-center">
-        <div className="max-w-2xl rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-500">
+        <div className="max-w-2xl rounded-full border border-[var(--border)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-medium text-[var(--muted-foreground)]">
           {message.content}
         </div>
       </div>
@@ -42,15 +43,15 @@ export function ChatMessage({ message }: Props) {
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <article
-        className={`group max-w-[78%] rounded-lg px-4 py-3 shadow-sm ${
+        className={`group max-w-[82%] rounded-[var(--radius-md)] px-4 py-3 shadow-sm ${
           isUser
-            ? "bg-[#1A56DB] text-white"
-            : "border border-zinc-200 bg-white text-zinc-900"
+            ? "bg-[var(--foreground)] text-[var(--background)]"
+            : "border border-[var(--border)] bg-[var(--surface-raised)] text-[var(--foreground)]"
         }`}
       >
         {showNoResumeBanner ? (
-          <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            No CV on file — upload your resume at{" "}
+          <p className="mb-3 rounded-2xl border border-[var(--warning)]/30 bg-[var(--warning-soft)] px-3 py-2 text-xs text-[var(--warning)]">
+            No CV on file - upload your resume at{" "}
             <a className="font-semibold underline" href="/resume">
               /resume
             </a>{" "}
@@ -64,7 +65,7 @@ export function ChatMessage({ message }: Props) {
           </p>
         ) : (
           <>
-            <div className="prose prose-sm max-w-none prose-zinc leading-6">
+            <div className="prose prose-sm max-w-none leading-6 text-[var(--foreground)] prose-a:text-[var(--primary)] prose-headings:text-[var(--foreground)] prose-li:text-[var(--foreground)] prose-p:text-[var(--foreground)] prose-strong:text-[var(--foreground)]">
               <ReactMarkdown>{message.content}</ReactMarkdown>
             </div>
             {hasResume && evidenceChunks.length > 0 ? (
@@ -77,7 +78,7 @@ export function ChatMessage({ message }: Props) {
 
         <p
           className={`mt-2 text-[11px] font-medium opacity-0 transition group-hover:opacity-100 ${
-            isUser ? "text-blue-100" : "text-zinc-400"
+            isUser ? "text-[var(--background)]/70" : "text-[var(--muted)]"
           }`}
         >
           {format(new Date(message.created_at), "MMM d, h:mm a")}
@@ -91,9 +92,9 @@ function CvEvidenceSection({ chunks }: { chunks: EvidenceChunk[] }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="mt-3 border-t border-zinc-100 pt-3">
+    <div className="mt-3 border-t border-[var(--border)] pt-3">
       <button
-        className="flex w-full items-center justify-between gap-2 text-left text-xs font-semibold text-indigo-700"
+        className="flex w-full items-center justify-between gap-2 text-left text-xs font-semibold text-[var(--primary)]"
         type="button"
         onClick={() => setOpen((value) => !value)}
       >
@@ -154,10 +155,7 @@ function DraftAction({
           `Saved cover letter (${result.used_resume_chunks.length} CV sections used).`,
         );
       } else {
-        const role =
-          targetRole ||
-          extractTargetRole(sourceMessage) ||
-          "Target role";
+        const role = targetRole || extractTargetRole(sourceMessage) || "Target role";
         const weeks = extractWeekCount(sourceMessage) ?? 8;
         const result = await saveRoadmap({
           target_role: role,
@@ -179,18 +177,19 @@ function DraftAction({
   }
 
   return (
-    <div className="mt-3 border-t border-zinc-100 pt-3">
-      <button
-        className="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+    <div className="mt-3 border-t border-[var(--border)] pt-3">
+      <Button
+        size="sm"
+        variant="secondary"
+        className="text-xs"
         disabled={loading}
-        type="button"
         onClick={() => void handleSave()}
       >
         {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
         {action.label}
-      </button>
+      </Button>
       {status ? (
-        <p className="mt-2 text-xs text-zinc-600">{status}</p>
+        <p className="mt-2 text-xs text-[var(--muted-foreground)]">{status}</p>
       ) : null}
     </div>
   );
@@ -198,8 +197,7 @@ function DraftAction({
 
 function assistantMessageAction(message: AssistantMessage) {
   const intent = message.metadata?.intent as AssistantIntent | undefined;
-  const canSaveCover =
-    message.metadata?.can_save_cover_letter === true;
+  const canSaveCover = message.metadata?.can_save_cover_letter === true;
   const canSaveRoadmap = message.metadata?.can_save_roadmap === true;
 
   if (intent === "roadmap_generation" && canSaveRoadmap) {

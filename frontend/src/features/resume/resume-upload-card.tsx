@@ -156,7 +156,7 @@ export function ResumeUploadCard({
           <div>
             <h2 className={resumeCardHeader}>Upload CV</h2>
             <p className={resumeCardSubtext}>
-              PDF or DOCX · max 10 MB · parsed into sections, skills &amp; search index
+              PDF or DOCX - max 10 MB - parsed into sections, skills &amp; search index
             </p>
           </div>
           {isDone && (
@@ -200,7 +200,7 @@ export function ResumeUploadCard({
                 {selectedFile.name}
               </p>
               <p className="mt-0.5 text-xs text-zinc-500">
-                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB ·{" "}
+                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB -{" "}
                 <span className="text-indigo-600">View preview</span>
               </p>
             </>
@@ -248,7 +248,7 @@ export function ResumeUploadCard({
           <SpinnerButton
             className={`${resumePrimaryButton} flex-1`}
             loading={isUploading}
-            loadingLabel="Processing…"
+            loadingLabel="Processing..."
             disabled={isUploading || !selectedFile}
             type="button"
             onClick={handleUpload}

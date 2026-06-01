@@ -39,7 +39,7 @@ export function RegenerateCoverLetterDialog({
           <SpinnerButton
             type="button"
             loading={isRegenerating}
-            loadingLabel="Regenerating…"
+            loadingLabel="Regenerating..."
             onClick={onConfirm}
             className="h-9 px-3"
           >

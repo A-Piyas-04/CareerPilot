@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { AppNav } from "@/components/nav/AppNav";
+import { AppShell } from "@/components/nav/AppNav";
 import { CoverLetterDetailClient } from "@/components/cover-letters/CoverLetterDetailClient";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,9 +23,8 @@ export default async function CoverLetterDetailPage({
   const { id } = await params;
 
   return (
-    <>
-      <AppNav />
+    <AppShell>
       <CoverLetterDetailClient coverLetterId={id} />
-    </>
+    </AppShell>
   );
 }

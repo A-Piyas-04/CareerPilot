@@ -3,7 +3,7 @@
 import { FileText } from "lucide-react";
 import { FormEvent, useState } from "react";
 
-import { SpinnerButton } from "@/components/ui";
+import { Card, Input, Select, SpinnerButton, Textarea } from "@/components/ui";
 import type {
   CoverLetterTone,
   GenerateCoverLetterRequest,
@@ -52,104 +52,103 @@ export function CoverLetterGenerateForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
-    >
-      <div>
-        <h1 className="text-xl font-semibold text-zinc-950">
-          Cover Letter Generator
-        </h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          Create a tailored letter from a job description and verified CV
-          context.
-        </p>
-      </div>
+    <Card className="p-5">
+      <form onSubmit={handleSubmit}>
+        <div>
+          <h1 className="text-xl font-semibold text-[var(--foreground)]">
+            Cover Letter Generator
+          </h1>
+          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+            Create a tailored letter from a job description and verified CV
+            context.
+          </p>
+        </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">Job title</span>
-          <input
-            value={jobTitle}
-            onChange={(event) => setJobTitle(event.target.value)}
-            placeholder="ML Engineer Intern"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
-            required
-          />
-        </label>
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-[var(--foreground)]">
+              Job title
+            </span>
+            <Input
+              value={jobTitle}
+              onChange={(event) => setJobTitle(event.target.value)}
+              placeholder="ML Engineer Intern"
+              required
+            />
+          </label>
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">
-            Company name
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-[var(--foreground)]">
+              Company name
+            </span>
+            <Input
+              value={companyName}
+              onChange={(event) => setCompanyName(event.target.value)}
+              placeholder="Acme Corp"
+              required
+            />
+          </label>
+        </div>
+
+        <label className="mt-4 flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-[var(--foreground)]">
+            Job description
           </span>
-          <input
-            value={companyName}
-            onChange={(event) => setCompanyName(event.target.value)}
-            placeholder="Acme Corp"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+          <Textarea
+            value={jobDescription}
+            onChange={(event) => setJobDescription(event.target.value)}
+            placeholder="Paste the role description, requirements, and responsibilities."
+            className="min-h-40 resize-y"
             required
           />
         </label>
-      </div>
 
-      <label className="mt-4 flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zinc-800">
-          Job description
-        </span>
-        <textarea
-          value={jobDescription}
-          onChange={(event) => setJobDescription(event.target.value)}
-          placeholder="Paste the role description, requirements, and responsibilities."
-          className="min-h-40 resize-y rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
-          required
-        />
-      </label>
+        <div className="mt-4 grid gap-4 lg:grid-cols-[220px_1fr]">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-[var(--foreground)]">
+              Tone
+            </span>
+            <Select
+              value={tone}
+              onChange={(event) => setTone(event.target.value as CoverLetterTone)}
+            >
+              {TONES.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </label>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[220px_1fr]">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">Tone</span>
-          <select
-            value={tone}
-            onChange={(event) => setTone(event.target.value as CoverLetterTone)}
-            className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-[var(--foreground)]">
+              Extra notes
+            </span>
+            <Input
+              value={extraNotes}
+              onChange={(event) => setExtraNotes(event.target.value)}
+              placeholder="Mention my backend internship"
+            />
+          </label>
+        </div>
+
+        <div className="mt-5 flex justify-end">
+          <SpinnerButton
+            type="submit"
+            loading={isGenerating}
+            loadingLabel="Generating..."
+            disabled={
+              isGenerating ||
+              !jobTitle.trim() ||
+              !companyName.trim() ||
+              !jobDescription.trim()
+            }
+            icon={<FileText className="h-4 w-4" />}
           >
-            {TONES.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">
-            Extra notes
-          </span>
-          <input
-            value={extraNotes}
-            onChange={(event) => setExtraNotes(event.target.value)}
-            placeholder="Mention my backend internship"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none transition focus:border-[#1A56DB] focus:ring-2 focus:ring-blue-100"
-          />
-        </label>
-      </div>
-
-      <div className="mt-5 flex justify-end">
-        <SpinnerButton
-          type="submit"
-          loading={isGenerating}
-          loadingLabel="Generating…"
-          disabled={
-            isGenerating ||
-            !jobTitle.trim() ||
-            !companyName.trim() ||
-            !jobDescription.trim()
-          }
-          icon={<FileText className="h-4 w-4" />}
-        >
-          Generate Cover Letter
-        </SpinnerButton>
-      </div>
-    </form>
+            Generate Cover Letter
+          </SpinnerButton>
+        </div>
+      </form>
+    </Card>
   );
 }

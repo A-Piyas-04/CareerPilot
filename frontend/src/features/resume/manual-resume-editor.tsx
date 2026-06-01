@@ -169,7 +169,7 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
         <SpinnerButton
           type="button"
           loading={isSaving}
-          loadingLabel="Saving…"
+          loadingLabel="Saving..."
           onClick={handleSave}
           icon={<Save className="h-4 w-4" />}
           className="rounded-lg"

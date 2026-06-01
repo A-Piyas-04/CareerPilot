@@ -13,6 +13,8 @@ import {
 import { useState } from "react";
 import type { ReactNode } from "react";
 
+import { ConfirmDialog } from "@/components/ui";
+
 import { formatDate } from "./format";
 import { useCancelGoal, useUpdateGoal } from "./hooks";
 import { TaskList } from "./task-list";
@@ -26,6 +28,7 @@ type Props = {
 
 export function GoalCard({ goal, onEdit }: Props) {
   const [isExpanded, setIsExpanded] = useState(goal.status === "active");
+  const [cancelOpen, setCancelOpen] = useState(false);
   const updateMutation = useUpdateGoal(goal.id);
   const cancelMutation = useCancelGoal();
   const completedTasks = goal.tasks.filter((task) => task.status === "done").length;
@@ -37,14 +40,12 @@ export function GoalCard({ goal, onEdit }: Props) {
   }
 
   async function handleCancel() {
-    if (!confirm("Cancel this goal? Linked tasks will stay available for history.")) {
-      return;
-    }
-
     await cancelMutation.mutateAsync(goal.id);
+    setCancelOpen(false);
   }
 
   return (
+    <>
     <article className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
       <div className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -106,7 +107,7 @@ export function GoalCard({ goal, onEdit }: Props) {
             {goal.status !== "cancelled" ? (
               <IconButton
                 label="Cancel goal"
-                onClick={handleCancel}
+                onClick={() => setCancelOpen(true)}
                 disabled={cancelMutation.isPending}
                 danger
               >
@@ -150,6 +151,15 @@ export function GoalCard({ goal, onEdit }: Props) {
 
       {isExpanded ? <TaskList goal={goal} /> : null}
     </article>
+    <ConfirmDialog
+      isOpen={cancelOpen}
+      title="Cancel this goal?"
+      description="Linked tasks will stay available for history."
+      confirmLabel="Cancel goal"
+      onCancel={() => setCancelOpen(false)}
+      onConfirm={() => void handleCancel()}
+    />
+    </>
   );
 }
 

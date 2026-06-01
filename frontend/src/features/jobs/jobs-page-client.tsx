@@ -1,8 +1,9 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { ListCardSkeleton, Skeleton } from "@/components/ui";
+import { EmptyState, ListCardSkeleton, PageHeader, Skeleton } from "@/components/ui";
 import { useResumes } from "@/features/resume/hooks";
 import { pickPrimaryResume } from "@/features/resume/types";
 
@@ -25,29 +26,30 @@ export function JobsPageClient() {
   const matchesQuery = useJobMatches(selectedResumeId);
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f6f7f9]">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3 px-5 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              CareerPilot
-            </p>
-            <h1 className="text-2xl font-semibold text-zinc-950">Job Hunter</h1>
-          </div>
-        </div>
-      </header>
+    <main className="cp-page">
+      <section className="cp-container flex flex-1 flex-col gap-6 py-6">
+        <PageHeader
+          eyebrow="Match engine"
+          icon={Search}
+          title="Job Hunter"
+          description="Search the market, score roles against your CV, and save promising matches into your tracker."
+        />
 
-      <section className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-5 px-5 py-5">
         {resumesQuery.isLoading ? (
-          <Skeleton className="h-24 rounded-lg" />
+          <Skeleton className="h-32 rounded-[var(--radius-md)]" />
         ) : resumes.length === 0 ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            Upload a CV on the{" "}
-            <a className="font-semibold underline" href="/resume">
-              CV Intelligence
-            </a>{" "}
-            page first — the agent needs one to compute fit scores.
-          </div>
+          <EmptyState
+            title="Add a CV before searching"
+            description="The match engine needs a parsed CV to compute fit scores and evidence."
+            action={
+              <a
+                className="text-sm font-semibold text-[var(--primary)] underline-offset-4 hover:underline"
+                href="/resume"
+              >
+                Open CV Intelligence
+              </a>
+            }
+          />
         ) : (
           <JobSearchForm
             resumes={resumes}
@@ -57,20 +59,21 @@ export function JobsPageClient() {
         )}
 
         <div className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
             Matches
           </h2>
 
           {matchesQuery.isLoading ? (
-            <ListCardSkeleton count={3} cardClassName="h-32" className="space-y-3" />
+            <ListCardSkeleton count={3} cardClassName="h-40" className="space-y-3" />
           ) : matchesQuery.error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <div className="rounded-2xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] p-4 text-sm text-[var(--danger)]">
               {matchesQuery.error.message}
             </div>
           ) : (matchesQuery.data ?? []).length === 0 ? (
-            <div className="rounded-lg border border-zinc-200 bg-white p-6 text-center text-sm text-zinc-600">
-              No matches yet. Run a search above to discover jobs.
-            </div>
+            <EmptyState
+              title="No matches yet"
+              description="Run a search above to discover jobs scored against your selected resume."
+            />
           ) : (
             <div className="flex flex-col gap-3">
               {(matchesQuery.data ?? []).map((m) => (

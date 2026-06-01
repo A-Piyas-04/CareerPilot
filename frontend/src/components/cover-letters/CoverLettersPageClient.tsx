@@ -1,10 +1,11 @@
 "use client";
 
+import { Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { CoverLetterGenerateForm } from "@/components/cover-letters/CoverLetterGenerateForm";
 import { CoverLetterList } from "@/components/cover-letters/CoverLetterList";
-import { SubmissionProgress } from "@/components/ui";
+import { Card, PageHeader, SubmissionProgress } from "@/components/ui";
 import { COVER_LETTER_GENERATE_STEPS } from "@/lib/progress/cover-letter-progress";
 import {
   useCoverLetters,
@@ -26,8 +27,16 @@ export function CoverLettersPageClient() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-49px)] bg-zinc-50 px-6 py-6">
-      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+    <main className="cp-page px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
+        <PageHeader
+          eyebrow="Documents"
+          icon={Mail}
+          title="Cover Letter Studio"
+          description="Generate, refine, copy, and revisit tailored letters grounded in your CV."
+        />
+      </div>
+      <div className="mx-auto mt-6 grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
         <div className="space-y-4">
           <CoverLetterGenerateForm
             isGenerating={generateCoverLetter.isPending}
@@ -41,12 +50,12 @@ export function CoverLettersPageClient() {
           />
         </div>
 
-        <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+        <Card className="p-5">
           <div className="mb-4">
-            <h2 className="text-base font-semibold text-zinc-950">
+            <h2 className="text-base font-semibold text-[var(--foreground)]">
               Saved cover letters
             </h2>
-            <p className="mt-1 text-sm text-zinc-600">
+            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
               Review, copy, edit, or regenerate previous versions.
             </p>
           </div>
@@ -55,7 +64,7 @@ export function CoverLettersPageClient() {
             error={coverLetters.error?.message}
             isLoading={coverLetters.isLoading}
           />
-        </section>
+        </Card>
       </div>
     </main>
   );

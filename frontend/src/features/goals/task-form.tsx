@@ -172,7 +172,7 @@ export function TaskForm({
           type="submit"
           variant="emerald"
           loading={isPending}
-          loadingLabel="Saving…"
+          loadingLabel="Saving..."
           className="h-9 px-3"
         >
           {submitLabel}

@@ -40,10 +40,10 @@ export function MessageComposer({ disabled, isSending, onSend }: Props) {
   }
 
   return (
-    <div className="border-t border-zinc-200 bg-white p-4">
-      <div className="mx-auto flex max-w-4xl items-end gap-3 rounded-lg border border-zinc-300 bg-white p-2 shadow-sm focus-within:border-[#1A56DB] focus-within:ring-2 focus-within:ring-blue-100">
+    <div className="border-t border-[var(--border)] bg-[var(--surface-glass)] p-4 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-4xl items-end gap-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-raised)] p-2 shadow-[var(--shadow-soft)] focus-within:border-[var(--primary)] focus-within:ring-4 focus-within:ring-[var(--ring)]">
         <textarea
-          className="max-h-40 min-h-12 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-zinc-950 outline-none"
+          className="max-h-40 min-h-12 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]"
           value={content}
           onChange={(event) => setContent(event.target.value)}
           onKeyDown={handleKeyDown}
@@ -68,7 +68,7 @@ export function MessageComposer({ disabled, isSending, onSend }: Props) {
           <span className="sr-only">Send message</span>
         </SpinnerButton>
       </div>
-      <p className="mx-auto mt-2 max-w-4xl text-xs text-zinc-500">
+      <p className="mx-auto mt-2 max-w-4xl text-xs text-[var(--muted-foreground)]">
         Enter to send, Shift+Enter for a new line. Responses stream from
         CareerPilot and are saved to this conversation.
       </p>

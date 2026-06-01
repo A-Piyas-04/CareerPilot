@@ -3,7 +3,14 @@
 import { X } from "lucide-react";
 import { FormEvent, useState } from "react";
 
-import { SpinnerButton, SubmissionProgress } from "@/components/ui";
+import {
+  Button,
+  IconButton,
+  Input,
+  SpinnerButton,
+  SubmissionProgress,
+  Textarea,
+} from "@/components/ui";
 
 import { useCreateApplication } from "./hooks";
 
@@ -42,32 +49,26 @@ export function AddApplicationDrawer({ isOpen, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-zinc-950/30">
-      <aside className="ml-auto flex h-full w-full max-w-md flex-col bg-white shadow-xl">
-        <header className="flex h-16 items-center justify-between border-b border-zinc-200 px-5">
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+      <aside className="ml-auto flex h-full w-full max-w-md flex-col border-l border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-strong)]">
+        <header className="flex h-16 items-center justify-between border-b border-[var(--border)] px-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
               New card
             </p>
-            <h2 className="text-lg font-semibold text-zinc-950">
+            <h2 className="text-lg font-semibold text-[var(--foreground)]">
               Add application
             </h2>
           </div>
-          <button
-            className="rounded-md p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <IconButton label="Close" variant="ghost" onClick={onClose}>
             <X className="h-5 w-5" />
-          </button>
+          </IconButton>
         </header>
 
         <form className="flex flex-1 flex-col" onSubmit={handleSubmit}>
           <div className="flex-1 space-y-4 overflow-y-auto p-5">
             <Field label="Job title" required>
-              <input
-                className="h-11 w-full rounded-md border border-zinc-300 px-3 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              <Input
                 value={form.manual_job_title}
                 onChange={(event) =>
                   setForm({ ...form, manual_job_title: event.target.value })
@@ -78,8 +79,7 @@ export function AddApplicationDrawer({ isOpen, onClose }: Props) {
             </Field>
 
             <Field label="Company">
-              <input
-                className="h-11 w-full rounded-md border border-zinc-300 px-3 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              <Input
                 value={form.manual_company}
                 onChange={(event) =>
                   setForm({ ...form, manual_company: event.target.value })
@@ -89,8 +89,7 @@ export function AddApplicationDrawer({ isOpen, onClose }: Props) {
             </Field>
 
             <Field label="Location">
-              <input
-                className="h-11 w-full rounded-md border border-zinc-300 px-3 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              <Input
                 value={form.manual_location}
                 onChange={(event) =>
                   setForm({ ...form, manual_location: event.target.value })
@@ -100,8 +99,7 @@ export function AddApplicationDrawer({ isOpen, onClose }: Props) {
             </Field>
 
             <Field label="Deadline">
-              <input
-                className="h-11 w-full rounded-md border border-zinc-300 px-3 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              <Input
                 type="date"
                 value={form.deadline}
                 onChange={(event) =>
@@ -111,8 +109,8 @@ export function AddApplicationDrawer({ isOpen, onClose }: Props) {
             </Field>
 
             <Field label="Notes">
-              <textarea
-                className="min-h-36 w-full resize-y rounded-md border border-zinc-300 px-3 py-2 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              <Textarea
+                className="min-h-36 resize-y"
                 value={form.notes}
                 onChange={(event) =>
                   setForm({ ...form, notes: event.target.value })
@@ -122,7 +120,7 @@ export function AddApplicationDrawer({ isOpen, onClose }: Props) {
             </Field>
 
             {mutation.error ? (
-              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="rounded-2xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
                 {mutation.error.message}
               </p>
             ) : null}
@@ -135,19 +133,15 @@ export function AddApplicationDrawer({ isOpen, onClose }: Props) {
             className="mx-5 mb-3"
           />
 
-          <footer className="flex items-center justify-end gap-3 border-t border-zinc-200 p-5">
-            <button
-              className="h-10 rounded-md border border-zinc-300 px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-              type="button"
-              onClick={onClose}
-            >
+          <footer className="flex items-center justify-end gap-3 border-t border-[var(--border)] p-5">
+            <Button variant="secondary" onClick={onClose}>
               Cancel
-            </button>
+            </Button>
             <SpinnerButton
               type="submit"
               variant="emerald"
               loading={mutation.isPending}
-              loadingLabel="Adding…"
+              loadingLabel="Adding..."
             >
               Add card
             </SpinnerButton>
@@ -169,9 +163,9 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-zinc-700">
+      <span className="mb-1 block text-sm font-medium text-[var(--foreground)]">
         {label}
-        {required ? <span className="text-red-600"> *</span> : null}
+        {required ? <span className="text-[var(--danger)]"> *</span> : null}
       </span>
       {children}
     </label>

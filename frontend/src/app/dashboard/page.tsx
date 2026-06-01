@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { DashboardPageClient } from "@/components/dashboard/DashboardPageClient";
-import { AppNav } from "@/components/nav/AppNav";
+import { AppShell } from "@/components/nav/AppNav";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
@@ -15,9 +15,8 @@ export default async function DashboardPage() {
   }
 
   return (
-    <>
-      <AppNav />
+    <AppShell>
       <DashboardPageClient />
-    </>
+    </AppShell>
   );
 }

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { ChatWorkspace } from "@/components/chat/ChatWorkspace";
-import { AppNav } from "@/components/nav/AppNav";
+import { AppShell } from "@/components/nav/AppNav";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ChatPage() {
@@ -15,9 +15,8 @@ export default async function ChatPage() {
   }
 
   return (
-    <>
-      <AppNav />
+    <AppShell>
       <ChatWorkspace />
-    </>
+    </AppShell>
   );
 }

@@ -3,6 +3,7 @@
 import { RefreshCw, Sparkles } from "lucide-react";
 
 import { AiNudgeCard } from "@/components/dashboard/AiNudgeCard";
+import { Button, Card, EmptyState } from "@/components/ui";
 import { useAiNudges } from "@/lib/hooks/useAiNudges";
 import { QUOTA_EXCEEDED_MESSAGE } from "@/lib/reminders/types";
 
@@ -18,22 +19,24 @@ export function AiNudges() {
   } = useAiNudges();
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+    <Card className="p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-50 text-[#1A56DB]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]">
               <Sparkles className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold text-zinc-950">AI Nudges</h2>
-              <p className="mt-1 text-sm text-zinc-500">
+              <h2 className="text-lg font-semibold text-[var(--foreground)]">
+                AI Nudges
+              </h2>
+              <p className="mt-1 text-sm text-[var(--muted-foreground)]">
                 Personalized suggestions based on your recent progress.
               </p>
             </div>
           </div>
           {generatedAt ? (
-            <p className="mt-3 text-xs font-medium text-zinc-400">
+            <p className="mt-3 text-xs font-medium text-[var(--muted)]">
               {isCached ? "Cached for today" : "Generated"} at{" "}
               {new Date(generatedAt).toLocaleTimeString([], {
                 hour: "numeric",
@@ -42,36 +45,39 @@ export function AiNudges() {
             </p>
           ) : null}
         </div>
-        <button
-          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-zinc-200 px-3 text-sm font-semibold text-zinc-700 hover:border-[#1A56DB] hover:text-[#1A56DB] disabled:cursor-not-allowed disabled:opacity-60"
+        <Button
+          variant="secondary"
+          size="sm"
           disabled={isLoading}
           onClick={refreshNudges}
           type="button"
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           Refresh
-        </button>
+        </Button>
       </div>
 
       <div className="mt-5">
         {isLoading ? (
-          <div className="rounded-md border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
+          <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface-subtle)] p-4 text-sm text-[var(--muted-foreground)]">
             Generating personalized nudges...
           </div>
         ) : error ? (
           <div
-            className={`rounded-md border p-4 text-sm ${
+            className={`rounded-2xl border p-4 text-sm ${
               errorCode === "quota_exceeded"
-                ? "border-amber-200 bg-amber-50 text-amber-800"
-                : "border-red-200 bg-red-50 text-red-700"
+                ? "border-[var(--warning)]/30 bg-[var(--warning-soft)] text-[var(--warning)]"
+                : "border-[var(--danger)]/30 bg-[var(--danger-soft)] text-[var(--danger)]"
             }`}
           >
             {errorCode === "quota_exceeded" ? QUOTA_EXCEEDED_MESSAGE : error}
           </div>
         ) : nudges.length === 0 ? (
-          <div className="rounded-md border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
-            No nudges right now. You are all caught up.
-          </div>
+          <EmptyState
+            className="p-5"
+            title="No nudges right now"
+            description="You are all caught up."
+          />
         ) : (
           <div className="grid gap-3">
             {nudges.map((nudge) => (
@@ -80,6 +86,6 @@ export function AiNudges() {
           </div>
         )}
       </div>
-    </section>
+    </Card>
   );
 }

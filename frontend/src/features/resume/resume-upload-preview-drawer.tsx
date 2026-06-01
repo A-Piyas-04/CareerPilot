@@ -220,7 +220,7 @@ export function ResumeUploadPreviewDrawer({
             </div>
           )}
 
-          {/* Success — stats from ResumeDetail */}
+          {/* Success - stats from ResumeDetail */}
           {phase === "success" && detail && (
             <div className="mt-5 space-y-5">
               <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -287,7 +287,7 @@ export function ResumeUploadPreviewDrawer({
               variant="emerald"
               fullWidth
               loading={isUploading}
-              loadingLabel="Processing…"
+              loadingLabel="Processing..."
               disabled={isUploading}
               onClick={onUpload}
               icon={<Upload className="h-4 w-4" />}

@@ -63,7 +63,7 @@ export function ResumeAnswerBox({ resumeId, resumeStatus }: ResumeAnswerBoxProps
           <div>
             <h2 className={resumeCardHeader}>Ask about your CV</h2>
             <p className={resumeCardSubtext}>
-              AI answers grounded in your resume — no hallucination.
+              AI answers grounded in your resume - no hallucination.
             </p>
           </div>
         </div>
@@ -122,7 +122,7 @@ export function ResumeAnswerBox({ resumeId, resumeStatus }: ResumeAnswerBoxProps
         {answerMutation.isPending ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Thinking…
+            Thinking...
           </>
         ) : (
           <>

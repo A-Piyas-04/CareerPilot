@@ -12,7 +12,7 @@ import {
 import { CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { ListCardSkeleton } from "@/components/ui";
+import { ConfirmDialog, ListCardSkeleton } from "@/components/ui";
 import type { StandaloneTask } from "@/lib/hooks/useTasks";
 import {
   useBulkCompleteStandaloneTasks,
@@ -45,6 +45,7 @@ export function TaskList() {
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const tasksQuery = useTasks();
   const bulkCompleteMutation = useBulkCompleteStandaloneTasks();
   const bulkDeleteMutation = useBulkDeleteStandaloneTasks();
@@ -74,12 +75,9 @@ export function TaskList() {
   }
 
   async function handleBulkDelete() {
-    if (!confirm("Delete selected tasks?")) {
-      return;
-    }
-
     await bulkDeleteMutation.mutateAsync(selectedIds);
     setSelectedTaskIds(new Set());
+    setBulkDeleteOpen(false);
   }
 
   return (
@@ -140,7 +138,7 @@ export function TaskList() {
             <button
               className="flex h-8 items-center gap-1.5 rounded-md border border-red-200 bg-white px-2.5 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
               type="button"
-              onClick={handleBulkDelete}
+              onClick={() => setBulkDeleteOpen(true)}
               disabled={bulkDeleteMutation.isPending}
             >
               <Trash2 className="h-4 w-4" />
@@ -171,6 +169,14 @@ export function TaskList() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={bulkDeleteOpen}
+        title="Delete selected tasks?"
+        description="This removes the selected tasks from your list."
+        confirmLabel="Delete"
+        onCancel={() => setBulkDeleteOpen(false)}
+        onConfirm={() => void handleBulkDelete()}
+      />
     </aside>
   );
 }

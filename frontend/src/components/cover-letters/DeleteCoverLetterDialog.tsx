@@ -40,7 +40,7 @@ export function DeleteCoverLetterDialog({
             type="button"
             variant="danger"
             loading={isDeleting}
-            loadingLabel="Deleting…"
+            loadingLabel="Deleting..."
             onClick={onConfirm}
             className="h-9 px-3"
           >

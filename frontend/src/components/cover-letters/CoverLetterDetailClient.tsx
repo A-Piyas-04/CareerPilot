@@ -213,7 +213,7 @@ export function CoverLetterDetailClient({
                   <SpinnerButton
                     type="button"
                     loading={updateCoverLetter.isPending}
-                    loadingLabel="Saving…"
+                    loadingLabel="Saving..."
                     onClick={handleSave}
                     icon={<Save className="h-4 w-4" />}
                     className="h-9 px-3"

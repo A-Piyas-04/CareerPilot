@@ -68,7 +68,7 @@ export function ResumeQueryBox({
             </span>
           </div>
           <p className="mt-0.5 text-sm text-zinc-500">
-            Inspect raw retrieval — the same chunks downstream agents use.
+            Inspect raw retrieval - the same chunks downstream agents use.
           </p>
         </div>
         <ChevronDown
@@ -108,7 +108,7 @@ export function ResumeQueryBox({
             {queryMutation.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Searching…
+                Searching...
               </>
             ) : (
               <>

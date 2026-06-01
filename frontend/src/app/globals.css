@@ -1,8 +1,74 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f7f9;
-  --foreground: #171717;
+  --font-geist-sans: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --background: #f7f6f2;
+  --foreground: #111315;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-subtle: #f0eee8;
+  --surface-muted: #e8e5dc;
+  --surface-glass: rgba(255, 255, 255, 0.74);
+  --border: rgba(21, 23, 26, 0.1);
+  --border-strong: rgba(21, 23, 26, 0.18);
+  --muted: #6f746f;
+  --muted-foreground: #5e645f;
+  --primary: #315eea;
+  --primary-foreground: #ffffff;
+  --primary-soft: #e9edff;
+  --accent: #0f9f82;
+  --accent-soft: #ddf7ef;
+  --violet: #7c3aed;
+  --violet-soft: #efe7ff;
+  --success: #14845f;
+  --success-soft: #dcf7ea;
+  --warning: #b56a00;
+  --warning-soft: #fff1cf;
+  --danger: #c43d4b;
+  --danger-soft: #ffe4e8;
+  --ring: rgba(49, 94, 234, 0.36);
+  --shadow-soft: 0 1px 2px rgba(17, 19, 21, 0.05),
+    0 12px 36px rgba(17, 19, 21, 0.07);
+  --shadow-strong: 0 24px 80px rgba(17, 19, 21, 0.16);
+  --shadow-glow: 0 24px 80px rgba(49, 94, 234, 0.2);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --nav-width: 284px;
+}
+
+.dark {
+  --background: #10120f;
+  --foreground: #f4f1e9;
+  --surface: #171a17;
+  --surface-raised: #1c201c;
+  --surface-subtle: #222720;
+  --surface-muted: #2b3129;
+  --surface-glass: rgba(28, 32, 28, 0.76);
+  --border: rgba(244, 241, 233, 0.1);
+  --border-strong: rgba(244, 241, 233, 0.18);
+  --muted: #a8aca4;
+  --muted-foreground: #bdc0b7;
+  --primary: #8aa3ff;
+  --primary-foreground: #10120f;
+  --primary-soft: rgba(138, 163, 255, 0.16);
+  --accent: #54d6b6;
+  --accent-soft: rgba(84, 214, 182, 0.15);
+  --violet: #b79cff;
+  --violet-soft: rgba(183, 156, 255, 0.16);
+  --success: #65d6a2;
+  --success-soft: rgba(101, 214, 162, 0.15);
+  --warning: #f6c261;
+  --warning-soft: rgba(246, 194, 97, 0.15);
+  --danger: #ff8694;
+  --danger-soft: rgba(255, 134, 148, 0.15);
+  --ring: rgba(138, 163, 255, 0.44);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.28),
+    0 18px 50px rgba(0, 0, 0, 0.32);
+  --shadow-strong: 0 30px 90px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 24px 90px rgba(84, 214, 182, 0.16);
 }
 
 @theme inline {
@@ -16,10 +82,143 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  text-rendering: geometricPrecision;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(circle at top left, rgba(49, 94, 234, 0.14), transparent 32rem),
+    radial-gradient(circle at 86% 8%, rgba(15, 159, 130, 0.14), transparent 30rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), transparent 34rem);
+}
+
+.dark body::before {
+  background:
+    radial-gradient(circle at top left, rgba(138, 163, 255, 0.16), transparent 32rem),
+    radial-gradient(circle at 86% 8%, rgba(84, 214, 182, 0.14), transparent 30rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 34rem);
 }
 
 button,
 input,
+select,
 textarea {
   font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+.cp-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.36), transparent 20rem),
+    var(--background);
+  color: var(--foreground);
+}
+
+.dark .cp-page {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 20rem),
+    var(--background);
+}
+
+.cp-container {
+  width: min(100%, 1480px);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 2vw, 2rem);
+}
+
+.cp-card {
+  border: 1px solid var(--border);
+  background: var(--surface-glass);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(20px);
+}
+
+.cp-focus {
+  outline: none;
+}
+
+.cp-focus:focus-visible {
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.rbc-calendar {
+  color: var(--foreground);
+}
+
+.rbc-toolbar button {
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+  background: var(--surface-raised) !important;
+  border-radius: 999px !important;
+}
+
+.rbc-toolbar button.rbc-active,
+.rbc-toolbar button:hover {
+  background: var(--foreground) !important;
+  color: var(--background) !important;
+  box-shadow: none !important;
+}
+
+.rbc-month-view,
+.rbc-time-view,
+.rbc-agenda-view {
+  border-color: var(--border) !important;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.rbc-header,
+.rbc-month-row,
+.rbc-day-bg,
+.rbc-time-content,
+.rbc-time-header-content,
+.rbc-time-slot,
+.rbc-timeslot-group {
+  border-color: var(--border) !important;
+}
+
+.rbc-off-range-bg {
+  background: var(--surface-subtle) !important;
+}
+
+.rbc-today {
+  background: var(--primary-soft) !important;
 }

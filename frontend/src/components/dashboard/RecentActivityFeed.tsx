@@ -3,6 +3,7 @@
 import { CheckCircle2, CircleDot, GitPullRequestArrow, Map } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
+import { Card, EmptyState } from "@/components/ui";
 import type { RecentActivityItem } from "@/lib/dashboard/types";
 
 type RecentActivityFeedProps = {
@@ -11,14 +12,20 @@ type RecentActivityFeedProps = {
 
 export function RecentActivityFeed({ items }: RecentActivityFeedProps) {
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-zinc-950">Recent Activity</h2>
-      <p className="mt-1 text-sm text-zinc-500">Latest progress across modules</p>
+    <Card className="p-5">
+      <h2 className="text-lg font-semibold text-[var(--foreground)]">
+        Recent Activity
+      </h2>
+      <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+        Latest progress across modules
+      </p>
 
       {items.length === 0 ? (
-        <div className="mt-5 rounded-md border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
-          No recent activity yet.
-        </div>
+        <EmptyState
+          className="mt-5 p-5"
+          title="No recent activity yet"
+          description="Updates from applications, roadmap items, and tasks will appear here."
+        />
       ) : (
         <div className="mt-5 space-y-3">
           {items.map((item) => {
@@ -27,13 +34,17 @@ export function RecentActivityFeed({ items }: RecentActivityFeedProps) {
 
             return (
               <article className="flex gap-3" key={item.id}>
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1A56DB]">
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
                   <Icon className="h-4 w-4" />
                 </span>
-                <div className="min-w-0 flex-1 border-b border-zinc-100 pb-3">
-                  <p className="text-sm font-semibold text-zinc-950">{item.title}</p>
-                  <p className="mt-1 text-sm text-zinc-500">{item.description}</p>
-                  <p className="mt-1 text-xs font-medium text-zinc-400">
+                <div className="min-w-0 flex-1 border-b border-[var(--border)] pb-3">
+                  <p className="text-sm font-semibold text-[var(--foreground)]">
+                    {item.title}
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                    {item.description}
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-[var(--muted)]">
                     {Number.isNaN(date.getTime())
                       ? "Recently"
                       : formatDistanceToNow(date, { addSuffix: true })}
@@ -44,7 +55,7 @@ export function RecentActivityFeed({ items }: RecentActivityFeedProps) {
           })}
         </div>
       )}
-    </section>
+    </Card>
   );
 }
 

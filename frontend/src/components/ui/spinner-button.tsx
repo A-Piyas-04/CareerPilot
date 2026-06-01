@@ -12,15 +12,15 @@ type SpinnerButtonVariant =
 
 const VARIANT_CLASSES: Record<SpinnerButtonVariant, string> = {
   primary:
-    "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#1A56DB] px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-zinc-300",
+    "inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[var(--foreground)] px-4 text-sm font-semibold text-[var(--background)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] disabled:cursor-not-allowed disabled:opacity-55",
   secondary:
-    "inline-flex h-10 items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-55",
+    "inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface-raised)] px-4 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-subtle)] disabled:cursor-not-allowed disabled:opacity-55",
   danger:
-    "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-300",
+    "inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[var(--danger)] px-4 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-55",
   ghost:
-    "inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-55",
+    "inline-flex h-9 items-center justify-center gap-2 rounded-full px-3 text-sm font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)] disabled:cursor-not-allowed disabled:opacity-55",
   emerald:
-    "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400",
+    "inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-4 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-55 dark:text-[#10120f]",
 };
 
 type SpinnerButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {

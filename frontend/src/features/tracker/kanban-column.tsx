@@ -18,12 +18,12 @@ export function KanbanColumn({
   onOpenApplication,
 }: Props) {
   return (
-    <section className="flex h-[calc(100vh-170px)] min-h-[520px] w-72 shrink-0 flex-col rounded-lg border border-zinc-200 bg-zinc-100">
-      <header className="flex h-14 items-center justify-between border-b border-zinc-200 px-3">
-        <h2 className="text-sm font-semibold text-zinc-900">
+    <section className="flex h-[calc(100vh-220px)] min-h-[540px] w-[19rem] shrink-0 flex-col overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-glass)] shadow-[var(--shadow-soft)] backdrop-blur-xl">
+      <header className="flex h-14 items-center justify-between border-b border-[var(--border)] px-3">
+        <h2 className="text-sm font-semibold text-[var(--foreground)]">
           {STATUS_LABELS[status]}
         </h2>
-        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-zinc-600">
+        <span className="rounded-full bg-[var(--surface-raised)] px-2 py-0.5 text-xs font-semibold text-[var(--muted-foreground)]">
           {applications.length}
         </span>
       </header>
@@ -34,11 +34,11 @@ export function KanbanColumn({
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={`flex-1 space-y-3 overflow-y-auto p-3 transition ${
-              snapshot.isDraggingOver ? "bg-emerald-50" : ""
+              snapshot.isDraggingOver ? "bg-[var(--accent-soft)]" : ""
             }`}
           >
             {applications.length === 0 ? (
-              <div className="flex h-28 items-center justify-center rounded-md border border-dashed border-zinc-300 bg-white px-4 text-center text-sm text-zinc-500">
+              <div className="flex h-28 items-center justify-center rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--surface-raised)] px-4 text-center text-sm text-[var(--muted-foreground)]">
                 No applications here yet
               </div>
             ) : null}

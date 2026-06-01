@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { AppNav } from "@/components/nav/AppNav";
+import { AppShell } from "@/components/nav/AppNav";
 import { RoadmapDetailClient } from "@/components/roadmap/RoadmapDetailClient";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,9 +23,8 @@ export default async function RoadmapDetailPage({
   const { id } = await params;
 
   return (
-    <>
-      <AppNav />
+    <AppShell>
       <RoadmapDetailClient roadmapId={id} />
-    </>
+    </AppShell>
   );
 }

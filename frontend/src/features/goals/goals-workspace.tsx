@@ -1,14 +1,19 @@
 "use client";
 
-import { Briefcase, CalendarDays, LogOut, Plus } from "lucide-react";
+import { Briefcase, CalendarDays, Plus, Target } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { TaskList } from "@/components/tasks/TaskList";
-import { createClient } from "@/lib/supabase/client";
 
-import { ListCardSkeleton } from "@/components/ui";
+import {
+  Button,
+  EmptyState,
+  ListCardSkeleton,
+  PageHeader,
+  Tabs,
+  buttonClassName,
+} from "@/components/ui";
 
 import { GoalCard } from "./goal-card";
 import { GoalFormDrawer } from "./goal-form-drawer";
@@ -19,19 +24,12 @@ import { GOAL_STATUS_LABELS, GOAL_STATUSES } from "./types";
 type GoalFilter = GoalStatus | "all";
 
 export function GoalsWorkspace() {
-  const router = useRouter();
   const [filter, setFilter] = useState<GoalFilter>("active");
   const [isGoalDrawerOpen, setIsGoalDrawerOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<GoalDetail | null>(null);
   const goalsQuery = useGoals(filter === "all" ? undefined : filter);
 
   const goals = useMemo(() => goalsQuery.data ?? [], [goalsQuery.data]);
-
-  async function handleSignOut() {
-    await createClient().auth.signOut();
-    router.replace("/login");
-    router.refresh();
-  }
 
   function handleCreateGoal() {
     setEditingGoal(null);
@@ -44,74 +42,54 @@ export function GoalsWorkspace() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f6f7f9]">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-[1560px] flex-wrap items-center justify-between gap-3 px-5 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              CareerPilot
-            </p>
-            <h1 className="text-2xl font-semibold text-zinc-950">Goals</h1>
-          </div>
-
-          <div className="flex items-center gap-2">
+    <main className="cp-page flex min-h-screen flex-col">
+      <section className="cp-container py-6">
+        <PageHeader
+          eyebrow="Outcomes"
+          icon={Target}
+          title="Goals"
+          description="Turn career ambitions into visible milestones, linked tasks, and weekly progress."
+          actions={
+            <>
             <Link
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+              className={buttonClassName({ variant: "secondary" })}
               href="/calendar"
             >
               <CalendarDays className="h-4 w-4" />
               Calendar
             </Link>
             <Link
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+              className={buttonClassName({ variant: "secondary" })}
               href="/tracker"
             >
               <Briefcase className="h-4 w-4" />
               Tracker
             </Link>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-              type="button"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
-            <button
-              className="flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
-              type="button"
-              onClick={handleCreateGoal}
-            >
+            <Button onClick={handleCreateGoal}>
               <Plus className="h-4 w-4" />
               Add Goal
-            </button>
-          </div>
-        </div>
-      </header>
+            </Button>
+            </>
+          }
+        />
+      </section>
 
-      <section className="mx-auto grid w-full max-w-[1560px] flex-1 gap-5 px-5 py-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <section className="cp-container grid flex-1 gap-5 pb-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="min-w-0 space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            {(["all", ...GOAL_STATUSES] as GoalFilter[]).map((status) => (
-              <button
-                className={`h-9 rounded-md border px-3 text-sm font-semibold transition ${
-                  filter === status
-                    ? "border-emerald-700 bg-emerald-700 text-white"
-                    : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
-                }`}
-                key={status}
-                type="button"
-                onClick={() => setFilter(status)}
-              >
-                {status === "all" ? "All" : GOAL_STATUS_LABELS[status]}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            label="Goal status filter"
+            value={filter}
+            onChange={setFilter}
+            items={(["all", ...GOAL_STATUSES] as GoalFilter[]).map((status) => ({
+              value: status,
+              label: status === "all" ? "All" : GOAL_STATUS_LABELS[status],
+            }))}
+          />
 
           {goalsQuery.isLoading ? (
             <ListCardSkeleton count={3} cardClassName="h-44" className="space-y-3" />
           ) : goalsQuery.error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <div className="rounded-2xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] p-4 text-sm text-[var(--danger)]">
               {goalsQuery.error.message}
             </div>
           ) : goals.length ? (
@@ -121,22 +99,16 @@ export function GoalsWorkspace() {
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center">
-              <h2 className="text-lg font-semibold text-zinc-950">
-                No goals found
-              </h2>
-              <p className="mt-1 text-sm text-zinc-500">
-                Create a goal and break it into linked tasks.
-              </p>
-              <button
-                className="mt-4 inline-flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
-                type="button"
-                onClick={handleCreateGoal}
-              >
-                <Plus className="h-4 w-4" />
-                Add Goal
-              </button>
-            </div>
+            <EmptyState
+              title="No goals found"
+              description="Create a goal and break it into linked tasks."
+              action={
+                <Button onClick={handleCreateGoal}>
+                  <Plus className="h-4 w-4" />
+                  Add Goal
+                </Button>
+              }
+            />
           )}
         </div>
 
