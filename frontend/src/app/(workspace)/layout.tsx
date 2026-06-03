@@ -1,8 +1,8 @@
-import { AppNav } from "@/components/nav/AppNav";
 import {
   NavigationTransitionProvider,
   NavigationTransitionShell,
 } from "@/components/navigation/navigation-transition";
+import { WorkspaceChrome } from "@/components/layout";
 import { WorkspaceAssistLayer } from "@/components/reminders/WorkspaceAssistLayer";
 
 export default function WorkspaceLayout({
@@ -12,9 +12,10 @@ export default function WorkspaceLayout({
 }) {
   return (
     <NavigationTransitionProvider>
-      <AppNav />
-      <WorkspaceAssistLayer />
-      <NavigationTransitionShell>{children}</NavigationTransitionShell>
+      <WorkspaceChrome>
+        <WorkspaceAssistLayer />
+        <NavigationTransitionShell>{children}</NavigationTransitionShell>
+      </WorkspaceChrome>
     </NavigationTransitionProvider>
   );
 }

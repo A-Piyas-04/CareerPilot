@@ -122,7 +122,7 @@ export function ContentPageSkeleton({
 function PageShell({ children }: { children: ReactNode }) {
   return (
     <main
-      className="min-h-full bg-[var(--cp-page-bg)] px-5 py-6 lg:min-h-[calc(100vh-var(--cp-nav-with-context)-3.5rem)]"
+      className="min-h-full flex-1 bg-[var(--cp-page-bg)] px-5 py-6"
       aria-busy="true"
     >
       {children}
@@ -175,23 +175,25 @@ function ResumePageSkeleton() {
 export function ResumeSummarySkeleton() {
   return (
     <section
-      className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
+      className="rounded-xl border border-zinc-300 bg-white shadow-sm"
       aria-busy="true"
     >
-      <Skeleton className="h-5 w-36" />
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i}>
-            <Skeleton className="h-3 w-16" />
-            <Skeleton className="mt-1 h-4 w-32" />
-          </div>
-        ))}
+      <div className="border-b border-zinc-200 p-5 pb-4">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="mt-2 h-4 w-56" />
       </div>
-      <Skeleton className="mt-6 h-4 w-32" />
-      <div className="mt-3 space-y-2">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-14 rounded-lg" />
-        ))}
+      <div className="space-y-5 p-5 sm:p-6">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-16 rounded-lg" />
+          ))}
+        </div>
+        <Skeleton className="h-4 w-36" />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-[72px] rounded-lg" />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -248,7 +250,7 @@ function CalendarPageSkeleton() {
 function ChatPageSkeleton() {
   return (
     <div
-      className="flex min-h-[calc(100vh-var(--cp-nav-height))] bg-[var(--cp-page-bg)] lg:min-h-[calc(100vh-var(--cp-nav-with-context))]"
+      className="flex min-h-0 flex-1 bg-[var(--cp-page-bg)]"
       aria-busy="true"
     >
       <aside className="w-72 border-r border-zinc-200 bg-white p-4">

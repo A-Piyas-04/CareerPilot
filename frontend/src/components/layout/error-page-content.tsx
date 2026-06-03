@@ -1,6 +1,12 @@
 "use client";
 
-import { AlertTriangle, FileQuestion, LayoutDashboard, Kanban } from "lucide-react";
+import {
+  AlertTriangle,
+  FileQuestion,
+  FileText,
+  LayoutDashboard,
+  Kanban,
+} from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -41,13 +47,17 @@ export function ErrorPageContent({
               Try again
             </button>
           ) : null}
-          <Link href="/dashboard" className={btnPrimary}>
+          <Link href="/resume" className={btnPrimary}>
+            <FileText className="h-4 w-4" aria-hidden />
+            CV Intelligence
+          </Link>
+          <Link href="/dashboard" className={btnSecondary}>
             <LayoutDashboard className="h-4 w-4" aria-hidden />
-            Go to Dashboard
+            Dashboard
           </Link>
           <Link href="/tracker" className={btnSecondary}>
             <Kanban className="h-4 w-4" aria-hidden />
-            Back to Tracker
+            Tracker
           </Link>
         </div>
       </div>

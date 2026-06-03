@@ -2,30 +2,37 @@
 
 import {
   AlertCircle,
-  ChevronDown,
-  ChevronUp,
   FileText,
-  Layers,
   Loader2,
   PenLine,
   RefreshCw,
-  Search,
   Sparkles,
   Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { ResumeSummarySkeleton, Badge, EmptyState, SurfaceCard } from "@/components/ui";
+import {
+  ResumeSummarySkeleton,
+  Badge,
+  EmptyState,
+} from "@/components/ui";
 import { alertError, alertWarning, chipAmber, chipEmerald, chipSky } from "@/lib/ui-theme";
 
+import { ExtractedSectionsList } from "./components/extracted-sections-list";
+import { ResumeStatsGrid } from "./components/resume-stats-grid";
 import { useDeleteResume } from "./hooks";
 import { ResumeDeleteDialog } from "./resume-delete-dialog";
 import { ResumeSectionViewerDrawer } from "./resume-section-viewer-drawer";
-import { resumeCardBody, resumeSecondaryButton } from "./resume-ui";
-import type { ResumeDetail, ResumeSection, ResumeSkill } from "./types";
+import {
+  resumePageCard,
+  resumeCardBody,
+  resumeDangerButton,
+  resumeFileName,
+  resumeSecondaryButton,
+} from "./resume-ui";
+import type { ResumeDetail, ResumeSkill } from "./types";
 import { formatResumeDate } from "./types";
 
-/* ─── Category chip colors ─────────────────────────────────────────────────── */
 const CATEGORY_CHIPS = [chipEmerald, chipSky, chipAmber] as const;
 
 function skillChipClass(category: string | null | undefined, index: number): string {
@@ -45,70 +52,6 @@ function groupSkillsByCategory(
   return map;
 }
 
-/* ─── Expandable section card ─────────────────────────────────────────────── */
-function SectionCard({
-  section,
-  onViewFull,
-}: {
-  section: ResumeDetail["sections"][number];
-  onViewFull: (section: ResumeSection) => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const preview = section.content.slice(0, 160);
-  const hasMore = section.content.length > 160;
-
-  return (
-    <li className="rounded-lg border border-zinc-100 bg-zinc-50 transition duration-200 hover:border-zinc-200 hover:bg-white">
-      <button
-        className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="inline-block rounded-md bg-white border border-zinc-200 px-2 py-0.5 text-xs font-semibold capitalize text-zinc-800 shrink-0">
-            {section.section_name}
-          </span>
-          <span className="truncate text-xs text-zinc-500">
-            {!expanded && preview}
-            {!expanded && hasMore && "…"}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-zinc-400">
-            {section.content.length} chars
-          </span>
-          {hasMore &&
-            (expanded ? (
-              <ChevronUp className="h-3.5 w-3.5 text-zinc-400" />
-            ) : (
-              <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
-            ))}
-        </div>
-      </button>
-      {expanded && (
-        <div className="px-3 pb-3">
-          <p className="whitespace-pre-wrap text-xs leading-relaxed text-zinc-600">
-            {section.content}
-          </p>
-        </div>
-      )}
-      {hasMore && (
-        <div className="border-t border-zinc-100 px-3 py-2">
-          <button
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
-            type="button"
-            onClick={() => onViewFull(section)}
-          >
-            View full
-          </button>
-        </div>
-      )}
-    </li>
-  );
-}
-
-/* ─── Main component ─────────────────────────────────────────────────────── */
 type ResumeSummaryProps = {
   detail: ResumeDetail | undefined;
   isLoading: boolean;
@@ -135,9 +78,9 @@ export function ResumeSummary({
 
   const deleteMutation = useDeleteResume();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [viewingSection, setViewingSection] = useState<ResumeSection | null>(
-    null,
-  );
+  const [viewingSection, setViewingSection] = useState<
+    ResumeDetail["sections"][number] | null
+  >(null);
 
   function handleDelete() {
     if (!detail?.resume.id) return;
@@ -146,22 +89,23 @@ export function ResumeSummary({
     });
   }
 
-  /* ── Empty state ── */
   if (!hasResumes) {
     return (
-      <SurfaceCard
-        accent="emerald"
-        header={<h2 className="text-base font-semibold text-zinc-950">Resume overview</h2>}
-      >
-        <EmptyState
-          accent="emerald"
-          icon={FileText}
-          title="No resume uploaded yet"
-          description="Upload a PDF or DOCX to extract sections, skills, and a RAG-ready search index."
-          variant="dashed"
-          className="py-8"
-        />
-      </SurfaceCard>
+      <section className={resumePageCard}>
+        <div className={resumeCardBody}>
+          <h2 className="text-base font-semibold text-zinc-900">
+            Resume overview
+          </h2>
+          <EmptyState
+            accent="emerald"
+            icon={FileText}
+            title="No resume uploaded yet"
+            description="Upload a PDF or DOCX to extract sections, skills, and a searchable index for AI answers."
+            variant="dashed"
+            className="mt-4 py-8"
+          />
+        </div>
+      </section>
     );
   }
 
@@ -169,22 +113,25 @@ export function ResumeSummary({
 
   if (error) {
     return (
-      <SurfaceCard
-        accent="emerald"
-        header={<h2 className="text-base font-semibold text-zinc-950">Resume overview</h2>}
-      >
-        <div className={`${alertError} flex items-start gap-2`}>
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>{error.message}</p>
+      <section className={resumePageCard}>
+        <div className={resumeCardBody}>
+          <h2 className="text-base font-semibold text-zinc-900">
+            Resume overview
+          </h2>
+          <div className={`${alertError} mt-4 flex items-start gap-2`}>
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>{error.message}</p>
+          </div>
         </div>
-      </SurfaceCard>
+      </section>
     );
   }
 
   if (!detail) return null;
 
   const { resume, sections, skills, chunk_count } = detail;
-  const isProcessing = resume.status === "processing" || resume.status === "uploaded";
+  const isProcessing =
+    resume.status === "processing" || resume.status === "uploaded";
   const isFailed = resume.status === "failed";
   const isProcessed = resume.status === "processed";
 
@@ -194,184 +141,166 @@ export function ResumeSummary({
       ? "amber"
       : "inProgress";
 
+  const fileTypeSuffix =
+    resume.file_type === "builder"
+      ? " · built in app"
+      : resume.file_type === "manual"
+        ? " · manual entry"
+        : "";
+
   return (
-    <SurfaceCard
-      accent="emerald"
-      premium
-      header={
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold text-zinc-950">Resume overview</h2>
-            <p className="mt-0.5 truncate text-sm text-zinc-600">
+    <section className={resumePageCard}>
+      <div className={`${resumeCardBody} space-y-5`}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 border-b border-zinc-200 pb-4">
+            <h2 className="text-base font-semibold text-zinc-900">
+              Resume overview
+            </h2>
+            <p className={`${resumeFileName} mt-0.5 truncate text-sm`}>
               {resume.file_name}
-              {resume.file_type === "builder"
-                ? " · built in app"
-                : resume.file_type === "manual"
-                  ? " · manual entry"
-                  : ""}
+              {fileTypeSuffix}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Created {formatResumeDate(resume.created_at)}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {resume.is_active && (
-              <Badge tone="emerald">Active</Badge>
-            )}
+          <div className="flex flex-wrap items-start gap-2 pb-4">
+            {resume.is_active && <Badge tone="emerald">Active</Badge>}
             <Badge tone={statusTone} className="capitalize">
               {resume.status}
             </Badge>
           </div>
         </div>
-      }
-      bodyClassName={resumeCardBody}
-    >
 
-      {isProcessed && onEditInBuilder && resume.file_type === "builder" && (
-        <button
-          className={`${resumeSecondaryButton} mt-4 w-full sm:w-auto`}
-          type="button"
-          onClick={() => onEditInBuilder(detail)}
-        >
-          <PenLine className="h-4 w-4" />
-          Edit in builder
-        </button>
-      )}
-
-      {isProcessed && onEditInManual && resume.file_type === "manual" && (
-        <button
-          className={`${resumeSecondaryButton} mt-4 w-full sm:w-auto`}
-          type="button"
-          onClick={() => onEditInManual(detail)}
-        >
-          <FileText className="h-4 w-4" />
-          Edit in manual editor
-        </button>
-      )}
-
-      {/* Metadata grid */}
-      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-        <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 p-3">
-          <dt className="flex items-center gap-1 text-xs text-zinc-500">
-            <FileText className="h-3 w-3" />
-            Added
-          </dt>
-          <dd className="mt-1 font-semibold text-zinc-900">
-            {formatResumeDate(resume.created_at)}
-          </dd>
-        </div>
-        <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 p-3">
-          <dt className="flex items-center gap-1 text-xs text-zinc-500">
-            <Layers className="h-3 w-3" />
-            Sections
-          </dt>
-          <dd className="mt-1 font-semibold text-zinc-900">{sections.length}</dd>
-        </div>
-        <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 p-3">
-          <dt className="flex items-center gap-1 text-xs text-zinc-500">
-            <Sparkles className="h-3 w-3" />
-            Skills
-          </dt>
-          <dd className="mt-1 font-semibold text-zinc-900">{skills.length}</dd>
-        </div>
-        <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 p-3">
-          <dt className="flex items-center gap-1 text-xs text-zinc-500">
-            <Search className="h-3 w-3" />
-            Chunks
-          </dt>
-          <dd className="mt-1 font-semibold text-zinc-900">{chunk_count}</dd>
-        </div>
-      </dl>
-
-      {/* Processing banner */}
-      {isProcessing && (
-        <div className={`${alertWarning} mt-4 flex items-center gap-2`}>
-          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-          Processing your CV — this may take a few seconds…
-        </div>
-      )}
-
-      {/* Failure banner + retry */}
-      {isFailed && (
-        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-3">
-          <div className="flex items-start gap-2 text-sm text-red-800">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>{resume.error_message ?? "Resume processing failed."}</p>
-          </div>
-          {onRequestReupload && (
-            <button
-              className="mt-2 flex items-center gap-1.5 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50"
-              type="button"
-              onClick={onRequestReupload}
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              Upload a new file
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Sections */}
-      {sections.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            Extracted sections
-            <span className="ml-2 normal-case font-normal">({sections.length})</span>
-          </h3>
-          <ul className="mt-2 space-y-1.5">
-            {sections.map((section) => (
-              <SectionCard
-                key={section.id}
-                section={section}
-                onViewFull={setViewingSection}
-              />
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Skills */}
-      {skills.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            Extracted skills
-            <span className="ml-2 normal-case font-normal">({skills.length})</span>
-          </h3>
-          <div className="mt-3 space-y-3">
-            {[...groupedSkills.entries()].map(([category, categorySkills]) => (
-              <div key={category}>
-                {groupedSkills.size > 1 && (
-                  <p className="mb-1.5 text-xs font-semibold capitalize text-zinc-500">
-                    {category}
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-1.5">
-                  {categorySkills.map((skill: ResumeSkill, skillIndex: number) => (
-                    <span
-                      className={skillChipClass(skill.category, skillIndex)}
-                      key={skill.id}
-                      title={skill.evidence ?? undefined}
-                    >
-                      {skill.skill_name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Delete */}
-      {isProcessed && (
-        <div className="mt-6 border-t border-zinc-100 pt-4">
+        {isProcessed && onEditInBuilder && resume.file_type === "builder" && (
           <button
-            className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 transition hover:text-red-600"
+            className={`${resumeSecondaryButton} w-full sm:w-auto`}
             type="button"
-            onClick={() => setDeleteDialogOpen(true)}
+            onClick={() => onEditInBuilder(detail)}
           >
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete this resume
+            <PenLine className="h-4 w-4" />
+            Edit in builder
           </button>
-        </div>
-      )}
+        )}
+
+        {isProcessed && onEditInManual && resume.file_type === "manual" && (
+          <button
+            className={`${resumeSecondaryButton} w-full sm:w-auto`}
+            type="button"
+            onClick={() => onEditInManual(detail)}
+          >
+            <FileText className="h-4 w-4" />
+            Edit in manual editor
+          </button>
+        )}
+
+        <ResumeStatsGrid
+          createdAt={resume.created_at}
+          sectionCount={sections.length}
+          skillCount={skills.length}
+          chunkCount={chunk_count}
+        />
+
+        {sections.length === 0 && chunk_count === 0 && !isProcessing && (
+          <p className="text-sm text-zinc-500">
+            No searchable chunks yet. Re-upload or wait for processing to finish.
+          </p>
+        )}
+
+        {isProcessing && (
+          <div className={`${alertWarning} flex items-center gap-2`}>
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+            Processing resume… this may take a few seconds.
+          </div>
+        )}
+
+        {isFailed && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+            <div className="flex items-start gap-2 text-sm text-red-800">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>{resume.error_message ?? "Resume processing failed."}</p>
+            </div>
+            {onRequestReupload && (
+              <button
+                className="mt-3 flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+                type="button"
+                onClick={onRequestReupload}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Upload a new file
+              </button>
+            )}
+          </div>
+        )}
+
+        <ExtractedSectionsList
+          sections={sections}
+          onViewFull={setViewingSection}
+        />
+
+        {skills.length > 0 ? (
+          <div>
+            <h3 className="text-sm font-semibold text-zinc-900">
+              Extracted skills
+              <span className="ml-2 font-normal text-zinc-500">
+                ({skills.length})
+              </span>
+            </h3>
+            <div className="mt-3 space-y-3">
+              {[...groupedSkills.entries()].map(([category, categorySkills]) => (
+                <div key={category}>
+                  {groupedSkills.size > 1 && (
+                    <p className="mb-1.5 text-xs font-semibold capitalize text-zinc-500">
+                      {category}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-1.5">
+                    {categorySkills.map((skill: ResumeSkill, skillIndex: number) => (
+                      <span
+                        className={skillChipClass(skill.category, skillIndex)}
+                        key={skill.id}
+                        title={skill.evidence ?? undefined}
+                      >
+                        {skill.skill_name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          !isProcessing && (
+            <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-5 text-center">
+              <Sparkles className="mx-auto h-5 w-5 text-zinc-400" />
+              <p className="mt-2 text-sm font-medium text-zinc-700">
+                No skills extracted
+              </p>
+              <p className="mt-1 text-xs text-zinc-500">
+                Skills appear after processing or when added in the manual editor.
+              </p>
+            </div>
+          )
+        )}
+
+        {isProcessed && (
+          <div className="rounded-lg border border-red-100 bg-red-50/40 px-4 py-3">
+            <p className="text-sm font-medium text-zinc-800">Delete this resume</p>
+            <p className="mt-0.5 text-xs text-zinc-600">
+              Permanently removes sections, skills, and search chunks. This cannot
+              be undone.
+            </p>
+            <button
+              className={`${resumeDangerButton} mt-3`}
+              type="button"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete resume
+            </button>
+          </div>
+        )}
+      </div>
 
       <ResumeSectionViewerDrawer
         isOpen={viewingSection !== null}
@@ -386,6 +315,6 @@ export function ResumeSummary({
         onCancel={() => setDeleteDialogOpen(false)}
         onConfirm={handleDelete}
       />
-    </SurfaceCard>
+    </section>
   );
 }

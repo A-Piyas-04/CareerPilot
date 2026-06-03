@@ -14,6 +14,11 @@ export const NAV_ACCENT_STYLES: Record<
     itemActive: string;
     itemActiveIcon: string;
     mobileSection: string;
+    sidebarSection: string;
+    sidebarSectionDark: string;
+    sidebarPanelHeaderDark: string;
+    sidebarItemIdle: string;
+    sidebarIconIdle: string;
   }
 > = {
   emerald: {
@@ -28,6 +33,14 @@ export const NAV_ACCENT_STYLES: Record<
     itemActive: "bg-emerald-600 text-white shadow-sm border-emerald-600",
     itemActiveIcon: "bg-white/20 text-white",
     mobileSection: "border-emerald-200 bg-emerald-50/50",
+    sidebarSection:
+      "rounded-lg border border-emerald-200/50 bg-emerald-50/45 p-2",
+    sidebarSectionDark:
+      "rounded-lg border border-emerald-700/35 bg-emerald-950/30 p-2",
+    sidebarPanelHeaderDark: "text-emerald-300",
+    sidebarItemIdle:
+      "border border-transparent text-slate-300 hover:border-slate-600/50 hover:bg-slate-700/70 hover:text-white",
+    sidebarIconIdle: "bg-emerald-950/60 text-emerald-300 ring-1 ring-emerald-800/40",
   },
   sky: {
     triggerActive: "bg-sky-50 text-sky-900 ring-1 ring-sky-200/80 shadow-sm",
@@ -40,6 +53,13 @@ export const NAV_ACCENT_STYLES: Record<
     itemActive: "bg-sky-600 text-white shadow-sm border-sky-600",
     itemActiveIcon: "bg-white/20 text-white",
     mobileSection: "border-sky-200 bg-sky-50/50",
+    sidebarSection: "rounded-lg border border-sky-200/50 bg-sky-50/45 p-2",
+    sidebarSectionDark:
+      "rounded-lg border border-sky-700/35 bg-sky-950/30 p-2",
+    sidebarPanelHeaderDark: "text-sky-300",
+    sidebarItemIdle:
+      "border border-transparent text-slate-300 hover:border-slate-600/50 hover:bg-slate-700/70 hover:text-white",
+    sidebarIconIdle: "bg-sky-950/60 text-sky-300 ring-1 ring-sky-800/40",
   },
   violet: {
     triggerActive:
@@ -53,6 +73,15 @@ export const NAV_ACCENT_STYLES: Record<
     itemActive: "bg-violet-600 text-white shadow-sm border-violet-600",
     itemActiveIcon: "bg-white/20 text-white",
     mobileSection: "border-violet-200 bg-violet-50/50",
+    sidebarSection:
+      "rounded-lg border border-violet-200/50 bg-violet-50/45 p-2",
+    sidebarSectionDark:
+      "rounded-lg border border-violet-700/35 bg-violet-950/30 p-2",
+    sidebarPanelHeaderDark: "text-violet-300",
+    sidebarItemIdle:
+      "border border-transparent text-slate-300 hover:border-slate-600/50 hover:bg-slate-700/70 hover:text-white",
+    sidebarIconIdle:
+      "bg-violet-950/60 text-violet-300 ring-1 ring-violet-800/40",
   },
 };
 

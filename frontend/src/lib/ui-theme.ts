@@ -5,7 +5,7 @@ import type { NavGroupAccent } from "@/lib/navigation-config";
 export type AccentTone = NavGroupAccent;
 
 export const pageShell =
-  "relative min-h-[calc(100vh-var(--cp-nav-height))] bg-gradient-to-b from-emerald-50/30 via-[var(--cp-page-bg)] to-sky-50/20 lg:min-h-[calc(100vh-var(--cp-nav-with-context))]";
+  "relative w-full flex-1 bg-gradient-to-b from-emerald-50/25 via-[var(--cp-page-bg)] to-slate-200/60";
 
 export const pageBackgroundDecor =
   "pointer-events-none absolute inset-0 overflow-hidden aria-hidden";
@@ -17,13 +17,13 @@ export const pageContainer = "relative mx-auto w-full max-w-6xl px-5 py-6";
 export const pageContainerWide = "relative mx-auto w-full max-w-[1400px] px-5 py-6";
 
 export const surfaceCard =
-  "rounded-2xl border border-zinc-200/90 bg-white shadow-sm ring-1 ring-zinc-950/[0.03]";
+  "rounded-2xl border border-[var(--cp-card-border)] bg-[var(--cp-card-bg)] shadow-[0_2px_8px_-2px_rgba(15,23,42,0.1)] ring-1 ring-slate-900/[0.04]";
 
 export const surfaceCardMuted =
-  "rounded-2xl border border-zinc-200/80 bg-zinc-50/80 ring-1 ring-zinc-950/[0.02]";
+  "rounded-2xl border border-slate-300/80 bg-slate-100/90 ring-1 ring-slate-900/[0.03]";
 
 export const surfaceCardElevated =
-  "rounded-2xl border border-zinc-200/90 bg-white shadow-md ring-1 ring-zinc-950/[0.04]";
+  "rounded-2xl border border-[var(--cp-card-border)] bg-[var(--cp-card-bg)] shadow-[0_4px_16px_-4px_rgba(15,23,42,0.14)] ring-1 ring-slate-900/[0.05]";
 
 export const premiumCard =
   "rounded-3xl border border-emerald-900/10 bg-gradient-to-b from-white via-white to-emerald-50/40 shadow-lg shadow-emerald-950/10 ring-1 ring-emerald-900/[0.06] backdrop-blur-sm transition-all duration-300 ease-out";
@@ -63,9 +63,10 @@ export const btnDanger =
 
 export const eyebrow = "text-xs font-semibold uppercase tracking-wide text-emerald-700";
 
-export const pageTitle = "text-2xl font-semibold tracking-tight text-zinc-950";
+export const pageTitle = "text-3xl font-semibold tracking-tight text-zinc-950";
 
-export const pageDescription = "mt-1 max-w-3xl text-sm leading-6 text-zinc-600";
+export const pageDescription =
+  "mt-1 max-w-3xl text-base leading-relaxed text-zinc-600";
 
 export const chipEmerald =
   "rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200/60";

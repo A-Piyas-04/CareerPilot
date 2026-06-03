@@ -19,6 +19,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      # Keep .next inside the container so Turbopack route manifests are not corrupted by host sync
+      - frontend_next_cache:/app/.next
     env_file:
       - ./.env
       - ./frontend/.env
@@ -30,3 +32,6 @@ services:
       ["npm", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "3000"]
     depends_on:
       - backend
+
+volumes:
+  frontend_next_cache:

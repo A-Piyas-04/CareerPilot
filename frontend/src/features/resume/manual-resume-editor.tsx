@@ -3,7 +3,7 @@
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { SpinnerButton, SurfaceCard } from "@/components/ui";
+import { SpinnerButton } from "@/components/ui";
 import {
   btnPrimary,
   chipAmber,
@@ -13,7 +13,7 @@ import {
   textareaField,
 } from "@/lib/ui-theme";
 
-import { resumeCardBody } from "./resume-ui";
+import { resumeModuleTitle, resumeCardSubtext } from "./resume-ui";
 
 import { useCreateManualResume, useUpdateManualResume } from "./hooks";
 import type {
@@ -30,6 +30,7 @@ import type {
 type Props = {
   detail?: ResumeDetail;
   onSaveSuccess: (resumeId: string) => void;
+  embedded?: boolean;
 };
 
 const emptyPersonal = {
@@ -82,7 +83,11 @@ const emptyLanguage: ManualLanguageInput = {
   proficiency: "",
 };
 
-export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
+export function ManualResumeEditor({
+  detail,
+  onSaveSuccess,
+  embedded = false,
+}: Props) {
   const [payload, setPayload] = useState<ManualResumePayload>(() =>
     payloadFromDetail(detail),
   );
@@ -124,17 +129,12 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
     });
   }
 
-  return (
-    <SurfaceCard
-      accent="violet"
-      premium
-      header={
-        <div className="flex flex-wrap items-start justify-between gap-3">
+  const editorBody = (
+    <>
+        <div className={`flex flex-wrap items-start justify-between gap-3 ${embedded ? "pb-1" : "border-b border-zinc-200 pb-4"}`}>
           <div>
-            <h2 className="text-base font-semibold text-zinc-950">
-              Manual CV Editor
-            </h2>
-            <p className="mt-0.5 text-sm text-zinc-600">
+            <h2 className={resumeModuleTitle}>Manual CV Editor</h2>
+            <p className={resumeCardSubtext}>
               Build or refine your CV with structured fields. Saving regenerates
               sections, skills, and the search index.
             </p>
@@ -150,9 +150,6 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
             Save CV
           </SpinnerButton>
         </div>
-      }
-      bodyClassName={resumeCardBody}
-    >
 
       <div className="mt-5 space-y-6">
         <Field
@@ -216,7 +213,15 @@ export function ManualResumeEditor({ detail, onSaveSuccess }: Props) {
           onChange={(items) => setField("languages", items)}
         />
       </div>
-    </SurfaceCard>
+    </>
+  );
+
+  return embedded ? (
+    editorBody
+  ) : (
+    <section className="rounded-xl border border-zinc-300 bg-white p-5 shadow-sm">
+      {editorBody}
+    </section>
   );
 }
 

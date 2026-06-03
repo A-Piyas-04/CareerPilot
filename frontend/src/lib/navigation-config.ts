@@ -34,6 +34,14 @@ export type RelatedLink = {
   label: string;
 };
 
+export const DASHBOARD_NAV_ITEM: NavItem = {
+  href: "/dashboard",
+  label: "Dashboard",
+  shortLabel: "Dash",
+  icon: LayoutDashboard,
+  description: "Metrics and AI nudges",
+};
+
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Discover",
@@ -117,18 +125,21 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: CalendarDays,
         description: "Deadlines and events",
       },
-      {
-        href: "/dashboard",
-        label: "Dashboard",
-        shortLabel: "Dash",
-        icon: LayoutDashboard,
-        description: "Metrics and AI nudges",
-      },
+      DASHBOARD_NAV_ITEM,
     ],
   },
 ];
 
-export const ALL_NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items);
+/** Sidebar: same groups as NAV_GROUPS but Dashboard lives in the top header only */
+export const SIDEBAR_NAV_GROUPS: NavGroup[] = NAV_GROUPS.map((group) => ({
+  ...group,
+  items: group.items.filter((item) => item.href !== DASHBOARD_NAV_ITEM.href),
+}));
+
+export const ALL_NAV_ITEMS = [
+  ...SIDEBAR_NAV_GROUPS.flatMap((group) => group.items),
+  DASHBOARD_NAV_ITEM,
+];
 
 export const PAGE_RELATED_LINKS: Record<string, RelatedLink[]> = {
   "/jobs": [

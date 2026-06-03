@@ -16,11 +16,14 @@ import {
   pageShell,
   pageTitle,
   relatedLinkPill,
+  surfaceCardElevated,
 } from "@/lib/ui-theme";
 
 type PageShellProps = {
   children: ReactNode;
   width?: "default" | "wide" | "full";
+  /** Neutral flat background without decorative gradients */
+  flatBackground?: boolean;
 };
 
 function PageBackgroundDecor() {
@@ -41,7 +44,11 @@ function PageBackgroundDecor() {
   );
 }
 
-export function PageShell({ children, width = "default" }: PageShellProps) {
+export function PageShell({
+  children,
+  width = "default",
+  flatBackground = false,
+}: PageShellProps) {
   const containerClass =
     width === "wide"
       ? pageContainerWide
@@ -50,8 +57,14 @@ export function PageShell({ children, width = "default" }: PageShellProps) {
         : pageContainer;
 
   return (
-    <div className={pageShell}>
-      <PageBackgroundDecor />
+    <div
+      className={
+        flatBackground
+          ? "relative w-full flex-1 bg-[var(--cp-workspace-main)]"
+          : pageShell
+      }
+    >
+      {!flatBackground && <PageBackgroundDecor />}
       <div className={containerClass}>{children}</div>
     </div>
   );
@@ -89,15 +102,15 @@ export function PageHeader({
   const styles = getPageAccentStyles(accent);
 
   return (
-    <header className="mb-6 overflow-hidden rounded-2xl border border-zinc-200/70 bg-white/60 pb-5 shadow-sm ring-1 ring-zinc-950/[0.03] backdrop-blur-sm">
+    <header className={`mb-6 overflow-hidden pb-5 ${surfaceCardElevated}`}>
       <div className={`px-5 pt-5 ${styles.headerBand}`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
             {Icon ? (
               <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconClassName ?? styles.iconTile}`}
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${iconClassName ?? styles.iconTile}`}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-6 w-6" />
               </div>
             ) : null}
             <div className="min-w-0">

@@ -1,58 +1,28 @@
 "use client";
 
-import {
-  AlertCircle,
-  FileText,
-  PenLine,
-  Sparkles,
-  Upload,
-} from "lucide-react";
+import { FileText, PenLine, Upload } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
-import { PageHeader, PageShell } from "@/components/layout";
-import { Badge, EmptyState } from "@/components/ui";
-import type { BadgeTone } from "@/components/ui";
-import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
-import { btnPrimary, btnSecondary } from "@/lib/ui-theme";
+import { PageShell } from "@/components/layout";
+import { EmptyState } from "@/components/ui";
+import { alertError, btnPrimary, btnSecondary } from "@/lib/ui-theme";
 
+import { ActiveResumeSelector } from "./components/active-resume-selector";
+import { ResumeIntelligenceHeader } from "./components/resume-intelligence-header";
+import {
+  ResumeModeTabs,
+  type CvInputMode,
+} from "./components/resume-mode-tabs";
+import { ResumeWorkspacePanel } from "./components/resume-workspace-panel";
 import { useResume, useResumes } from "./hooks";
 import { ManualResumeEditor } from "./manual-resume-editor";
 import { ResumeAnswerBox } from "./resume-answer-box";
 import { ResumeBuilderCard } from "./resume-builder-card";
 import { ResumeSummary } from "./resume-summary";
 import { ResumeUploadCard } from "./resume-upload-card";
-import { resumeSegmentGroup, resumeSegmentTab } from "./resume-ui";
+import { resumePageStack } from "./resume-ui";
 import type { ResumeDetail } from "./types";
-import {
-  getPageStatusBadge,
-  PAGE_STATUS_LABELS,
-  pickPrimaryResume,
-} from "./types";
-
-type CvInputMode = "upload" | "build" | "manual";
-
-const BADGE_TONES: Record<ReturnType<typeof getPageStatusBadge>, BadgeTone> = {
-  no_cv: "neutral",
-  processing: "inProgress",
-  failed: "amber",
-  rag_ready: "rag",
-};
-
-const BADGE_ICONS: Record<
-  ReturnType<typeof getPageStatusBadge>,
-  typeof FileText
-> = {
-  no_cv: FileText,
-  processing: Sparkles,
-  failed: AlertCircle,
-  rag_ready: Sparkles,
-};
-
-function resumeTypeLabel(fileType: string | null | undefined): string {
-  if (fileType === "builder") return " · built";
-  if (fileType === "manual") return " · manual";
-  return "";
-}
+import { getPageStatusBadge, pickPrimaryResume } from "./types";
 
 function ResumeEmptyState({
   onUpload,
@@ -111,7 +81,7 @@ export function ResumePageClient() {
     primaryResume;
 
   const pageBadge = getPageStatusBadge(resumes, selectedResume);
-  const BadgeIcon = BADGE_ICONS[pageBadge];
+  const showEmptyHero = resumes.length === 0 && !resumesQuery.isLoading;
 
   function handleCvSuccess(resumeId: string) {
     setSelectedResumeId(resumeId);
@@ -146,61 +116,50 @@ export function ResumePageClient() {
     setBuilderEditId(null);
   }
 
-  const showEmptyHero = resumes.length === 0 && !resumesQuery.isLoading;
+  const sectionCount = detailQuery.data?.sections.length;
+  const chunkCount = detailQuery.data?.chunk_count;
+
+  const activeResumeBar =
+    resumes.length > 0 ? (
+      <ActiveResumeSelector
+        resumes={resumes}
+        effectiveResumeId={effectiveResumeId}
+        selectedResume={selectedResume}
+        onSelect={setSelectedResumeId}
+      />
+    ) : (
+      <div className="flex items-start gap-4 rounded-xl border border-white/70 bg-white/75 p-4 shadow-[0_2px_16px_-4px_rgba(15,23,42,0.1)] ring-1 ring-emerald-900/[0.07] backdrop-blur-sm">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-50 text-zinc-500 ring-1 ring-zinc-300/60">
+          <FileText className="h-5 w-5" strokeWidth={2} />
+        </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            Active Resume
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-zinc-700">
+            No resume yet — upload or build one below to get started.
+          </p>
+        </div>
+      </div>
+    );
+
+  const showOverview = resumes.length > 0 || resumesQuery.isLoading;
 
   return (
-    <PageShell>
-      <PageHeader
-        accent="emerald"
-        eyebrowText="Discover"
-        icon={FileText}
-        title="CV Intelligence"
-        description="Upload, build, or edit your CV, then query it with AI grounded in your real experience."
-        relatedLinks={PAGE_RELATED_LINKS["/resume"]}
-        actions={
-          <Badge
-            tone={BADGE_TONES[pageBadge]}
-            icon={<BadgeIcon className="h-3.5 w-3.5" />}
-          >
-            {PAGE_STATUS_LABELS[pageBadge]}
-          </Badge>
-        }
-      />
+    <PageShell flatBackground>
+      <div className={resumePageStack}>
+          <ResumeIntelligenceHeader
+            pageBadge={pageBadge}
+            hasActiveResume={resumes.length > 0}
+            sectionCount={sectionCount}
+            chunkCount={chunkCount}
+          />
 
-      <div>
-        {resumesQuery.error && (
-          <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-            {resumesQuery.error.message}
-          </p>
-        )}
+          {resumesQuery.error && (
+            <div className={alertError}>{resumesQuery.error.message}</div>
+          )}
 
-        {resumes.length > 1 && (
-          <div className="mb-5">
-            <label
-              className="text-sm font-medium text-zinc-800"
-              htmlFor="resume-select"
-            >
-              Active resume
-            </label>
-            <select
-              className="mt-1.5 block w-full max-w-md rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 transition focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-              id="resume-select"
-              value={effectiveResumeId ?? ""}
-              onChange={(e) => setSelectedResumeId(e.target.value)}
-            >
-              {resumes.map((resume) => (
-                <option key={resume.id} value={resume.id}>
-                  {resume.file_name}
-                  {resume.is_active ? " (active)" : ""}
-                  {resumeTypeLabel(resume.file_type)}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {showEmptyHero && (
-          <div className="mb-6">
+          {showEmptyHero && (
             <ResumeEmptyState
               onBuild={() => {
                 setInputMode("build");
@@ -209,56 +168,22 @@ export function ResumePageClient() {
               onManual={() => setInputMode("manual")}
               onUpload={() => setInputMode("upload")}
             />
-          </div>
-        )}
+          )}
 
-        <div className="space-y-6">
-          <div ref={inputAreaRef}>
-              <div
-                className={`${resumeSegmentGroup} mb-4`}
-                role="tablist"
-                aria-label="CV input method"
-              >
-                <button
-                  className={resumeSegmentTab(inputMode === "upload")}
-                  role="tab"
-                  type="button"
-                  aria-selected={inputMode === "upload"}
-                  onClick={() => setInputMode("upload")}
-                >
-                  <Upload className="h-4 w-4" />
-                  Upload
-                </button>
-                <button
-                  className={resumeSegmentTab(inputMode === "build")}
-                  role="tab"
-                  type="button"
-                  aria-selected={inputMode === "build"}
-                  onClick={() => setInputMode("build")}
-                >
-                  <PenLine className="h-4 w-4" />
-                  Build CV
-                </button>
-                <button
-                  className={resumeSegmentTab(inputMode === "manual")}
-                  role="tab"
-                  type="button"
-                  aria-selected={inputMode === "manual"}
-                  onClick={() => setInputMode("manual")}
-                >
-                  <FileText className="h-4 w-4" />
-                  Manual
-                </button>
-              </div>
+          <div ref={inputAreaRef} className="w-full">
+            <ResumeWorkspacePanel activeResume={activeResumeBar}>
+              <ResumeModeTabs inputMode={inputMode} onChange={setInputMode} />
 
               {inputMode === "upload" && (
                 <ResumeUploadCard
+                  embedded
                   onUploadSuccess={handleCvSuccess}
                   uploadDetail={detailQuery.data}
                 />
               )}
               {inputMode === "build" && (
                 <ResumeBuilderCard
+                  embedded
                   key={`${builderEditId ?? "new"}-${builderEditDetail?.resume.updated_at ?? "blank"}`}
                   buildDetail={detailQuery.data}
                   editResumeId={builderEditId}
@@ -269,30 +194,37 @@ export function ResumePageClient() {
               )}
               {inputMode === "manual" && (
                 <ManualResumeEditor
+                  embedded
                   key={`${effectiveResumeId ?? "new"}-${detailQuery.data?.resume.updated_at ?? "loading"}`}
                   detail={detailQuery.data}
                   onSaveSuccess={handleManualSaveSuccess}
                 />
               )}
-            </div>
+            </ResumeWorkspacePanel>
+          </div>
 
-          {(resumes.length > 0 || resumesQuery.isLoading) && (
-            <ResumeSummary
-              detail={detailQuery.data}
-              error={detailQuery.error}
-              hasResumes={resumes.length > 0}
-              isLoading={resumesQuery.isLoading || detailQuery.isLoading}
-              onEditInBuilder={handleEditInBuilder}
-              onEditInManual={handleEditInManual}
-              onRequestReupload={handleRequestReupload}
+          <div
+            className={`grid w-full gap-6 lg:items-start ${
+              showOverview ? "lg:grid-cols-2" : "lg:grid-cols-1"
+            }`}
+          >
+            {showOverview && (
+              <ResumeSummary
+                detail={detailQuery.data}
+                error={detailQuery.error}
+                hasResumes={resumes.length > 0}
+                isLoading={resumesQuery.isLoading || detailQuery.isLoading}
+                onEditInBuilder={handleEditInBuilder}
+                onEditInManual={handleEditInManual}
+                onRequestReupload={handleRequestReupload}
+              />
+            )}
+
+            <ResumeAnswerBox
+              resumeId={effectiveResumeId ?? undefined}
+              resumeStatus={selectedResume?.status}
             />
-          )}
-
-          <ResumeAnswerBox
-            resumeId={effectiveResumeId ?? undefined}
-            resumeStatus={selectedResume?.status}
-          />
-        </div>
+          </div>
       </div>
     </PageShell>
   );

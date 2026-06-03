@@ -5,7 +5,7 @@ import { useEffect } from "react";
 
 import { TransitionLink } from "@/components/navigation/navigation-transition";
 import type { NavGroup } from "@/lib/navigation-config";
-import { NAV_GROUPS } from "@/lib/navigation-config";
+import { SIDEBAR_NAV_GROUPS } from "@/lib/navigation-config";
 import {
   isNavItemActive,
   NAV_ACCENT_STYLES,
@@ -71,7 +71,7 @@ export function MobileNavDrawer({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
-          {NAV_GROUPS.map((group) => (
+          {SIDEBAR_NAV_GROUPS.map((group) => (
             <MobileNavSection
               key={group.label}
               group={group}
@@ -112,7 +112,7 @@ function MobileNavSection({
 
   return (
     <section
-      className={`mb-3 overflow-hidden rounded-2xl border ${styles.mobileSection}`}
+      className={`mb-3 overflow-hidden ${styles.sidebarSection}`}
     >
       <div className="px-3 pb-1 pt-3">
         <p className={`text-xs font-bold uppercase tracking-wider ${styles.panelHeader}`}>

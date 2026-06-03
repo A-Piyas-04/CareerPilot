@@ -1,10 +1,10 @@
 "use client";
 
 import { PenLine, Plus, Save, Trash2 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 
-import { SpinnerButton, SubmissionProgress, SurfaceCard } from "@/components/ui";
-import { alertError, iconTile } from "@/lib/ui-theme";
+import { SpinnerButton, SubmissionProgress } from "@/components/ui";
+import { alertError } from "@/lib/ui-theme";
 import { useSimulatedProgress } from "@/hooks/useSimulatedProgress";
 import { RESUME_UPLOAD_STEPS } from "@/lib/progress/resume-upload-progress";
 
@@ -14,8 +14,8 @@ import {
   type UploadPreviewPhase,
 } from "./resume-upload-preview-drawer";
 import {
-  resumeCardBody,
-  resumeCardHeader,
+  resumeInsetPanel,
+  resumeModuleTitle,
   resumeCardSubtext,
   resumeInput,
   resumePrimaryButton,
@@ -47,6 +47,7 @@ type ResumeBuilderCardProps = {
   buildDetail?: ResumeDetail | null;
   onBuildSuccess: (resumeId: string) => void;
   onClearEdit?: () => void;
+  embedded?: boolean;
 };
 
 function newSectionRow(
@@ -76,6 +77,7 @@ export function ResumeBuilderCard({
   buildDetail,
   onBuildSuccess,
   onClearEdit,
+  embedded = false,
 }: ResumeBuilderCardProps) {
   const isEdit = Boolean(editResumeId && initialDetail);
   const formId = useId();
@@ -96,13 +98,6 @@ export function ResumeBuilderCard({
     isActive: isPending,
     steps: [...RESUME_UPLOAD_STEPS],
   });
-
-  useEffect(() => {
-    if (initialDetail) {
-      setTitle(initialDetail.resume.file_name);
-      setRows(detailToRows(initialDetail));
-    }
-  }, [initialDetail]);
 
   function validateForm(): BuildResumeRequest | null {
     setLocalError(null);
@@ -171,19 +166,15 @@ export function ResumeBuilderCard({
       ? buildDetail
       : null;
 
-  return (
+  const formContent = (
     <>
-      <SurfaceCard
-        accent="sky"
-        premium
-        header={
-          <div className="flex items-start justify-between gap-3">
+          <div className={`flex items-start justify-between gap-3 ${embedded ? "pb-1" : "border-b border-zinc-200 pb-4"}`}>
             <div className="flex items-center gap-2">
-              <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${iconTile("sky")}`}>
-                <PenLine className="h-4 w-4" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-300 bg-slate-100">
+                <PenLine className="h-4 w-4 text-emerald-800" />
               </div>
               <div>
-                <h2 className={resumeCardHeader}>
+                <h2 className={resumeModuleTitle}>
                   {isEdit ? "Edit CV" : "Build your CV"}
                 </h2>
                 <p className={resumeCardSubtext}>
@@ -203,9 +194,6 @@ export function ResumeBuilderCard({
               </button>
             )}
           </div>
-        }
-        bodyClassName={resumeCardBody}
-      >
 
         <div className="mt-5">
           <label
@@ -231,7 +219,7 @@ export function ResumeBuilderCard({
           {rows.map((row, index) => (
             <div
               key={row.id}
-              className="rounded-lg border border-zinc-100 bg-zinc-50/80 p-4 ring-1 ring-zinc-950/5"
+              className={`${resumeInsetPanel} p-4`}
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <select
@@ -324,6 +312,7 @@ export function ResumeBuilderCard({
 
         <SpinnerButton
           className={`${resumePrimaryButton} mt-5 w-full`}
+          variant="emerald"
           loading={isPending}
           loadingLabel="Indexing…"
           disabled={isPending}
@@ -334,7 +323,18 @@ export function ResumeBuilderCard({
         >
           {isEdit ? "Update & re-index" : "Save & index CV"}
         </SpinnerButton>
-      </SurfaceCard>
+    </>
+  );
+
+  return (
+    <>
+      {embedded ? (
+        formContent
+      ) : (
+        <section className="rounded-xl border border-zinc-300 bg-white p-5 shadow-sm">
+          {formContent}
+        </section>
+      )}
 
       <ResumeUploadPreviewDrawer
         detail={previewDetail}

@@ -31,7 +31,7 @@ function SimilarityBar({ score }: { score: number }) {
     <div className="flex items-center gap-2">
       <div className="h-1.5 w-16 overflow-hidden rounded-full bg-zinc-200">
         <div
-          className="h-full rounded-full bg-indigo-500"
+          className="h-full rounded-full bg-emerald-600"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -56,7 +56,7 @@ export function ChunkEvidenceCard({
           <p className="text-sm font-medium text-zinc-900">
             {chunk.section_name ?? "General"}
           </p>
-          <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-800">
+          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200/60">
             {formatSimilarity(chunk.similarity)} match
           </span>
         </div>
@@ -81,7 +81,7 @@ export function ChunkEvidenceCard({
       </p>
       {hasMore && (
         <button
-          className="mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+          className="mt-1 text-xs font-medium text-emerald-700 hover:text-emerald-800"
           type="button"
           onClick={() => setExpanded((v) => !v)}
         >

@@ -117,7 +117,7 @@ export function ChatWorkspace() {
   }
 
   return (
-    <main className="flex min-h-[calc(100vh-var(--cp-nav-height))] flex-col bg-[var(--cp-page-bg)] lg:flex-row">
+    <main className="flex min-h-0 flex-1 flex-col bg-[var(--cp-page-bg)] lg:flex-row">
       <ConfirmDialog
         isOpen={deleteTargetId !== null}
         title="Delete conversation?"

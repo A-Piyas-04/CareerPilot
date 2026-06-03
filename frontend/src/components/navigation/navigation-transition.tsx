@@ -118,7 +118,7 @@ export function NavigationTransitionShell({
     : "singleColumn";
 
   return (
-    <div className="relative min-h-[calc(100vh-var(--cp-nav-height))] lg:min-h-[calc(100vh-var(--cp-nav-with-context))]">
+    <div className="relative flex min-h-0 flex-1 flex-col">
       {showOverlay ? (
         <div
           className="cp-page-transition absolute inset-0 z-20 overflow-hidden bg-[var(--cp-page-bg)]"
