@@ -20,7 +20,7 @@ export function AppSidebar({ collapsed, onToggleCollapse }: AppSidebarProps) {
     <aside
       id="workspace-sidebar"
       data-collapsed={collapsed ? "true" : "false"}
-      className="relative hidden h-dvh max-h-dvh shrink-0 flex-col overflow-visible border-r border-[var(--cp-sidebar-border)] bg-[var(--cp-sidebar-bg)] shadow-[inset_-1px_0_0_rgba(0,0,0,0.15)] transition-[width] duration-300 ease-in-out will-change-[width] lg:flex"
+      className="relative hidden h-dvh max-h-dvh shrink-0 flex-col overflow-visible border-r border-[var(--cp-sidebar-border)] bg-[var(--cp-sidebar-bg)] transition-[width] duration-300 ease-in-out will-change-[width] lg:flex"
       style={{
         width: collapsed
           ? "var(--cp-sidebar-width-collapsed)"
@@ -28,16 +28,20 @@ export function AppSidebar({ collapsed, onToggleCollapse }: AppSidebarProps) {
       }}
       aria-label="Workspace navigation"
     >
-      <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-2 py-4">
-        <div
-          className={`flex flex-col ${collapsed ? "gap-3" : "gap-7"}`}
-        >
-          {SIDEBAR_NAV_GROUPS.map((group) => {
+      <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-3 pb-6 pt-[var(--cp-header-height)]">
+        <nav className="flex flex-col" aria-label="Workspace sections">
+          {SIDEBAR_NAV_GROUPS.map((group, groupIndex) => {
             const styles = NAV_ACCENT_STYLES[group.accent];
             return (
               <section
                 key={group.label}
-                className={`${styles.sidebarSectionDark} ${collapsed ? "p-1" : "p-1.5"}`}
+                className={
+                  groupIndex > 0
+                    ? collapsed
+                      ? "mt-4 border-t border-slate-400/35 pt-4"
+                      : "mt-5 border-t border-slate-400/40 pt-5"
+                    : undefined
+                }
                 aria-label={group.label}
               >
                 <ul className="space-y-0.5">
@@ -52,22 +56,24 @@ export function AppSidebar({ collapsed, onToggleCollapse }: AppSidebarProps) {
                             title={collapsed ? label : undefined}
                             aria-current={isActive ? "page" : undefined}
                             aria-label={collapsed ? label : undefined}
-                            className={`block rounded-lg text-sm transition-colors duration-200 ${
+                            className={`block rounded-md transition-colors duration-150 ${
                               collapsed
-                                ? "px-1.5 py-2 text-center"
-                                : "px-3 py-2.5"
+                                ? "border-l-0 px-1.5 py-2 text-center text-sm"
+                                : "px-2.5 py-2.5 text-[19px]"
                             } ${
                               isActive
-                                ? styles.itemActive
-                                : styles.sidebarItemIdle
+                                ? collapsed
+                                  ? "bg-white/[0.08] font-medium text-slate-100"
+                                  : `${styles.sidebarItemActive} font-medium`
+                                : `${styles.sidebarItemIdle} font-normal`
                             }`}
                           >
                             {collapsed ? (
-                              <span className="block text-xs font-semibold leading-tight transition-opacity duration-300">
+                              <span className="block font-medium leading-tight">
                                 {displayShort}
                               </span>
                             ) : (
-                              <span className="block truncate font-semibold leading-tight transition-opacity duration-300">
+                              <span className="block truncate leading-snug tracking-[0.01em]">
                                 {label}
                               </span>
                             )}
@@ -80,13 +86,13 @@ export function AppSidebar({ collapsed, onToggleCollapse }: AppSidebarProps) {
               </section>
             );
           })}
-        </div>
+        </nav>
       </div>
 
       <button
         type="button"
         onClick={onToggleCollapse}
-        className="absolute top-[42%] right-0 z-50 flex h-9 w-9 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-slate-300 bg-white text-slate-700 shadow-[0_2px_12px_rgba(15,23,42,0.18)] transition-all duration-200 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+        className="absolute top-[42%] right-0 z-50 flex h-8 w-8 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300/90 bg-white text-slate-600 shadow-sm transition-colors duration-150 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
         aria-expanded={!collapsed}
         aria-controls="workspace-sidebar"
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}

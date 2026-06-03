@@ -18,6 +18,7 @@ export const NAV_ACCENT_STYLES: Record<
     sidebarSectionDark: string;
     sidebarPanelHeaderDark: string;
     sidebarItemIdle: string;
+    sidebarItemActive: string;
     sidebarIconIdle: string;
   }
 > = {
@@ -35,11 +36,12 @@ export const NAV_ACCENT_STYLES: Record<
     mobileSection: "border-emerald-200 bg-emerald-50/50",
     sidebarSection:
       "rounded-lg border border-emerald-200/50 bg-emerald-50/45 p-2",
-    sidebarSectionDark:
-      "rounded-lg border border-slate-600/50 border-l-[3px] border-l-emerald-500 bg-[#1e2735] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] p-2",
+    sidebarSectionDark: "",
     sidebarPanelHeaderDark: "text-emerald-300",
     sidebarItemIdle:
-      "border border-transparent text-slate-300 hover:border-slate-600/50 hover:bg-slate-700/70 hover:text-white",
+      "border-l-2 border-l-transparent text-slate-400 hover:bg-white/[0.04] hover:text-slate-200",
+    sidebarItemActive:
+      "border-l-2 border-l-emerald-500/70 bg-white/[0.06] text-slate-100",
     sidebarIconIdle: "bg-emerald-950/60 text-emerald-300 ring-1 ring-emerald-800/40",
   },
   sky: {
@@ -54,11 +56,12 @@ export const NAV_ACCENT_STYLES: Record<
     itemActiveIcon: "bg-white/20 text-white",
     mobileSection: "border-sky-200 bg-sky-50/50",
     sidebarSection: "rounded-lg border border-sky-200/50 bg-sky-50/45 p-2",
-    sidebarSectionDark:
-      "rounded-lg border border-slate-600/50 border-l-[3px] border-l-sky-500 bg-[#1e2735] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] p-2",
+    sidebarSectionDark: "",
     sidebarPanelHeaderDark: "text-sky-300",
     sidebarItemIdle:
-      "border border-transparent text-slate-300 hover:border-slate-600/50 hover:bg-slate-700/70 hover:text-white",
+      "border-l-2 border-l-transparent text-slate-400 hover:bg-white/[0.04] hover:text-slate-200",
+    sidebarItemActive:
+      "border-l-2 border-l-sky-500/70 bg-white/[0.06] text-slate-100",
     sidebarIconIdle: "bg-sky-950/60 text-sky-300 ring-1 ring-sky-800/40",
   },
   violet: {
@@ -75,11 +78,12 @@ export const NAV_ACCENT_STYLES: Record<
     mobileSection: "border-violet-200 bg-violet-50/50",
     sidebarSection:
       "rounded-lg border border-violet-200/50 bg-violet-50/45 p-2",
-    sidebarSectionDark:
-      "rounded-lg border border-slate-600/50 border-l-[3px] border-l-violet-500 bg-[#1e2735] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] p-2",
+    sidebarSectionDark: "",
     sidebarPanelHeaderDark: "text-violet-300",
     sidebarItemIdle:
-      "border border-transparent text-slate-300 hover:border-slate-600/50 hover:bg-slate-700/70 hover:text-white",
+      "border-l-2 border-l-transparent text-slate-400 hover:bg-white/[0.04] hover:text-slate-200",
+    sidebarItemActive:
+      "border-l-2 border-l-violet-500/70 bg-white/[0.06] text-slate-100",
     sidebarIconIdle:
       "bg-violet-950/60 text-violet-300 ring-1 ring-violet-800/40",
   },
