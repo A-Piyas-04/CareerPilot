@@ -29,7 +29,13 @@ services:
       - WATCHPACK_POLLING_INTERVAL=1000
       - CHOKIDAR_USEPOLLING=true
     command:
-      ["npm", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "3000"]
+      - sh
+      - -c
+      - >-
+        if [ -f /app/.next/dev/types/routes.d.ts ] &&
+        ! grep -q 'AppRoutes.*"/resume"' /app/.next/dev/types/routes.d.ts;
+        then rm -rf /app/.next; fi;
+        exec npm run dev:webpack -- --hostname 0.0.0.0 --port 3000
     depends_on:
       - backend
 

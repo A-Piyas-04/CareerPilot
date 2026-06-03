@@ -14,9 +14,15 @@ export function WorkspaceAssistLayer() {
   const { dismiss, reminders } = useDueReminders();
   const { nudges } = useAiNudges();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [dismissedNudges, setDismissedNudges] = useState<Set<string>>(() =>
-    readDismissedNudges(),
+  const [dismissedNudges, setDismissedNudges] = useState<Set<string>>(
+    () => new Set(),
   );
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setDismissedNudges(readDismissedNudges());
+    setMounted(true);
+  }, []);
   const reminder = reminders[0] ?? null;
   const nudge = useMemo(
     () => nudges.find((item) => !dismissedNudges.has(item.id)) ?? null,
@@ -49,7 +55,7 @@ export function WorkspaceAssistLayer() {
     });
   }
 
-  if (!reminder && !nudge) {
+  if (!mounted || (!reminder && !nudge)) {
     return null;
   }
 

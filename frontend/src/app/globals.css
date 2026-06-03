@@ -9,13 +9,14 @@
   --cp-sidebar-border: #334155;
   --cp-header-bg: #ffffff;
   --cp-header-border: #cbd5e1;
-  --cp-footer-bg: #e2e8f0;
-  --cp-footer-border: #94a3b8;
+  --cp-footer-bg: #1a6b52;
+  --cp-footer-border: #22855f;
   --cp-card-bg: #ffffff;
   --cp-card-border: #cbd5e1;
   --cp-surface: #ffffff;
   --cp-border: #cbd5e1;
-  --cp-sidebar-width: 16rem;
+  --cp-sidebar-width: 15.5rem;
+  --cp-sidebar-width-collapsed: 1.0rem;
   --cp-header-height: 4rem;
   --cp-nav-height: var(--cp-header-height);
   --cp-nav-with-context: var(--cp-header-height);

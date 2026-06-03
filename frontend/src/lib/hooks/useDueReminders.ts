@@ -20,7 +20,7 @@ const POLL_MS = 60_000;
 export function useDueReminders() {
   const [reminders, setReminders] = useState<DueReminder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [dismissed, setDismissed] = useState<Set<string>>(() => readDismissed());
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
   const visibleReminders = useMemo(
     () => reminders.filter((reminder) => !dismissed.has(reminder.id)),
     [dismissed, reminders],
@@ -42,6 +42,10 @@ export function useDueReminders() {
       writeDismissed(next);
       return next;
     });
+  }, []);
+
+  useEffect(() => {
+    setDismissed(readDismissed());
   }, []);
 
   useEffect(() => {

@@ -1,28 +1,57 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { AppFooter } from "./AppFooter";
+import { AppFooterScrollRegion } from "./AppFooter";
 import { AppSidebar } from "./AppSidebar";
 import { AppTopHeader } from "./AppTopHeader";
+
+const SIDEBAR_COLLAPSED_KEY = "cp-sidebar-collapsed";
 
 type WorkspaceChromeProps = {
   children: ReactNode;
 };
 
 export function WorkspaceChrome({ children }: WorkspaceChromeProps) {
-  return (
-    <div className="flex min-h-[calc(100vh-var(--cp-header-height))] lg:min-h-screen">
-      <AppSidebar />
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-      <div className="flex min-w-0 flex-1 flex-col">
+  useEffect(() => {
+    try {
+      setSidebarCollapsed(
+        window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1",
+      );
+    } catch {
+      /* ignore storage errors */
+    }
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(
+          SIDEBAR_COLLAPSED_KEY,
+          next ? "1" : "0",
+        );
+      } catch {
+        /* ignore storage errors */
+      }
+      return next;
+    });
+  }, []);
+
+  return (
+    <div className="relative flex h-dvh max-h-dvh overflow-hidden">
+      <AppSidebar
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebar}
+      />
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <AppTopHeader />
 
-        <div className="flex min-h-0 flex-1 flex-col bg-[var(--cp-page-bg)]">
-          {children}
-        </div>
-
-        <AppFooter />
+        <AppFooterScrollRegion>{children}</AppFooterScrollRegion>
       </div>
     </div>
   );
