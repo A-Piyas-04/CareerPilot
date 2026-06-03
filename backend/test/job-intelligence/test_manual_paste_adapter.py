@@ -1,4 +1,6 @@
 """Tests for the manual-paste job source adapter."""
+from datetime import date
+
 import pytest
 
 from app.job_intelligence.models.job import JobCreate
@@ -25,14 +27,24 @@ class TestManualPasteAdapter:
             description="Build APIs.",
             company="Acme",
             location="Remote",
+            deadline=date(2026, 6, 10),
             source_url="https://acme.example.com/jobs/1",
         )
         assert job.title == "Backend Engineer"
         assert job.description == "Build APIs."
         assert job.company == "Acme"
         assert job.location == "Remote"
+        assert job.deadline.isoformat() == "2026-06-10"
         assert job.source_url == "https://acme.example.com/jobs/1"
         assert job.source == "manual"
+
+    def test_deadline_extracted_from_description(self):
+        adapter = ManualPasteAdapter()
+        [job] = adapter.parse(
+            title="Backend Engineer",
+            description="Build APIs. Deadline: 2026-06-11.",
+        )
+        assert job.deadline.isoformat() == "2026-06-11"
 
     def test_optional_fields_default_to_none(self):
         adapter = ManualPasteAdapter()

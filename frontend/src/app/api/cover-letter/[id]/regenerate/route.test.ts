@@ -22,6 +22,26 @@ vi.mock("@/lib/gemini", () => ({
   createGeminiText: vi.fn(),
 }));
 
+vi.mock("@/lib/assistant/getResumeContext", () => ({
+  getResumeContext: vi.fn(async () => ({
+    emptyReason: null,
+    evidenceChunks: [
+      {
+        chunk_id: "00000000-0000-4000-8000-000000000020",
+        chunk_text: "Skills: Python, FastAPI, PostgreSQL.",
+        resume_id: "00000000-0000-4000-8000-000000000010",
+        section_name: "skills",
+        similarity: 0.9,
+      },
+    ],
+    hasResume: true,
+    resumeId: "00000000-0000-4000-8000-000000000010",
+    text: "Skills: Python, FastAPI, PostgreSQL.",
+    usedResumeChunks: ["00000000-0000-4000-8000-000000000020"],
+    userSkills: ["Python", "FastAPI", "PostgreSQL"],
+  })),
+}));
+
 const { createClient } = await import("@/lib/supabase/server");
 const { createCoverLetterDbClient } = await import("@/lib/supabase/admin");
 const { createGeminiText, GeminiApiError } = await import("@/lib/gemini");

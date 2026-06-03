@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import { CalendarClock, Pencil, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { ConfirmDialog } from "@/components/ui";
@@ -27,15 +28,27 @@ export function EventPopover({ event, onClose, onEdit }: Props) {
   }
 
   const resource = event.resource;
-  const isReadOnly = resource.kind === "application_deadline";
+  const isReadOnly = resource.kind !== "calendar_event";
   const description =
     resource.kind === "calendar_event" ? resource.event.description : null;
   const linkedTask =
-    resource.kind === "calendar_event" ? resource.linked_task_title : null;
+    resource.kind === "calendar_event"
+      ? resource.linked_task_title
+      : resource.kind === "task_due"
+        ? resource.task.title
+        : null;
   const linkedApplication =
     resource.kind === "calendar_event"
       ? resource.linked_application_title
-      : resource.application.title;
+      : resource.kind === "application_deadline"
+        ? resource.application.title
+        : null;
+  const linkedGoal =
+    resource.kind === "goal_deadline"
+      ? resource.goal.title
+      : resource.kind === "task_due"
+        ? resource.task.goal_title
+        : null;
 
   async function handleDelete() {
     if (!event || event.resource.kind !== "calendar_event") {
@@ -104,10 +117,27 @@ export function EventPopover({ event, onClose, onEdit }: Props) {
         </p>
       ) : null}
 
-      {isReadOnly ? (
-        <p className="mt-4 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-600">
-          Application deadlines are read-only calendar items.
+      {linkedGoal ? (
+        <p className="mt-2 text-sm text-zinc-600">
+          <span className="font-semibold text-zinc-800">Goal:</span>{" "}
+          {linkedGoal}
         </p>
+      ) : null}
+
+      {isReadOnly ? (
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
+          <p className="text-xs font-medium text-zinc-600">
+            {readOnlyMessage(resource.kind)}
+          </p>
+          {resource.kind === "goal_deadline" || resource.kind === "task_due" ? (
+            <Link
+              href="/goals"
+              className="shrink-0 text-xs font-semibold text-violet-700 hover:underline"
+            >
+              Open Goals
+            </Link>
+          ) : null}
+        </div>
       ) : (
         <div className="mt-4 flex items-center justify-end gap-2">
           <button
@@ -156,4 +186,17 @@ function badgeClass(type: CalendarEventType) {
 
 function eventTypeLabel(type: CalendarEventType) {
   return type.slice(0, 1).toUpperCase() + type.slice(1);
+}
+
+function readOnlyMessage(kind: CalendarDisplayEvent["resource"]["kind"]) {
+  if (kind === "application_deadline") {
+    return "Application deadlines are read-only calendar items.";
+  }
+  if (kind === "goal_deadline") {
+    return "Goal target dates are read-only calendar items.";
+  }
+  if (kind === "task_due") {
+    return "Task due dates are read-only calendar items.";
+  }
+  return "This calendar item is read-only.";
 }

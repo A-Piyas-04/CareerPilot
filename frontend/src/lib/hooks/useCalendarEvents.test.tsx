@@ -66,6 +66,29 @@ describe("calendar hooks", () => {
         ],
       },
     ]);
+    supabase.setTable("goals", [
+      {
+        data: [
+          {
+            id: "goal",
+            target_date: "2026-06-02",
+            title: "Apply to 5 jobs",
+          },
+        ],
+      },
+    ]);
+    supabase.setTable("tasks", [
+      {
+        data: [
+          {
+            due_date: "2026-06-03",
+            goals: { title: "Apply to 5 jobs" },
+            id: "task",
+            title: "Update CV",
+          },
+        ],
+      },
+    ]);
 
     const { result } = renderHook(() => useCalendarEvents(), {
       wrapper: wrapper(queryClient),
@@ -75,8 +98,12 @@ describe("calendar hooks", () => {
     expect(result.current.data?.map((event) => event.resource.kind)).toEqual([
       "calendar_event",
       "application_deadline",
+      "goal_deadline",
+      "task_due",
     ]);
     expect(result.current.data?.[1].title).toContain("Deadline");
+    expect(result.current.data?.[2].title).toContain("Goal target");
+    expect(result.current.data?.[3].title).toContain("Task due");
   });
 
   it("creates a user-scoped study event", async () => {

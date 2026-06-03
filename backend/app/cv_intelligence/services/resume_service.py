@@ -1,6 +1,7 @@
 """Resume service ? orchestrates the full CV ingestion pipeline and read operations."""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any, Optional
 
@@ -381,6 +382,18 @@ def process_resume(user_id: str, filename: str, file_bytes: bytes) -> Resume:
             detail="Could not create resume record.",
         )
     resume_id: str = created["id"]
+    file_url = _store_resume_file(
+        supabase=supabase,
+        user_id=user_id,
+        resume_id=resume_id,
+        filename=filename,
+        file_bytes=file_bytes,
+        file_type=file_type,
+    )
+    if file_url:
+        supabase.table("resumes").update({"file_url": file_url}).eq(
+            "id", resume_id
+        ).eq("user_id", user_id).execute()
 
     try:
         raw_text = extract_text(filename, file_bytes)
@@ -589,12 +602,15 @@ def delete_resume(user_id: str, resume_id: str) -> None:
     user_skills rows have resume_id set to NULL (on delete set null).
     Raises 404 if not found or owned by another user.
     """
-    _get_owned_resume(user_id, resume_id)
+    resume = _get_owned_resume(user_id, resume_id)
+    supabase = get_supabase_client()
+    if resume.file_url:
+        _delete_stored_resume_file(supabase=supabase, file_url=resume.file_url)
 
     run_supabase(
         "delete resume",
         lambda: (
-            get_supabase_client()
+            supabase
             .table("resumes")
             .delete()
             .eq("id", resume_id)
@@ -625,6 +641,69 @@ def _get_owned_resume(user_id: str, resume_id: str) -> Resume:
     if not row:
         raise _not_found()
     return Resume(**row)
+
+
+def _store_resume_file(
+    *,
+    supabase: Any,
+    user_id: str,
+    resume_id: str,
+    filename: str,
+    file_bytes: bytes,
+    file_type: str,
+) -> str | None:
+    """Best-effort raw file upload to Supabase Storage."""
+    storage = getattr(supabase, "storage", None)
+    bucket_name = settings.resume_storage_bucket.strip() or "resumes"
+    if not storage or not bucket_name:
+        return None
+
+    safe_name = _safe_storage_filename(filename)
+    path = f"{user_id}/{resume_id}/{safe_name}"
+    content_type = (
+        "application/pdf"
+        if file_type == "pdf"
+        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+
+    try:
+        try:
+            storage.create_bucket(bucket_name, options={"public": False})
+        except TypeError:
+            storage.create_bucket(bucket_name, {"public": False})
+        except Exception:
+            pass
+
+        bucket = storage.from_(bucket_name)
+        try:
+            bucket.upload(
+                path,
+                file_bytes,
+                file_options={"content-type": content_type, "upsert": "true"},
+            )
+        except TypeError:
+            bucket.upload(path, file_bytes, {"content-type": content_type, "upsert": "true"})
+        return path
+    except Exception:
+        return None
+
+
+def _delete_stored_resume_file(*, supabase: Any, file_url: str) -> None:
+    """Best-effort cleanup of a stored resume object."""
+    storage = getattr(supabase, "storage", None)
+    bucket_name = settings.resume_storage_bucket.strip() or "resumes"
+    if not storage or not file_url:
+        return
+    try:
+        storage.from_(bucket_name).remove([file_url])
+    except Exception:
+        pass
+
+
+def _safe_storage_filename(filename: str) -> str:
+    stem = Path(filename or "resume").name
+    safe = re.sub(r"[^A-Za-z0-9._-]+", "-", stem).strip(".-")
+    return safe or "resume"
 
 
 def _mark_failed(supabase: Any, resume_id: str, user_id: str, error_message: str) -> None:

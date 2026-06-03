@@ -11,8 +11,8 @@ import { buildNudgePrompt, NUDGE_SYSTEM_PROMPT } from "@/lib/reminders/prompts";
 import { parseNudgesJson } from "@/lib/reminders/parser";
 import {
   NUDGE_GENERATION_FAILED_MESSAGE,
-  QUOTA_EXCEEDED_MESSAGE,
   type AiNudge,
+  type AiNudgeResponse,
   type NudgeActivitySummary,
 } from "@/lib/reminders/types";
 import { createClient } from "@/lib/supabase/server";
@@ -21,9 +21,13 @@ export const runtime = "nodejs";
 
 type DbRow = Record<string, unknown>;
 
+const nudgeCache = new Map<string, AiNudgeResponse>();
+const inFlightGenerations = new Map<string, Promise<AiNudgeResponse>>();
+
 export async function POST(request: Request) {
   try {
-    await request.json().catch(() => ({}));
+    const body = (await request.json().catch(() => ({}))) as { force?: unknown };
+    const force = body.force === true;
     const supabase = await createClient();
     const {
       data: { user },
@@ -34,39 +38,29 @@ export async function POST(request: Request) {
       return jsonError({ error: "nudge_generation_failed", message: "User not authenticated" }, 401);
     }
 
-    const summary = await collectActivitySummary(supabase, user.id);
-    const rawResponse = await createGeminiText({
-      maxOutputTokens: 900,
-      model: GEMINI_MODEL,
-      prompt: buildNudgePrompt(summary),
-      systemPrompt: NUDGE_SYSTEM_PROMPT,
-      temperature: 0.25,
-    });
-    const generatedNudges = parseNudgesJson(rawResponse);
-    const deterministic = buildDeterministicJobMatchNudge(summary);
-    const nudges = deterministic
-      ? [
-          deterministic,
-          ...generatedNudges.filter((nudge) => nudge.id !== deterministic.id),
-        ].slice(0, 3)
-      : generatedNudges;
-
-    return Response.json({
-      cached: false,
-      generatedAt: new Date().toISOString(),
-      nudges,
-    });
-  } catch (error) {
-    if (isQuotaError(error)) {
-      return jsonError(
-        {
-          error: "quota_exceeded",
-          message: QUOTA_EXCEEDED_MESSAGE,
-        },
-        429,
-      );
+    if (!force) {
+      const cached = nudgeCache.get(user.id);
+      if (cached) {
+        return Response.json({ ...cached, cached: true });
+      }
+      const pending = inFlightGenerations.get(user.id);
+      if (pending) {
+        const result = await pending;
+        return Response.json({ ...result, cached: true });
+      }
     }
 
+    const generation = generateAndCacheNudges(supabase, user.id);
+    inFlightGenerations.set(user.id, generation);
+    try {
+      const result = await generation;
+      return Response.json(result);
+    } finally {
+      if (inFlightGenerations.get(user.id) === generation) {
+        inFlightGenerations.delete(user.id);
+      }
+    }
+  } catch (error) {
     return jsonError(
       {
         error: "nudge_generation_failed",
@@ -75,6 +69,51 @@ export async function POST(request: Request) {
       error instanceof GeminiApiError ? error.status : 500,
     );
   }
+}
+
+async function generateAndCacheNudges(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<AiNudgeResponse> {
+  const summary = await collectActivitySummary(supabase, userId);
+  const generatedNudges = await tryGenerateAiNudges(summary);
+  const nudges = mergeNudges(summary, generatedNudges);
+  const response: AiNudgeResponse = {
+    cached: false,
+    generatedAt: new Date().toISOString(),
+    nudges,
+  };
+  nudgeCache.set(userId, response);
+  return response;
+}
+
+async function tryGenerateAiNudges(summary: NudgeActivitySummary): Promise<AiNudge[]> {
+  try {
+    const rawResponse = await createGeminiText({
+      maxOutputTokens: 900,
+      model: GEMINI_MODEL,
+      prompt: buildNudgePrompt(summary),
+      systemPrompt: NUDGE_SYSTEM_PROMPT,
+      temperature: 0.25,
+    });
+    return parseNudgesJson(rawResponse);
+  } catch {
+    return [];
+  }
+}
+
+function mergeNudges(summary: NudgeActivitySummary, generated: AiNudge[]) {
+  const deterministic = buildDeterministicNudges(summary);
+  const seen = new Set<string>();
+  return [...deterministic, ...generated]
+    .filter((nudge) => {
+      if (seen.has(nudge.id)) {
+        return false;
+      }
+      seen.add(nudge.id);
+      return true;
+    })
+    .slice(0, 3);
 }
 
 async function collectActivitySummary(
@@ -317,30 +356,73 @@ function buildDeterministicJobMatchNudge(
   };
 }
 
+function buildDeterministicNudges(summary: NudgeActivitySummary): AiNudge[] {
+  const nudges: AiNudge[] = [];
+  const jobNudge = buildDeterministicJobMatchNudge(summary);
+  if (jobNudge) {
+    nudges.push(jobNudge);
+  }
+  if (summary.overdueTasks > 0) {
+    nudges.push({
+      actionHref: "/goals",
+      actionLabel: "Open Tasks",
+      id: "overdue-tasks-deterministic",
+      message: `You have ${summary.overdueTasks} overdue task${
+        summary.overdueTasks === 1 ? "" : "s"
+      } waiting. Clear the smallest one first to rebuild momentum.`,
+      title: "Overdue tasks need attention",
+      type: "task",
+    });
+  }
+  if (summary.tasksDueToday > 0) {
+    nudges.push({
+      actionHref: "/goals",
+      actionLabel: "Open Goals",
+      id: "tasks-due-today-deterministic",
+      message: `${summary.tasksDueToday} task${
+        summary.tasksDueToday === 1 ? " is" : "s are"
+      } due today. Review your priority list before starting new work.`,
+      title: "Tasks due today",
+      type: "task",
+    });
+  }
+  if (summary.upcomingEventsNext7Days.length > 0) {
+    const nextEvent = summary.upcomingEventsNext7Days[0];
+    nudges.push({
+      actionHref: "/calendar",
+      actionLabel: "Open Calendar",
+      id: "upcoming-event-deterministic",
+      message: `${nextEvent.title} is coming up soon. Check the calendar so prep does not slip.`,
+      title: "Upcoming deadline or event",
+      type: "deadline",
+    });
+  }
+  if ((summary.lowProgressRoadmaps ?? 0) > 0) {
+    nudges.push({
+      actionHref: "/roadmap",
+      actionLabel: "Open Roadmap",
+      id: "low-roadmap-progress-deterministic",
+      message: "One of your roadmaps is below 35% progress. Pick the next small milestone and schedule it.",
+      title: "Roadmap progress is low",
+      type: "roadmap",
+    });
+  }
+  if (nudges.length === 0 && summary.totalApplications === 0) {
+    nudges.push({
+      actionHref: "/jobs",
+      actionLabel: "Search Jobs",
+      id: "start-job-search-deterministic",
+      message: "You do not have applications tracked yet. Run a job search and save one promising role.",
+      title: "Start your pipeline",
+      type: "application",
+    });
+  }
+  return nudges;
+}
+
 function row(data: unknown) {
   const items = rows(data);
   return items[0] ?? null;
-}
-
-function isQuotaError(error: unknown) {
-  const candidate = error as {
-    code?: unknown;
-    message?: unknown;
-    status?: unknown;
-    type?: unknown;
-  };
-  const message = String(candidate?.message ?? "").toLowerCase();
-  const code = String(candidate?.code ?? "").toLowerCase();
-  const type = String(candidate?.type ?? "").toLowerCase();
-
-  return (
-    candidate?.status === 429 ||
-    code.includes("insufficient_quota") ||
-    type.includes("insufficient_quota") ||
-    message.includes("quota") ||
-    message.includes("rate limit") ||
-    message.includes("billing")
-  );
 }
 
 function rows(value: unknown): DbRow[] {

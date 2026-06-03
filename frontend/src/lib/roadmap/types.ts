@@ -47,6 +47,7 @@ export type GenerateRoadmapResponse = {
   roadmapId: string;
   roadmap: Roadmap;
   items: RoadmapItem[];
+  usedResumeChunks?: string[];
 };
 
 export type RoadmapDetailResponse = {

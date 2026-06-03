@@ -84,6 +84,8 @@ export function CoverLetterDetailClient({
 
   const coverLetter = data.coverLetter;
   const updatedAt = new Date(coverLetter.updated_at);
+  const evidenceChunks = coverLetter.metadata?.evidence_chunks ?? [];
+  const usedChunkIds = coverLetter.metadata?.used_resume_chunks ?? [];
 
   const handleCopy = async () => {
     try {
@@ -317,10 +319,40 @@ export function CoverLetterDetailClient({
             </label>
           </div>
         ) : (
-          <div
-            className={`whitespace-pre-wrap p-5 text-sm leading-7 text-zinc-800 ${surfaceCardMuted}`}
-          >
-            {coverLetter.content}
+          <div className="space-y-4">
+            {usedChunkIds.length > 0 ? (
+              <section className={`p-4 ${surfaceCardMuted}`}>
+                <h2 className="text-sm font-semibold text-zinc-950">
+                  Grounded in CV evidence
+                </h2>
+                <p className="mt-1 text-sm text-zinc-600">
+                  Used {usedChunkIds.length} CV chunk
+                  {usedChunkIds.length === 1 ? "" : "s"} for this letter.
+                </p>
+                {evidenceChunks.length > 0 ? (
+                  <div className="mt-3 space-y-2">
+                    {evidenceChunks.slice(0, 3).map((chunk) => (
+                      <div
+                        key={chunk.chunk_id}
+                        className="rounded-lg border border-sky-100 bg-white/80 p-3"
+                      >
+                        <p className="text-xs font-semibold uppercase text-sky-700">
+                          {chunk.section_name ?? "CV section"}
+                        </p>
+                        <p className="mt-1 line-clamp-3 text-sm text-zinc-600">
+                          {chunk.chunk_text}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+            <div
+              className={`whitespace-pre-wrap p-5 text-sm leading-7 text-zinc-800 ${surfaceCardMuted}`}
+            >
+              {coverLetter.content}
+            </div>
           </div>
         )}
       </DetailPageShell>

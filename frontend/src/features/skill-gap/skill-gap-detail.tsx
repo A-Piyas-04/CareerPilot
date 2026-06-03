@@ -48,6 +48,11 @@ export function SkillGapDetail({ analysis, isLoading, error }: Props) {
     : [];
   const summary =
     typeof recommendations.summary === "string" ? recommendations.summary : null;
+  const evidenceChunkIds = Array.isArray(recommendations.evidence_chunk_ids)
+    ? recommendations.evidence_chunk_ids.filter(
+        (value): value is string => typeof value === "string",
+      )
+    : [];
 
   const roadmapMatch: MatchSummary = {
     match_id: null,
@@ -106,6 +111,18 @@ export function SkillGapDetail({ analysis, isLoading, error }: Props) {
               <li key={item}>{item}</li>
             ))}
           </ol>
+        </section>
+      ) : null}
+
+      {evidenceChunkIds.length > 0 ? (
+        <section className="rounded-xl border border-sky-200/80 bg-white p-4">
+          <h3 className="text-sm font-semibold text-sky-900">
+            Grounded in CV evidence
+          </h3>
+          <p className="mt-1 text-sm text-zinc-600">
+            Used {evidenceChunkIds.length} retrieved CV chunk
+            {evidenceChunkIds.length === 1 ? "" : "s"} for this analysis.
+          </p>
         </section>
       ) : null}
 

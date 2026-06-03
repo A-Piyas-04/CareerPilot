@@ -29,17 +29,24 @@ def extract_text(filename: str, file_bytes: bytes) -> str:
     ext = Path(filename).suffix.lower()
     if ext == ".pdf":
         raw = _extract_pdf(file_bytes)
+        text = _normalise(raw)
+        if not text:
+            ocr_text = _extract_pdf_with_gemini_ocr(file_bytes)
+            text = _normalise(ocr_text)
+        if text:
+            return text
     else:
         raw = _extract_docx(file_bytes)
+        text = _normalise(raw)
+        if text:
+            return text
 
-    text = _normalise(raw)
-    if not text:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="No text could be extracted from the uploaded file. "
-            "Please ensure the file contains selectable text (not a scanned image).",
-        )
-    return text
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        detail="No text could be extracted from the uploaded file. "
+        "Please ensure the file contains selectable text, upload a clearer scan, "
+        "or use the manual CV builder.",
+    )
 
 
 def _extract_pdf(file_bytes: bytes) -> str:
@@ -69,6 +76,40 @@ def _extract_docx(file_bytes: bytes) -> str:
     document = docx.Document(io.BytesIO(file_bytes))
     paragraphs: list[str] = [para.text for para in document.paragraphs if para.text.strip()]
     return "\n".join(paragraphs)
+
+
+def _extract_pdf_with_gemini_ocr(file_bytes: bytes) -> str:
+    """Best-effort OCR fallback for scanned PDFs using Gemini."""
+    try:
+        from app.core.config import settings  # noqa: PLC0415
+    except Exception:
+        return ""
+
+    if not settings.gemini_api_key:
+        return ""
+
+    try:
+        import google.generativeai as genai  # noqa: PLC0415
+
+        genai.configure(api_key=settings.gemini_api_key)
+        model = genai.GenerativeModel(settings.gemini_ocr_model)
+        response = model.generate_content(
+            [
+                {
+                    "mime_type": "application/pdf",
+                    "data": file_bytes,
+                },
+                (
+                    "Extract the resume/CV text from this PDF. Preserve useful "
+                    "section headings such as experience, education, skills, and "
+                    "projects. Return only the extracted text. Do not summarize, "
+                    "infer, or invent any content."
+                ),
+            ]
+        )
+        return getattr(response, "text", "") or ""
+    except Exception:
+        return ""
 
 
 def _normalise(text: str) -> str:

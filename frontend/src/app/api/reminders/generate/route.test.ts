@@ -24,15 +24,26 @@ const route = await import("./route");
 
 describe("POST /api/reminders/generate", () => {
   let supabase: FakeSupabase;
+  let userIndex = 0;
 
   beforeEach(() => {
     supabase = new FakeSupabase();
+    userIndex += 1;
+    supabase.auth.getUser.mockResolvedValue({
+      data: {
+        user: {
+          id: `00000000-0000-0000-0000-${String(userIndex).padStart(12, "0")}`,
+        },
+      },
+      error: null,
+    } as never);
     vi.mocked(createClient).mockResolvedValue(supabase as never);
     vi.mocked(createGeminiText).mockReset();
     seedCoreTables();
   });
 
   it("generates structured nudges from user activity", async () => {
+    seedQuietTables();
     vi.mocked(createGeminiText).mockResolvedValue(
       JSON.stringify({
         nudges: [
@@ -67,42 +78,132 @@ describe("POST /api/reminders/generate", () => {
     );
   });
 
-  it("accepts an empty nudges array", async () => {
+  it("uses deterministic fallback nudges when Gemini returns no nudges", async () => {
     vi.mocked(createGeminiText).mockResolvedValue(JSON.stringify({ nudges: [] }));
 
     const response = await route.POST(
-      new Request("http://localhost/api/reminders/generate", { method: "POST" }),
+      new Request("http://localhost/api/reminders/generate", {
+        body: JSON.stringify({ force: true }),
+        method: "POST",
+      }),
     );
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.nudges).toEqual([]);
+    expect(body.nudges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "overdue-tasks-deterministic",
+          title: "Overdue tasks need attention",
+        }),
+      ]),
+    );
   });
 
-  it("returns quota_exceeded for Gemini quota errors", async () => {
+  it("uses deterministic fallback nudges for Gemini quota errors", async () => {
     vi.mocked(createGeminiText).mockRejectedValue(
       new GeminiApiError("You exceeded your current quota", 429),
     );
 
     const response = await route.POST(
-      new Request("http://localhost/api/reminders/generate", { method: "POST" }),
+      new Request("http://localhost/api/reminders/generate", {
+        body: JSON.stringify({ force: true }),
+        method: "POST",
+      }),
     );
     const body = await response.json();
 
-    expect(response.status).toBe(429);
-    expect(body.error).toBe("quota_exceeded");
+    expect(response.status).toBe(200);
+    expect(body.cached).toBe(false);
+    expect(body.nudges[0]).toMatchObject({
+      id: "overdue-tasks-deterministic",
+      type: "task",
+    });
   });
 
-  it("returns nudge_generation_failed for invalid AI JSON", async () => {
+  it("uses deterministic fallback nudges for invalid AI JSON", async () => {
     vi.mocked(createGeminiText).mockResolvedValue("not-json");
 
     const response = await route.POST(
-      new Request("http://localhost/api/reminders/generate", { method: "POST" }),
+      new Request("http://localhost/api/reminders/generate", {
+        body: JSON.stringify({ force: true }),
+        method: "POST",
+      }),
     );
     const body = await response.json();
 
-    expect(response.status).toBe(500);
-    expect(body.error).toBe("nudge_generation_failed");
+    expect(response.status).toBe(200);
+    expect(body.nudges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "overdue-tasks-deterministic" }),
+      ]),
+    );
+  });
+
+  it("returns server-cached nudges until force refresh is requested", async () => {
+    seedQuietTables();
+    vi.mocked(createGeminiText)
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          nudges: [
+            {
+              actionHref: "/dashboard",
+              actionLabel: "Open Dashboard",
+              message: "Cached result should be reused.",
+              title: "First result",
+              type: "general",
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          nudges: [
+            {
+              actionHref: "/dashboard",
+              actionLabel: "Open Dashboard",
+              message: "Forced refresh should replace the cache.",
+              title: "Second result",
+              type: "general",
+            },
+          ],
+        }),
+      );
+
+    const firstResponse = await route.POST(
+      new Request("http://localhost/api/reminders/generate", {
+        body: JSON.stringify({ force: false }),
+        method: "POST",
+      }),
+    );
+    const firstBody = await firstResponse.json();
+    const secondResponse = await route.POST(
+      new Request("http://localhost/api/reminders/generate", {
+        body: JSON.stringify({ force: false }),
+        method: "POST",
+      }),
+    );
+    const secondBody = await secondResponse.json();
+
+    seedQuietTables();
+    const forcedResponse = await route.POST(
+      new Request("http://localhost/api/reminders/generate", {
+        body: JSON.stringify({ force: true }),
+        method: "POST",
+      }),
+    );
+    const forcedBody = await forcedResponse.json();
+
+    expect(firstResponse.status).toBe(200);
+    expect(firstBody.cached).toBe(false);
+    expect(firstBody.nudges[0].title).toBe("First result");
+    expect(secondResponse.status).toBe(200);
+    expect(secondBody.cached).toBe(true);
+    expect(secondBody.nudges[0].title).toBe("First result");
+    expect(forcedResponse.status).toBe(200);
+    expect(forcedBody.cached).toBe(false);
+    expect(forcedBody.nudges[0].title).toBe("Second result");
+    expect(createGeminiText).toHaveBeenCalledTimes(2);
   });
 
   it("does not fail when optional roadmap and goal tables fail", async () => {
@@ -115,7 +216,10 @@ describe("POST /api/reminders/generate", () => {
     vi.mocked(createGeminiText).mockResolvedValue(JSON.stringify({ nudges: [] }));
 
     const response = await route.POST(
-      new Request("http://localhost/api/reminders/generate", { method: "POST" }),
+      new Request("http://localhost/api/reminders/generate", {
+        body: JSON.stringify({ force: true }),
+        method: "POST",
+      }),
     );
 
     expect(response.status).toBe(200);
@@ -202,5 +306,29 @@ describe("POST /api/reminders/generate", () => {
         ],
       },
     ]);
+  }
+
+  function seedQuietTables() {
+    supabase.setTable("applications", [
+      {
+        data: [
+          {
+            applied_at: "2026-06-01T10:00:00Z",
+            created_at: "2026-06-01T10:00:00Z",
+            id: "app-quiet",
+            status: "applied",
+          },
+        ],
+      },
+    ]);
+    supabase.setTable("tasks", [{ data: [] }]);
+    supabase.setTable("calendar_events", [{ data: [] }]);
+    supabase.setTable("roadmaps", [
+      { data: [{ id: "roadmap-quiet", progress_percent: 80 }] },
+    ]);
+    supabase.setTable("goals", [{ data: [] }]);
+    supabase.setTable("roadmap_items", [{ data: [] }]);
+    supabase.setTable("job_matches", [{ data: [] }]);
+    supabase.setTable("job_searches", [{ data: [] }]);
   }
 });

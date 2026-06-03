@@ -55,7 +55,7 @@ export async function POST(_request: Request, context: RouteContext) {
 
     const [profile, resumeContext] = await Promise.all([
       loadProfile(supabase, user.id),
-      loadCoverLetterResumeContext(supabase, user.id),
+      loadCoverLetterResumeContext(supabase, user.id, jobDescription),
     ]);
     const rawResponse = await createGeminiText({
       maxOutputTokens: 1800,
@@ -90,6 +90,11 @@ export async function POST(_request: Request, context: RouteContext) {
         job_description: jobDescription,
         job_id: existing.job_id,
         job_title: jobTitle,
+        metadata: {
+          evidence_chunks: resumeContext.evidenceChunks,
+          regenerated_from_id: existing.id,
+          used_resume_chunks: resumeContext.usedResumeChunks,
+        },
         resume_id: resumeContext.resumeId,
         title,
         tone: existing.tone ?? "professional",

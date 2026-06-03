@@ -2,6 +2,7 @@
 
 import {
   CalendarDays,
+  CalendarPlus,
   CheckCircle2,
   ChevronDown,
   Pencil,
@@ -14,6 +15,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 
 import { ConfirmDialog } from "@/components/ui";
+import { useCreateCalendarEvent } from "@/lib/hooks/useCalendarEvents";
 
 import { premiumCard } from "@/lib/ui-theme";
 
@@ -33,6 +35,7 @@ export function GoalCard({ goal, onEdit }: Props) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const updateMutation = useUpdateGoal(goal.id);
   const cancelMutation = useCancelGoal();
+  const createCalendarEvent = useCreateCalendarEvent();
   const completedTasks = goal.tasks.filter((task) => task.status === "done").length;
   const totalTasks = goal.tasks.length;
   const progress = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -44,6 +47,16 @@ export function GoalCard({ goal, onEdit }: Props) {
   async function handleCancel() {
     await cancelMutation.mutateAsync(goal.id);
     setShowCancelConfirm(false);
+  }
+
+  async function handleCreateCalendarEvent() {
+    if (!goal.target_date) return;
+    await createCalendarEvent.mutateAsync({
+      description: goal.description ?? undefined,
+      event_type: "deadline",
+      start_time: `${goal.target_date}T12:00`,
+      title: `Goal target: ${goal.title}`,
+    });
   }
 
   return (
@@ -105,6 +118,15 @@ export function GoalCard({ goal, onEdit }: Props) {
                 disabled={updateMutation.isPending}
               >
                 <PauseCircle className="h-4 w-4" />
+              </IconButton>
+            ) : null}
+            {goal.target_date ? (
+              <IconButton
+                label="Create calendar event"
+                onClick={handleCreateCalendarEvent}
+                disabled={createCalendarEvent.isPending}
+              >
+                <CalendarPlus className="h-4 w-4" />
               </IconButton>
             ) : null}
             {goal.status !== "completed" ? (

@@ -40,6 +40,19 @@ export type CalendarApplicationOption = {
   deadline: string | null;
 };
 
+export type CalendarGoalDeadline = {
+  id: string;
+  title: string;
+  target_date: string;
+};
+
+export type CalendarTaskDue = {
+  id: string;
+  title: string;
+  due_date: string;
+  goal_title: string | null;
+};
+
 export type CalendarDisplayEvent = {
   id: string;
   title: string;
@@ -60,6 +73,16 @@ export type CalendarEventResource =
   | {
       kind: "application_deadline";
       application: CalendarApplicationOption;
+      event_type: "deadline";
+    }
+  | {
+      kind: "goal_deadline";
+      goal: CalendarGoalDeadline;
+      event_type: "deadline";
+    }
+  | {
+      kind: "task_due";
+      task: CalendarTaskDue;
       event_type: "deadline";
     };
 
@@ -97,6 +120,19 @@ type ApplicationRow = {
     | { title: string | null; company: string | null }
     | { title: string | null; company: string | null }[]
     | null;
+};
+
+type GoalRow = {
+  id: string;
+  title: string;
+  target_date: string | null;
+};
+
+type TaskDueRow = {
+  id: string;
+  title: string;
+  due_date: string | null;
+  goals?: { title: string | null } | { title: string | null }[] | null;
 };
 
 export const calendarKeys = {
@@ -280,9 +316,11 @@ export function useDeleteCalendarEvent() {
 }
 
 async function fetchCalendarDisplayEvents() {
-  const [events, applications] = await Promise.all([
+  const [events, applications, goals, tasks] = await Promise.all([
     fetchCalendarEvents(),
     fetchApplicationOptions(),
+    fetchGoalDeadlines(),
+    fetchTaskDueDates(),
   ]);
 
   return [
@@ -290,6 +328,8 @@ async function fetchCalendarDisplayEvents() {
     ...applications
       .filter((application) => Boolean(application.deadline))
       .map(applicationDeadlineToDisplay),
+    ...goals.map(goalDeadlineToDisplay),
+    ...tasks.map(taskDueToDisplay),
   ];
 }
 
@@ -375,6 +415,58 @@ async function fetchApplicationOptions() {
       deadline: application.deadline,
     };
   });
+}
+
+async function fetchGoalDeadlines() {
+  const supabase = createClient();
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("goals")
+    .select("id, title, target_date")
+    .eq("user_id", userId)
+    .not("target_date", "is", null)
+    .order("target_date", { ascending: true });
+
+  if (error) {
+    showErrorToast(error.message);
+    throw new Error(error.message);
+  }
+
+  return ((data ?? []) as GoalRow[])
+    .filter((goal) => Boolean(goal.target_date))
+    .map((goal) => ({
+      id: goal.id,
+      target_date: goal.target_date as string,
+      title: goal.title,
+    }));
+}
+
+async function fetchTaskDueDates() {
+  const supabase = createClient();
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("id, title, due_date, goals:goal_id(title)")
+    .eq("user_id", userId)
+    .not("due_date", "is", null)
+    .order("due_date", { ascending: true });
+
+  if (error) {
+    showErrorToast(error.message);
+    throw new Error(error.message);
+  }
+
+  return ((data ?? []) as TaskDueRow[])
+    .filter((task) => Boolean(task.due_date))
+    .map((task) => {
+      const goal = Array.isArray(task.goals) ? task.goals[0] : task.goals;
+      return {
+        due_date: task.due_date as string,
+        goal_title: goal?.title ?? null,
+        id: task.id,
+        title: task.title,
+      };
+    });
 }
 
 async function createCalendarEvent(input: CalendarEventInput) {
@@ -530,6 +622,40 @@ function applicationDeadlineToDisplay(
       application,
       event_type: "deadline",
     },
+  };
+}
+
+function goalDeadlineToDisplay(goal: CalendarGoalDeadline): CalendarDisplayEvent {
+  const start = new Date(`${goal.target_date}T12:00:00`);
+
+  return {
+    allDay: true,
+    end: addHours(start, 1),
+    id: `goal-deadline-${goal.id}`,
+    resource: {
+      event_type: "deadline",
+      goal,
+      kind: "goal_deadline",
+    },
+    start,
+    title: `Goal target: ${goal.title}`,
+  };
+}
+
+function taskDueToDisplay(task: CalendarTaskDue): CalendarDisplayEvent {
+  const start = new Date(`${task.due_date}T12:00:00`);
+
+  return {
+    allDay: true,
+    end: addHours(start, 1),
+    id: `task-due-${task.id}`,
+    resource: {
+      event_type: "deadline",
+      kind: "task_due",
+      task,
+    },
+    start,
+    title: `Task due: ${task.title}`,
   };
 }
 

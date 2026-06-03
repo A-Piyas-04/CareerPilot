@@ -36,6 +36,10 @@ class Settings(BaseSettings):
             "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
         ),
     )
+    resume_storage_bucket: str = Field(
+        default="resumes",
+        validation_alias="RESUME_STORAGE_BUCKET",
+    )
 
     # Database
     database_url: str = Field(default="", validation_alias="DATABASE_URL")
@@ -52,6 +56,10 @@ class Settings(BaseSettings):
     gemini_embedding_model: str = Field(
         default="models/embedding-001",
         validation_alias="GEMINI_EMBEDDING_MODEL",
+    )
+    gemini_ocr_model: str = Field(
+        default="gemini-2.0-flash",
+        validation_alias="GEMINI_OCR_MODEL",
     )
     embedding_vector_dim: int = Field(
         default=DEFAULT_EMBEDDING_VECTOR_DIM,

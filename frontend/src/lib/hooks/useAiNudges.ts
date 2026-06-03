@@ -1,6 +1,5 @@
 "use client";
 
-import { format } from "date-fns";
 import { useCallback, useEffect, useState } from "react";
 
 import type {
@@ -19,13 +18,8 @@ type AiNudgeState = {
   isCached: boolean;
 };
 
-const CACHE_PREFIX = "careerpilot_nudges_";
-
 export function useAiNudges() {
-  const [cacheKey] = useState(() => todayCacheKey());
-  const [state, setState] = useState<AiNudgeState>(() =>
-    initialNudgeState(cacheKey),
-  );
+  const [state, setState] = useState<AiNudgeState>(() => initialNudgeState());
 
   const refreshNudges = useCallback(async () => {
     setState((current) => ({
@@ -37,9 +31,9 @@ export function useAiNudges() {
       nudges: [],
     }));
 
-    const nextState = await requestNudges(cacheKey, true);
+    const nextState = await requestNudges(true);
     setState(nextState);
-  }, [cacheKey]);
+  }, []);
 
   useEffect(() => {
     if (!state.isLoading || state.generatedAt || state.nudges.length > 0) {
@@ -47,7 +41,7 @@ export function useAiNudges() {
     }
 
     let isActive = true;
-    void requestNudges(cacheKey, false).then((nextState) => {
+    void requestNudges(false).then((nextState) => {
       if (isActive) {
         setState(nextState);
       }
@@ -56,7 +50,7 @@ export function useAiNudges() {
     return () => {
       isActive = false;
     };
-  }, [cacheKey, state.generatedAt, state.isLoading, state.nudges.length]);
+  }, [state.generatedAt, state.isLoading, state.nudges.length]);
 
   return {
     ...state,
@@ -65,7 +59,6 @@ export function useAiNudges() {
 }
 
 async function requestNudges(
-  cacheKey: string,
   force: boolean,
 ): Promise<AiNudgeState> {
   try {
@@ -90,12 +83,11 @@ async function requestNudges(
       };
     }
 
-    localStorage.setItem(cacheKey, JSON.stringify(payload));
     return {
       error: null,
       errorCode: null,
       generatedAt: payload.generatedAt,
-      isCached: false,
+      isCached: payload.cached,
       isLoading: false,
       nudges: payload.nudges,
     };
@@ -111,24 +103,7 @@ async function requestNudges(
   }
 }
 
-function todayCacheKey() {
-  return `${CACHE_PREFIX}${format(new Date(), "yyyy-MM-dd")}`;
-}
-
-function initialNudgeState(cacheKey: string): AiNudgeState {
-  const cached = readCachedNudges(cacheKey);
-
-  if (cached) {
-    return {
-      error: null,
-      errorCode: null,
-      generatedAt: cached.generatedAt,
-      isCached: true,
-      isLoading: false,
-      nudges: cached.nudges,
-    };
-  }
-
+function initialNudgeState(): AiNudgeState {
   return {
     error: null,
     errorCode: null,
@@ -137,30 +112,4 @@ function initialNudgeState(cacheKey: string): AiNudgeState {
     isLoading: true,
     nudges: [],
   };
-}
-
-function readCachedNudges(cacheKey: string): AiNudgeResponse | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    const raw = localStorage.getItem(cacheKey);
-    if (!raw) {
-      return null;
-    }
-
-    const parsed = JSON.parse(raw) as Partial<AiNudgeResponse>;
-    if (!Array.isArray(parsed.nudges) || typeof parsed.generatedAt !== "string") {
-      return null;
-    }
-
-    return {
-      cached: true,
-      generatedAt: parsed.generatedAt,
-      nudges: parsed.nudges,
-    };
-  } catch {
-    return null;
-  }
 }

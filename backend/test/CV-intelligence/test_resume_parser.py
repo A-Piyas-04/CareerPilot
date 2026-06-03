@@ -10,6 +10,7 @@ from app.cv_intelligence.services.resume_parser import (
     extract_text,
     validate_file,
 )
+from app.cv_intelligence.services import resume_parser
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +113,17 @@ class TestExtractTextPDF:
         with pytest.raises(HTTPException) as exc_info:
             extract_text("resume.pdf", pdf_bytes)
         assert exc_info.value.status_code == 422
+
+    def test_empty_pdf_uses_ocr_fallback(self, monkeypatch):
+        pdf_bytes = _make_minimal_pdf("")
+        monkeypatch.setattr(
+            resume_parser,
+            "_extract_pdf_with_gemini_ocr",
+            lambda _file_bytes: "Skills\nPython\nExperience\nBuilt APIs",
+        )
+        text = extract_text("resume.pdf", pdf_bytes)
+        assert "Python" in text
+        assert "Built APIs" in text
 
     def test_pdf_with_text_extracted(self):
         """PDF with selectable text must return non-empty string."""
