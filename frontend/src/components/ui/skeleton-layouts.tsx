@@ -163,9 +163,10 @@ function SingleColumnPageSkeleton() {
 function ResumePageSkeleton() {
   return (
     <PageShell>
-      <div className="mx-auto max-w-6xl grid gap-6 lg:grid-cols-2">
+      <div className="mx-auto max-w-6xl space-y-6">
         <Skeleton className="h-72 rounded-xl border border-zinc-200 bg-white" />
         <ResumeSummarySkeleton />
+        <Skeleton className="h-64 rounded-xl border border-zinc-200 bg-white" />
       </div>
     </PageShell>
   );
