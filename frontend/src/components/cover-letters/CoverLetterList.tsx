@@ -23,7 +23,23 @@ export function CoverLetterList({
   }
 
   if (error) {
-    return <div className={`p-4 ${alertError}`}>{error}</div>;
+    const needsDbGrants = /sql editor|apply-remote-grants/i.test(error);
+
+    return (
+      <div className={`space-y-3 p-4 ${alertError}`}>
+        <p>{error}</p>
+        {needsDbGrants ? (
+          <a
+            className="inline-block text-sm font-medium text-red-900 underline underline-offset-2"
+            href="https://supabase.com/dashboard/project/hiqdwrjoqfpelrhujtoj/sql/new"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Open Supabase SQL Editor →
+          </a>
+        ) : null}
+      </div>
+    );
   }
 
   if (coverLetters.length === 0) {

@@ -8,6 +8,7 @@ import type {
   CoverLetterTone,
   GenerateCoverLetterRequest,
 } from "@/lib/cover-letter/types";
+import { suppressExtensionHydrationProps } from "@/lib/hydration";
 import {
   formHintPanel,
   inputFieldSky,
@@ -82,6 +83,7 @@ export function CoverLetterGenerateForm({
 
   return (
     <form
+      {...suppressExtensionHydrationProps}
       onSubmit={handleSubmit}
       className={`p-5 ${surfaceCard}`}
     >
@@ -105,6 +107,7 @@ export function CoverLetterGenerateForm({
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-zinc-800">Job title</span>
           <input
+            {...suppressExtensionHydrationProps}
             value={jobTitle}
             onChange={(event) => setJobTitle(event.target.value)}
             placeholder="ML Engineer Intern"
@@ -118,6 +121,7 @@ export function CoverLetterGenerateForm({
             Company name
           </span>
           <input
+            {...suppressExtensionHydrationProps}
             value={companyName}
             onChange={(event) => setCompanyName(event.target.value)}
             placeholder="Acme Corp"
@@ -132,6 +136,7 @@ export function CoverLetterGenerateForm({
           Job description
         </span>
         <textarea
+          {...suppressExtensionHydrationProps}
           value={jobDescription}
           onChange={(event) => setJobDescription(event.target.value)}
           placeholder="Paste the role description, requirements, and responsibilities."
@@ -144,6 +149,7 @@ export function CoverLetterGenerateForm({
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-zinc-800">Tone</span>
           <select
+            {...suppressExtensionHydrationProps}
             value={tone}
             onChange={(event) => setTone(event.target.value as CoverLetterTone)}
             className={inputFieldSky}
@@ -161,6 +167,7 @@ export function CoverLetterGenerateForm({
             Extra notes
           </span>
           <input
+            {...suppressExtensionHydrationProps}
             value={extraNotes}
             onChange={(event) => setExtraNotes(event.target.value)}
             placeholder="Mention my backend internship"

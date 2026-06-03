@@ -1,8 +1,16 @@
 import { getResumeContext } from "@/lib/assistant/getResumeContext";
 import type { CoverLetter, CoverLetterTone } from "@/lib/cover-letter/types";
+import {
+  createCoverLetterDbClient,
+  type ServiceRoleClient,
+} from "@/lib/supabase/admin";
+
+export { createCoverLetterDbClient };
+import { toUserFacingPostgrestError } from "@/lib/supabase/postgrest-errors";
 import { createClient } from "@/lib/supabase/server";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+export type CoverLetterDbClient = ServiceRoleClient;
 type DbRow = Record<string, unknown>;
 
 export class CoverLetterHttpError extends Error {
@@ -93,12 +101,29 @@ export async function loadProfile(
   return data;
 }
 
+export async function listCoverLettersForUser(
+  userId: string,
+  db: CoverLetterDbClient = createCoverLetterDbClient(),
+) {
+  const { data, error } = await db
+    .from("cover_letters")
+    .select("*")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw new CoverLetterHttpError(toUserFacingPostgrestError(error.message), 500);
+  }
+
+  return (data ?? []).map(normalizeCoverLetter);
+}
+
 export async function fetchCoverLetterForUser(
-  supabase: SupabaseServerClient,
   coverLetterId: string,
   userId: string,
+  db: CoverLetterDbClient = createCoverLetterDbClient(),
 ) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("cover_letters")
     .select("*")
     .eq("id", coverLetterId)
@@ -171,21 +196,18 @@ export async function resolveJobContext({
 
 export async function nextCoverLetterVersion({
   companyName,
+  db = createCoverLetterDbClient(),
   jobId,
   jobTitle,
-  supabase,
   userId,
 }: {
   companyName: string;
+  db?: CoverLetterDbClient;
   jobId: string | null;
   jobTitle: string;
-  supabase: SupabaseServerClient;
   userId: string;
 }) {
-  let query = supabase
-    .from("cover_letters")
-    .select("version")
-    .eq("user_id", userId);
+  let query = db.from("cover_letters").select("version").eq("user_id", userId);
 
   if (jobId) {
     query = query.eq("job_id", jobId);
@@ -196,7 +218,7 @@ export async function nextCoverLetterVersion({
   const { data, error } = await query;
 
   if (error) {
-    throw new CoverLetterHttpError(error.message, 500);
+    throw new CoverLetterHttpError(toUserFacingPostgrestError(error.message), 500);
   }
 
   const maxVersion = (data ?? []).reduce((max, row) => {
@@ -231,7 +253,13 @@ export function buildCoverLetterTitle(jobTitle: string, companyName: string) {
 }
 
 export function jsonError(message: string, status: number) {
-  return Response.json({ detail: message }, { status });
+  return Response.json({ detail: toUserFacingPostgrestError(message) }, { status });
+}
+
+export function coverLetterDbErrorMessage(error: { message: string } | null) {
+  return error
+    ? toUserFacingPostgrestError(error.message)
+    : "Cover letter request failed.";
 }
 
 export function isUuid(value: string) {

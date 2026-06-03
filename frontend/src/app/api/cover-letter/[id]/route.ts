@@ -2,7 +2,9 @@ import { NextRequest } from "next/server";
 
 import {
   buildCoverLetterTitle,
+  coverLetterDbErrorMessage,
   CoverLetterHttpError,
+  createCoverLetterDbClient,
   fetchCoverLetterForUser,
   getAuthenticatedCoverLetterUser,
   isUuid,
@@ -31,8 +33,8 @@ export async function GET(_request: Request, context: RouteContext) {
       return jsonError("Invalid cover letter id.", 400);
     }
 
-    const { supabase, user } = await getAuthenticatedCoverLetterUser();
-    const coverLetter = await fetchCoverLetterForUser(supabase, id, user.id);
+    const { user } = await getAuthenticatedCoverLetterUser();
+    const coverLetter = await fetchCoverLetterForUser(id, user.id);
 
     return Response.json({ coverLetter });
   } catch (error) {
@@ -53,8 +55,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     const body = (await request.json()) as Partial<UpdateCoverLetterRequest>;
-    const { supabase, user } = await getAuthenticatedCoverLetterUser();
-    const existing = await fetchCoverLetterForUser(supabase, id, user.id);
+    const { user } = await getAuthenticatedCoverLetterUser();
+    const db = createCoverLetterDbClient();
+    const existing = await fetchCoverLetterForUser(id, user.id, db);
     const nextJobTitle =
       typeof body.jobTitle === "string"
         ? body.jobTitle.trim()
@@ -112,7 +115,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       updates.title = buildCoverLetterTitle(nextJobTitle, nextCompanyName);
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("cover_letters")
       .update(updates)
       .eq("id", id)
@@ -121,7 +124,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       .single();
 
     if (error || !data) {
-      return jsonError(error?.message ?? "Could not update cover letter.", 500);
+      return jsonError(
+        coverLetterDbErrorMessage(error) ?? "Could not update cover letter.",
+        500,
+      );
     }
 
     return Response.json({ coverLetter: normalizeCoverLetter(data) });
@@ -142,17 +148,18 @@ export async function DELETE(_request: Request, context: RouteContext) {
       return jsonError("Invalid cover letter id.", 400);
     }
 
-    const { supabase, user } = await getAuthenticatedCoverLetterUser();
-    await fetchCoverLetterForUser(supabase, id, user.id);
+    const { user } = await getAuthenticatedCoverLetterUser();
+    const db = createCoverLetterDbClient();
+    await fetchCoverLetterForUser(id, user.id, db);
 
-    const { error } = await supabase
+    const { error } = await db
       .from("cover_letters")
       .delete()
       .eq("id", id)
       .eq("user_id", user.id);
 
     if (error) {
-      return jsonError(error.message, 500);
+      return jsonError(coverLetterDbErrorMessage(error), 500);
     }
 
     return Response.json({ ok: true });

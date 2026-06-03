@@ -40,7 +40,7 @@ describe("cover-letter server helpers", () => {
     ]);
 
     await expect(
-      fetchCoverLetterForUser(supabase as never, "letter", USER_ID),
+      fetchCoverLetterForUser("letter", USER_ID, supabase as never),
     ).resolves.toMatchObject({ content: "Letter", id: "letter" });
 
     expect(supabase.calls[0].filters).toEqual([
@@ -77,9 +77,9 @@ describe("cover-letter server helpers", () => {
     await expect(
       nextCoverLetterVersion({
         companyName: "Acme",
+        db: supabase as never,
         jobId: JOB_ID,
         jobTitle: "ML Engineer",
-        supabase: supabase as never,
         userId: USER_ID,
       }),
     ).resolves.toBe(4);

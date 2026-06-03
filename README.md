@@ -141,6 +141,8 @@ npx supabase link --project-ref <your-ref>
 npx supabase db push
 ```
 
+If cover letters (or other features) show **permission denied for table**, the remote DB is missing `GRANT`s. Run the SQL in [`scripts/apply-remote-grants.sql`](scripts/apply-remote-grants.sql) once in [Supabase SQL Editor](https://supabase.com/dashboard/project/hiqdwrjoqfpelrhujtoj/sql/new).
+
 ---
 
 ## End-to-end demo flow

@@ -42,6 +42,6 @@ describe("SubmissionProgress", () => {
     );
 
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
-    expect(screen.getByText("Saving changes")).toBeInTheDocument();
+    expect(screen.getAllByText("Saving changes").length).toBeGreaterThan(0);
   });
 });

@@ -3,7 +3,9 @@ import { parseCoverLetterJson } from "@/lib/cover-letter/parser";
 import { buildCoverLetterPrompt, COVER_LETTER_SYSTEM_PROMPT } from "@/lib/cover-letter/prompts";
 import {
   buildCoverLetterTitle,
+  coverLetterDbErrorMessage,
   CoverLetterHttpError,
+  createCoverLetterDbClient,
   fetchCoverLetterForUser,
   getAuthenticatedCoverLetterUser,
   isUuid,
@@ -30,7 +32,8 @@ export async function POST(_request: Request, context: RouteContext) {
     }
 
     const { supabase, user } = await getAuthenticatedCoverLetterUser();
-    const existing = await fetchCoverLetterForUser(supabase, id, user.id);
+    const db = createCoverLetterDbClient();
+    const existing = await fetchCoverLetterForUser(id, user.id, db);
     const job = await resolveJobContext({
       jobId: existing.job_id ?? undefined,
       supabase,
@@ -72,13 +75,13 @@ export async function POST(_request: Request, context: RouteContext) {
     const generated = parseCoverLetterJson(rawResponse);
     const version = await nextCoverLetterVersion({
       companyName,
+      db,
       jobId: existing.job_id,
       jobTitle,
-      supabase,
       userId: user.id,
     });
     const title = buildCoverLetterTitle(jobTitle, companyName);
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("cover_letters")
       .insert({
         company_name: companyName,
@@ -97,7 +100,10 @@ export async function POST(_request: Request, context: RouteContext) {
       .single();
 
     if (error || !data) {
-      return jsonError(error?.message ?? "Could not save regenerated letter.", 500);
+      return jsonError(
+        coverLetterDbErrorMessage(error) ?? "Could not save regenerated letter.",
+        500,
+      );
     }
 
     return Response.json({ coverLetter: normalizeCoverLetter(data) });

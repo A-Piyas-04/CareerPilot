@@ -183,6 +183,7 @@ describe("GET /api/dashboard/metrics", () => {
       roadmapProgress: 0,
       tasksCompletedThisWeek: 0,
       weeklyStreak: 0,
+      skillsAdded: 0,
     });
     expect(body.pipeline).toHaveLength(5);
     expect(body.upcomingEvents).toEqual([]);

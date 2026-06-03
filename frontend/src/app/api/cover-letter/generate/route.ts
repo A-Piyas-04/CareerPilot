@@ -5,7 +5,9 @@ import { parseCoverLetterJson } from "@/lib/cover-letter/parser";
 import { buildCoverLetterPrompt, COVER_LETTER_SYSTEM_PROMPT } from "@/lib/cover-letter/prompts";
 import {
   buildCoverLetterTitle,
+  coverLetterDbErrorMessage,
   CoverLetterHttpError,
+  createCoverLetterDbClient,
   getAuthenticatedCoverLetterUser,
   jsonError,
   loadCoverLetterResumeContext,
@@ -82,7 +84,8 @@ export async function POST(request: NextRequest) {
     });
     const generated = parseCoverLetterJson(rawResponse);
     const title = buildCoverLetterTitle(jobTitle, companyName);
-    const { data, error } = await supabase
+    const db = createCoverLetterDbClient();
+    const { data, error } = await db
       .from("cover_letters")
       .insert({
         company_name: companyName,
@@ -101,7 +104,10 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error || !data) {
-      return jsonError(error?.message ?? "Could not save cover letter.", 500);
+      return jsonError(
+        coverLetterDbErrorMessage(error) ?? "Could not save cover letter.",
+        500,
+      );
     }
 
     return Response.json({ coverLetter: normalizeCoverLetter(data) });
