@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
-    "dev:webpack": "next dev --webpack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next dev --webpack",
+    "dev:turbo": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next dev --turbo",
+    "dev:webpack": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next dev --webpack",
+    "build": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next build",
+    "start": "node ./node_modules/next/dist/bin/next start",
     "lint": "eslint",
     "test": "vitest run --exclude '**/*.live-ai.test.ts'",
     "test:live-ai": "vitest run '**/*.live-ai.test.ts'"
