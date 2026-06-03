@@ -58,7 +58,7 @@ export function ResumeAnswerBox({
 
   return (
     <section
-      className={`${resumeCard} overflow-hidden lg:sticky lg:top-[57px]`}
+      className={`${resumeCard} overflow-hidden`}
     >
       <div className="p-5">
         <div className="-mx-5 -mt-5 mb-5 border-b border-indigo-100 bg-gradient-to-r from-indigo-50/90 to-white px-5 py-4">

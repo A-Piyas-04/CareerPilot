@@ -19,7 +19,6 @@ import { useResume, useResumes } from "./hooks";
 import { ManualResumeEditor } from "./manual-resume-editor";
 import { ResumeAnswerBox } from "./resume-answer-box";
 import { ResumeBuilderCard } from "./resume-builder-card";
-import { ResumeQueryBox } from "./resume-query-box";
 import { ResumeSummary } from "./resume-summary";
 import { ResumeUploadCard } from "./resume-upload-card";
 import { resumeSegmentGroup, resumeSegmentTab } from "./resume-ui";
@@ -213,9 +212,8 @@ export function ResumePageClient() {
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-6">
-            <div ref={inputAreaRef}>
+        <div className="space-y-6">
+          <div ref={inputAreaRef}>
               <div
                 className={`${resumeSegmentGroup} mb-4`}
                 role="tablist"
@@ -278,33 +276,23 @@ export function ResumePageClient() {
               )}
             </div>
 
-            {(resumes.length > 0 || resumesQuery.isLoading) && (
-              <ResumeSummary
-                detail={detailQuery.data}
-                error={detailQuery.error}
-                hasResumes={resumes.length > 0}
-                isLoading={resumesQuery.isLoading || detailQuery.isLoading}
-                onEditInBuilder={handleEditInBuilder}
-                onEditInManual={handleEditInManual}
-                onRequestReupload={handleRequestReupload}
-              />
-            )}
-          </div>
+          {(resumes.length > 0 || resumesQuery.isLoading) && (
+            <ResumeSummary
+              detail={detailQuery.data}
+              error={detailQuery.error}
+              hasResumes={resumes.length > 0}
+              isLoading={resumesQuery.isLoading || detailQuery.isLoading}
+              onEditInBuilder={handleEditInBuilder}
+              onEditInManual={handleEditInManual}
+              onRequestReupload={handleRequestReupload}
+            />
+          )}
 
           <ResumeAnswerBox
             resumeId={effectiveResumeId ?? undefined}
             resumeStatus={selectedResume?.status}
           />
         </div>
-
-        {resumes.length > 0 && (
-          <div className="mt-6">
-            <ResumeQueryBox
-              resumeId={effectiveResumeId ?? undefined}
-              resumeStatus={selectedResume?.status}
-            />
-          </div>
-        )}
       </div>
     </PageShell>
   );
