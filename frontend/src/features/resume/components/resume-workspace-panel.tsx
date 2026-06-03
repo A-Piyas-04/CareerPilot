@@ -20,7 +20,12 @@ export function ResumeWorkspacePanel({
 }: ResumeWorkspacePanelProps) {
   return (
     <div className={resumeWorkspaceShell}>
-      <div className={resumeWorkspaceBand}>{activeResume}</div>
+      <div className={`${resumeWorkspaceBand} cp-resume-band-dots`}>
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-800/90">
+          Your profile
+        </p>
+        {activeResume}
+      </div>
       <div className={resumeWorkspaceBody}>
         <div className="w-full space-y-5">{children}</div>
       </div>

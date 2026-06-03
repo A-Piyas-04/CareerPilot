@@ -15,9 +15,11 @@ import {
   type UploadPreviewPhase,
 } from "./resume-upload-preview-drawer";
 import {
+  resumeDropZoneActive,
+  resumeDropZoneFile,
+  resumeDropZoneIdle,
+  resumeFileTypePill,
   resumeInsetPanel,
-  resumeModuleTitle,
-  resumeCardSubtext,
   resumePrimaryButton,
 } from "./resume-ui";
 import type { Resume, ResumeDetail } from "./types";
@@ -151,26 +153,21 @@ export function ResumeUploadCard({
     fileInputRef.current?.click();
   }
 
-  const dropZoneClass = `flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-10 transition-all duration-150 ${
-    isDragging
-      ? "scale-[1.01] border-emerald-600 bg-emerald-50 shadow-md"
-      : selectedFile
-        ? "border-emerald-600 bg-emerald-50/90 shadow-sm"
-        : "border-zinc-400 bg-white hover:border-emerald-600 hover:bg-slate-50 hover:shadow-sm active:scale-[0.99]"
-  }`;
+  const dropZoneClass = [
+    embedded ? resumeInsetPanel : "",
+    resumeDropZoneIdle,
+    isDragging ? resumeDropZoneActive : "",
+    selectedFile && !isDragging ? resumeDropZoneFile : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const body = (
     <>
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h2 className={resumeModuleTitle}>
-            Upload Resume
-          </h2>
-          <p className={resumeCardSubtext}>
-            PDF or DOCX, up to 10 MB. We will extract sections, skills, and
-            searchable chunks.
-          </p>
-        </div>
+      <div className="flex items-start justify-between gap-3">
+        <h2 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+          Upload your Resume
+        </h2>
         {isDone && (
           <Badge
             tone="completed"
@@ -182,7 +179,7 @@ export function ResumeUploadCard({
       </div>
 
       <div
-        className={`mt-5 ${embedded ? resumeInsetPanel : ""} ${dropZoneClass}`}
+        className={`mt-5 ${dropZoneClass}`}
             onClick={handleDropZoneClick}
             onDragEnter={(e) => {
               e.preventDefault();
@@ -206,30 +203,43 @@ export function ResumeUploadCard({
           >
             {selectedFile ? (
               <>
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-zinc-200 bg-white">
-                  <FileText className="h-6 w-6 text-emerald-700" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-900/20 ring-4 ring-white/80">
+                  <FileText className="h-7 w-7" strokeWidth={1.75} />
                 </div>
-                <p className="mt-3 text-sm font-semibold text-zinc-900">
+                <p className="mt-4 max-w-sm truncate text-center text-base font-semibold text-zinc-900">
                   {selectedFile.name}
                 </p>
-                <p className="mt-0.5 text-xs text-zinc-500">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB ·{" "}
-                  <span className="font-medium text-emerald-700">
-                    View preview
+                <p className="mt-1 text-sm text-zinc-500">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  <span className="mx-1.5 text-zinc-300">·</span>
+                  <span className="font-semibold text-emerald-700 group-hover:underline">
+                    Tap to preview
                   </span>
                 </p>
               </>
             ) : (
               <>
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-zinc-200 bg-white">
-                  <FileUp className="h-6 w-6 text-zinc-400" />
+                <div
+                  className={`flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-200/80 bg-white shadow-sm ring-4 ring-emerald-50 ${
+                    isDragging ? "animate-[cp-upload-pulse_1.2s_ease-in-out_infinite]" : ""
+                  }`}
+                >
+                  <FileUp
+                    className={`h-7 w-7 ${isDragging ? "text-emerald-600" : "text-zinc-400"}`}
+                    strokeWidth={1.75}
+                  />
                 </div>
-                <p className="mt-3 text-sm font-semibold text-zinc-800">
-                  Drag and drop your resume here
+                <p className="mt-4 text-base font-semibold text-zinc-800">
+                  {isDragging ? "Release to add your file" : "Drag & drop your resume"}
                 </p>
-                <p className="mt-1 text-xs text-zinc-500">
-                  or click to browse · PDF, DOCX
+                <p className="mt-1 text-sm text-zinc-500">
+                  or <span className="font-medium text-emerald-700">click to browse</span>
                 </p>
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                  <span className={resumeFileTypePill}>PDF</span>
+                  <span className={resumeFileTypePill}>DOCX</span>
+                  <span className="text-xs text-zinc-400">· up to 10 MB</span>
+                </div>
               </>
             )}
           </div>

@@ -42,7 +42,7 @@ export function AppSidebar({ collapsed, onToggleCollapse }: AppSidebarProps) {
               >
                 <ul className="space-y-0.5">
                   {group.items.map(
-                    ({ href, label, shortLabel, description }) => {
+                    ({ href, label, shortLabel }) => {
                       const isActive = isNavItemActive(pathname, href);
                       const displayShort = shortLabel ?? label.slice(0, 3);
                       return (
@@ -67,21 +67,8 @@ export function AppSidebar({ collapsed, onToggleCollapse }: AppSidebarProps) {
                                 {displayShort}
                               </span>
                             ) : (
-                              <span className="min-w-0 transition-opacity duration-300">
-                                <span className="block truncate font-semibold leading-tight">
-                                  {label}
-                                </span>
-                                {description ? (
-                                  <span
-                                    className={`mt-0.5 block text-[11px] leading-snug transition-opacity duration-300 ${
-                                      isActive
-                                        ? "text-white/85"
-                                        : "text-slate-400"
-                                    }`}
-                                  >
-                                    {description}
-                                  </span>
-                                ) : null}
+                              <span className="block truncate font-semibold leading-tight transition-opacity duration-300">
+                                {label}
                               </span>
                             )}
                           </TransitionLink>

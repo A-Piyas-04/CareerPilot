@@ -5,8 +5,8 @@
   --foreground: #18181b;
   --cp-page-bg: #f1f5f9;
   --cp-workspace-main: #e2e8f0;
-  --cp-sidebar-bg: #1e293b;
-  --cp-sidebar-border: #334155;
+  --cp-sidebar-bg: #1c1d2d;
+  --cp-sidebar-border: #3d4d63;
   --cp-header-bg: #ffffff;
   --cp-header-border: #cbd5e1;
   --cp-footer-bg: #1a6b52;
@@ -147,4 +147,31 @@ select {
   );
   background-size: 200% 100%;
   animation: cp-shimmer 1.5s ease-in-out infinite;
+}
+
+.cp-resume-band-dots {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgb(4 120 87 / 0.09) 1px,
+    transparent 0
+  );
+  background-size: 22px 22px;
+}
+
+@keyframes cp-upload-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(4 120 87 / 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgb(4 120 87 / 0);
+  }
+}
+
+.cp-upload-drop-idle {
+  background-image: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    rgb(236 253 245 / 0.9),
+    transparent 70%
+  );
 }

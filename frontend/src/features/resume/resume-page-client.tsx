@@ -128,16 +128,17 @@ export function ResumePageClient() {
         onSelect={setSelectedResumeId}
       />
     ) : (
-      <div className="flex items-start gap-4 rounded-xl border border-white/70 bg-white/75 p-4 shadow-[0_2px_16px_-4px_rgba(15,23,42,0.1)] ring-1 ring-emerald-900/[0.07] backdrop-blur-sm">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-50 text-zinc-500 ring-1 ring-zinc-300/60">
+      <div className="flex items-start gap-4 rounded-2xl border border-dashed border-emerald-300/60 bg-white/85 p-5 shadow-sm ring-1 ring-emerald-900/[0.05] backdrop-blur-sm">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-zinc-400">
           <FileText className="h-5 w-5" strokeWidth={2} />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            Active Resume
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-800">
+            No active resume
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-zinc-700">
-            No resume yet — upload or build one below to get started.
+          <p className="mt-1.5 text-sm leading-relaxed text-zinc-600">
+            Choose a tab below to upload a file, build step-by-step, or fill in
+            the manual editor — your profile unlocks AI features once saved.
           </p>
         </div>
       </div>

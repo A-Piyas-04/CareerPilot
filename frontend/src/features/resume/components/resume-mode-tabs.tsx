@@ -15,10 +15,10 @@ type ResumeModeTabsProps = {
   onChange: (mode: CvInputMode) => void;
 };
 
-const TABS: { id: CvInputMode; label: string; icon: typeof Upload }[] = [
-  { id: "upload", label: "Upload CV", icon: Upload },
-  { id: "build", label: "Build CV", icon: PenLine },
-  { id: "manual", label: "Manual", icon: FileText },
+const TABS: { id: CvInputMode; label: string; shortLabel: string; icon: typeof Upload }[] = [
+  { id: "upload", label: "Upload CV", shortLabel: "Upload", icon: Upload },
+  { id: "build", label: "Build CV", shortLabel: "Build", icon: PenLine },
+  { id: "manual", label: "Manual", shortLabel: "Manual", icon: FileText },
 ];
 
 const MODE_INDEX: Record<CvInputMode, number> = {
@@ -27,8 +27,7 @@ const MODE_INDEX: Record<CvInputMode, number> = {
   manual: 2,
 };
 
-/** Width of one tab slot; matches flex gap-1 + p-1 on the group */
-const INDICATOR_WIDTH = "calc((100% - 1rem) / 3)";
+const INDICATOR_WIDTH = "calc((100% - 0.5rem) / 3)";
 
 export function ResumeModeTabs({ inputMode, onChange }: ResumeModeTabsProps) {
   const activeIndex = MODE_INDEX[inputMode];
@@ -47,7 +46,7 @@ export function ResumeModeTabs({ inputMode, onChange }: ResumeModeTabsProps) {
           transform: `translateX(calc(${activeIndex} * (100% + 0.25rem)))`,
         }}
       />
-      {TABS.map(({ id, label, icon: Icon }) => (
+      {TABS.map(({ id, label, shortLabel, icon: Icon }) => (
         <button
           key={id}
           className={resumeSegmentTab(inputMode === id)}
@@ -56,8 +55,9 @@ export function ResumeModeTabs({ inputMode, onChange }: ResumeModeTabsProps) {
           aria-selected={inputMode === id}
           onClick={() => onChange(id)}
         >
-          <Icon className="h-4 w-4 shrink-0" />
-          {label}
+          <Icon className="h-4 w-4 shrink-0" aria-hidden />
+          <span className="hidden sm:inline">{label}</span>
+          <span className="sm:hidden">{shortLabel}</span>
         </button>
       ))}
     </div>

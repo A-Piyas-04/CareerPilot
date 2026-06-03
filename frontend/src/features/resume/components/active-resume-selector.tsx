@@ -21,9 +21,9 @@ import {
 import type { Resume } from "../types";
 
 function resumeTypeLabel(fileType: string | null | undefined): string {
-  if (fileType === "builder") return " · built";
-  if (fileType === "manual") return " · manual";
-  return "";
+  if (fileType === "builder") return "Built in app";
+  if (fileType === "manual") return "Manual entry";
+  return "Uploaded file";
 }
 
 type ActiveResumeSelectorProps = {
@@ -48,58 +48,60 @@ export function ActiveResumeSelector({
   return (
     <div className={resumeActiveBarPanel}>
       <div className={resumeActiveBarIcon} aria-hidden>
-        <FileText className="h-5 w-5" strokeWidth={2} />
+        <FileText className="h-5 w-5 text-white" strokeWidth={2} />
       </div>
 
       <div className="min-w-0 flex-1">
         <label className={eyebrow} htmlFor="resume-select">
-          Active Resume
+          Active resume
         </label>
 
         {resumes.length > 1 ? (
-          <div className="relative mt-2 max-w-xl">
+          <div className="relative mt-2.5 max-w-xl">
             <select
-              className={`${resumeSelect} appearance-none pr-10`}
+              className={`${resumeSelect} appearance-none`}
               id="resume-select"
               value={effectiveResumeId ?? ""}
               onChange={(e) => onSelect(e.target.value)}
+              aria-label="Choose active resume"
             >
               {resumes.map((resume) => (
                 <option key={resume.id} value={resume.id}>
                   {resume.file_name}
                   {resume.is_active ? " (active)" : ""}
-                  {resumeTypeLabel(resume.file_type)}
                 </option>
               ))}
             </select>
             <ChevronDown
-              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-700/70"
+              className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-700"
               aria-hidden
             />
           </div>
         ) : (
           <div
-            className="mt-2 inline-flex max-w-full items-center gap-2 rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-3 py-2 ring-1 ring-emerald-900/[0.05]"
+            className="mt-2.5 inline-flex max-w-full items-center gap-2.5 rounded-xl border border-emerald-200/70 bg-gradient-to-r from-emerald-50/80 to-white px-3.5 py-2.5 shadow-sm ring-1 ring-emerald-900/[0.04]"
             id="resume-select"
           >
-            <FileText
-              className="h-4 w-4 shrink-0 text-emerald-700"
-              aria-hidden
-            />
             <p className={`${resumeFileName} truncate text-sm`}>{displayName}</p>
           </div>
         )}
 
-        <p className="mt-2.5 flex items-start gap-1.5 text-sm leading-relaxed text-zinc-600">
+        <p className="mt-1 text-xs font-medium text-emerald-800/80">
+          {resumeTypeLabel(selectedResume?.file_type)}
+        </p>
+
+        <p className="mt-2 flex items-start gap-2 text-sm leading-relaxed text-zinc-600">
           <Sparkles
-            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600"
+            className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"
             aria-hidden
           />
-          <span>Used for AI answers, job matching, and cover letters.</span>
+          <span>
+            Powers AI chat, job fit scores, and cover letter generation.
+          </span>
         </p>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-2 self-start rounded-xl border border-zinc-200/80 bg-slate-50/90 px-3 py-2.5 sm:self-center">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 self-start sm:self-center">
         {selectedResume?.is_active && (
           <Badge tone="emerald" icon={<CheckCircle2 className="h-3 w-3" />}>
             Active

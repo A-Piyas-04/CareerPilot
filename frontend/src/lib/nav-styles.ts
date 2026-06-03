@@ -36,7 +36,7 @@ export const NAV_ACCENT_STYLES: Record<
     sidebarSection:
       "rounded-lg border border-emerald-200/50 bg-emerald-50/45 p-2",
     sidebarSectionDark:
-      "rounded-lg border border-emerald-700/35 bg-emerald-950/30 p-2",
+      "rounded-lg border border-slate-600/50 border-l-[3px] border-l-emerald-500 bg-[#1e2735] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] p-2",
     sidebarPanelHeaderDark: "text-emerald-300",
     sidebarItemIdle:
       "border border-transparent text-slate-300 hover:border-slate-600/50 hover:bg-slate-700/70 hover:text-white",
@@ -55,7 +55,7 @@ export const NAV_ACCENT_STYLES: Record<
     mobileSection: "border-sky-200 bg-sky-50/50",
     sidebarSection: "rounded-lg border border-sky-200/50 bg-sky-50/45 p-2",
     sidebarSectionDark:
-      "rounded-lg border border-sky-700/35 bg-sky-950/30 p-2",
+      "rounded-lg border border-slate-600/50 border-l-[3px] border-l-sky-500 bg-[#1e2735] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] p-2",
     sidebarPanelHeaderDark: "text-sky-300",
     sidebarItemIdle:
       "border border-transparent text-slate-300 hover:border-slate-600/50 hover:bg-slate-700/70 hover:text-white",
@@ -76,7 +76,7 @@ export const NAV_ACCENT_STYLES: Record<
     sidebarSection:
       "rounded-lg border border-violet-200/50 bg-violet-50/45 p-2",
     sidebarSectionDark:
-      "rounded-lg border border-violet-700/35 bg-violet-950/30 p-2",
+      "rounded-lg border border-slate-600/50 border-l-[3px] border-l-violet-500 bg-[#1e2735] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] p-2",
     sidebarPanelHeaderDark: "text-violet-300",
     sidebarItemIdle:
       "border border-transparent text-slate-300 hover:border-slate-600/50 hover:bg-slate-700/70 hover:text-white",
