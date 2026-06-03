@@ -20,8 +20,13 @@ vi.mock("@/lib/gemini", () => ({
 
 vi.mock("@/lib/assistant/getResumeContext", () => ({
   getResumeContext: vi.fn(async () => ({
+    emptyReason: null,
+    evidenceChunks: [],
+    hasResume: true,
+    resumeId: "00000000-0000-4000-8000-000000000010",
     text: "Skills: Python, FastAPI, PostgreSQL.",
     usedResumeChunks: ["mock-chunk"],
+    userSkills: ["Python", "FastAPI", "PostgreSQL"],
   })),
 }));
 

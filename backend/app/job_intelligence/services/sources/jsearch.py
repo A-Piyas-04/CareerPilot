@@ -11,6 +11,7 @@ from typing import Any
 import httpx
 
 from app.job_intelligence.models.job import JobCreate
+from app.job_intelligence.services.deadlines import parse_deadline_from_job_data
 from app.job_intelligence.services.sources.jsearch_errors import JSearchError
 
 _TIMEOUT_SECONDS = 15.0
@@ -125,13 +126,17 @@ class JSearchAdapter:
         else:
             salary_range = None
 
+        description = item.get("job_description")
+        deadline = parse_deadline_from_job_data(item, description)
+
         return JobCreate(
             title=item.get("job_title") or "Untitled",
             company=item.get("employer_name"),
             location=location,
             salary_range=salary_range,
             job_type=item.get("job_employment_type"),
-            description=item.get("job_description"),
+            deadline=deadline,
+            description=description,
             requirements=None,
             source="jsearch",
             source_url=item.get("job_apply_link"),

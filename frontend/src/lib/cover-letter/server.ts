@@ -32,51 +32,42 @@ export async function getAuthenticatedCoverLetterUser() {
 export async function loadCoverLetterResumeContext(
   supabase: SupabaseServerClient,
   userId: string,
+  query: string,
 ) {
-  const { data: resume } = await supabase
-    .from("resumes")
-    .select("id, raw_text")
-    .eq("user_id", userId)
-    .eq("is_active", true)
-    .eq("status", "processed")
-    .not("raw_text", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (
-    resume &&
-    typeof resume.id === "string" &&
-    typeof resume.raw_text === "string" &&
-    resume.raw_text.trim()
-  ) {
-    return {
-      resumeId: resume.id,
-      text: resume.raw_text.slice(0, 6000),
-    };
-  }
-
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
-    return {
-      resumeId: null,
-      text: "[Resume context unavailable] Upload your CV at /resume and try again.",
-    };
+    throw new CoverLetterHttpError("Upload your CV at /resume before generating a cover letter.", 400);
   }
 
-  const fallback = await getResumeContext({
+  const context = await getResumeContext({
     accessToken: session.access_token,
     intent: "cover_letter",
-    query: "Generate a grounded cover letter from the user's CV.",
+    query,
     userId,
   });
 
+  if (!context.hasResume) {
+    throw new CoverLetterHttpError(
+      context.emptyReason || "Upload your CV at /resume before generating a cover letter.",
+      400,
+    );
+  }
+
+  if (context.usedResumeChunks.length === 0) {
+    throw new CoverLetterHttpError(
+      context.emptyReason || "No relevant CV evidence was found for this job description.",
+      400,
+    );
+  }
+
   return {
-    resumeId: null,
-    text: fallback.text,
+    evidenceChunks: context.evidenceChunks,
+    resumeId: context.resumeId,
+    text: context.text,
+    usedResumeChunks: context.usedResumeChunks,
   };
 }
 
@@ -217,6 +208,7 @@ export function normalizeCoverLetter(row: DbRow): CoverLetter {
     job_description: nullableString(row.job_description),
     job_id: nullableString(row.job_id),
     job_title: nullableString(row.job_title),
+    metadata: metadataValue(row.metadata),
     resume_id: nullableString(row.resume_id),
     title: nullableString(row.title),
     tone: toneValue(row.tone),
@@ -257,4 +249,11 @@ function nullableString(value: unknown) {
 function numberValue(value: unknown) {
   const numeric = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function metadataValue(value: unknown): CoverLetter["metadata"] {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return null;
+  }
+  return value as CoverLetter["metadata"];
 }

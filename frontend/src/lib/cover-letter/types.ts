@@ -12,6 +12,15 @@ export type CoverLetter = {
   tone: CoverLetterTone | null;
   extra_notes: string | null;
   content: string;
+  metadata: {
+    used_resume_chunks?: string[];
+    evidence_chunks?: Array<{
+      chunk_id: string;
+      section_name: string | null;
+      chunk_text: string;
+      similarity: number;
+    }>;
+  } | null;
   version: number;
   created_at: string;
   updated_at: string;

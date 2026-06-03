@@ -1,7 +1,10 @@
 """Manual-paste job source: user supplies a single JD by hand."""
 from __future__ import annotations
 
+from datetime import date
+
 from app.job_intelligence.models.job import JobCreate
+from app.job_intelligence.services.deadlines import parse_deadline_text
 
 
 class ManualPasteAdapter:
@@ -17,6 +20,7 @@ class ManualPasteAdapter:
         company: str | None = None,
         location: str | None = None,
         source_url: str | None = None,
+        deadline: date | None = None,
     ) -> list[JobCreate]:
         """Validate the input and return a single JobCreate."""
         clean_title = (title or "").strip()
@@ -32,6 +36,7 @@ class ManualPasteAdapter:
                 description=clean_description,
                 company=(company or "").strip() or None,
                 location=(location or "").strip() or None,
+                deadline=deadline or parse_deadline_text(clean_description),
                 source="manual",
                 source_url=source_url or None,
             )

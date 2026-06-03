@@ -23,6 +23,7 @@ _SAMPLE_RESPONSE = {
             "job_max_salary": 95000,
             "job_salary_currency": "EUR",
             "job_salary_period": "YEAR",
+            "job_offer_expiration_datetime_utc": "2026-06-15T23:59:00Z",
         },
         {
             "job_id": "def456",
@@ -111,8 +112,27 @@ class TestJSearchAdapter:
         assert first.source_url == "https://acme.example.com/jobs/abc123"
         assert first.description == "Build distributed Python services."
         assert first.salary_range == "70000-95000 EUR/YEAR"
+        assert first.deadline.isoformat() == "2026-06-15"
         # raw_data preserves the upstream payload for later debugging
         assert first.raw_data["job_id"] == "abc123"
+
+    def test_search_extracts_deadline_from_description(self):
+        adapter = JSearchAdapter(api_key="k", host="jsearch.p.rapidapi.com")
+        payload = {
+            "status": "OK",
+            "data": [
+                {
+                    "job_title": "Intern",
+                    "job_description": "Apply by 2026-07-04. Build ML systems.",
+                    "job_apply_link": "https://example.com/job",
+                }
+            ],
+        }
+        with patch("app.job_intelligence.services.sources.jsearch.httpx.Client") as client_cls:
+            client = client_cls.return_value.__enter__.return_value
+            client.get.return_value = _make_response(json_data=payload)
+            [job] = adapter.search("intern", limit=1)
+        assert job.deadline.isoformat() == "2026-07-04"
 
     def test_search_handles_missing_optional_fields(self):
         adapter = JSearchAdapter(api_key="k", host="jsearch.p.rapidapi.com")

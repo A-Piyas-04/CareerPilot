@@ -33,64 +33,41 @@ export async function getAuthenticatedRoadmapUser() {
 export async function loadRoadmapResumeContext(
   supabase: SupabaseServerClient,
   userId: string,
+  query: string,
 ) {
-  const { data: resume } = await supabase
-    .from("resumes")
-    .select("id, raw_text")
-    .eq("user_id", userId)
-    .eq("is_active", true)
-    .eq("status", "processed")
-    .not("raw_text", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (
-    resume &&
-    typeof resume.id === "string" &&
-    typeof resume.raw_text === "string" &&
-    resume.raw_text.trim()
-  ) {
-    const { data: chunks } = await supabase
-      .from("resume_chunks")
-      .select("id")
-      .eq("resume_id", resume.id)
-      .eq("user_id", userId)
-      .limit(20);
-
-    return {
-      resumeId: resume.id,
-      text: resume.raw_text.slice(0, 6000),
-      usedResumeChunks:
-        chunks
-          ?.map((chunk) => chunk.id)
-          .filter((id): id is string => typeof id === "string") ?? [],
-    };
-  }
-
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
-    return {
-      resumeId: null,
-      text: "[Resume context unavailable] Upload your CV at /resume and try again.",
-      usedResumeChunks: [],
-    };
+    throw new RoadmapHttpError("Upload your CV at /resume before generating a roadmap.", 400);
   }
 
-  const fallback = await getResumeContext({
+  const context = await getResumeContext({
     accessToken: session.access_token,
     intent: "roadmap_generation",
-    query: "Generate a grounded learning roadmap from the user's CV.",
+    query,
     userId,
   });
 
+  if (!context.hasResume) {
+    throw new RoadmapHttpError(
+      context.emptyReason || "Upload your CV at /resume before generating a roadmap.",
+      400,
+    );
+  }
+
+  if (context.usedResumeChunks.length === 0) {
+    throw new RoadmapHttpError(
+      context.emptyReason || "No relevant CV evidence was found for this roadmap.",
+      400,
+    );
+  }
+
   return {
-    resumeId: null,
-    text: fallback.text,
-    usedResumeChunks: fallback.usedResumeChunks,
+    resumeId: context.resumeId,
+    text: context.text,
+    usedResumeChunks: context.usedResumeChunks,
   };
 }
 

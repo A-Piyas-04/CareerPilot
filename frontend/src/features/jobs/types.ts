@@ -64,6 +64,7 @@ export type ManualJobRequest = {
   description: string;
   company?: string;
   location?: string;
+  deadline?: string;
   source_url?: string;
   resume_id: string;
 };

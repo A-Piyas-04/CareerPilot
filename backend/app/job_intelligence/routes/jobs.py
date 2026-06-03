@@ -1,6 +1,7 @@
 """Job hunter routes: search, list matches, save to tracker, manual paste."""
 from __future__ import annotations
 
+from datetime import date
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -39,6 +40,7 @@ class ManualJobRequest(BaseModel):
     description: str = Field(..., min_length=1, max_length=20_000)
     company: Optional[str] = Field(default=None, max_length=200)
     location: Optional[str] = Field(default=None, max_length=200)
+    deadline: Optional[date] = None
     source_url: Optional[str] = Field(default=None, max_length=500)
     resume_id: str
 
@@ -193,6 +195,7 @@ def add_manual_job(
             company=payload.company,
             location=payload.location,
             source_url=payload.source_url,
+            deadline=payload.deadline,
         )
     except ValueError as exc:
         raise HTTPException(

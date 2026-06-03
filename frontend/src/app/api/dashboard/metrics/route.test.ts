@@ -181,6 +181,7 @@ describe("GET /api/dashboard/metrics", () => {
       jobsApplied: 0,
       roadmapItemsDone: 0,
       roadmapProgress: 0,
+      skillsAdded: 0,
       tasksCompletedThisWeek: 0,
       weeklyStreak: 0,
     });

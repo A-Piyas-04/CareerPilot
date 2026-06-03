@@ -41,7 +41,11 @@ export async function POST(request: NextRequest) {
         .select("full_name, target_role, location, bio")
         .eq("id", user.id)
         .maybeSingle(),
-      loadRoadmapResumeContext(supabase, user.id),
+      loadRoadmapResumeContext(
+        supabase,
+        user.id,
+        [targetRole, jobDescription].filter(Boolean).join("\n\n"),
+      ),
     ]);
     const prompt = buildRoadmapPrompt({
       durationWeeks,
@@ -107,6 +111,7 @@ export async function POST(request: NextRequest) {
       items: items.map(normalizeRoadmapItem),
       roadmap: normalizeRoadmap(roadmap),
       roadmapId,
+      usedResumeChunks: resumeContext.usedResumeChunks,
     });
   } catch (error) {
     if (error instanceof RoadmapHttpError || error instanceof GeminiApiError) {

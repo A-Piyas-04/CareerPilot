@@ -3,6 +3,7 @@ import {
   NavigationTransitionProvider,
   NavigationTransitionShell,
 } from "@/components/navigation/navigation-transition";
+import { WorkspaceAssistLayer } from "@/components/reminders/WorkspaceAssistLayer";
 
 export default function WorkspaceLayout({
   children,
@@ -12,6 +13,7 @@ export default function WorkspaceLayout({
   return (
     <NavigationTransitionProvider>
       <AppNav />
+      <WorkspaceAssistLayer />
       <NavigationTransitionShell>{children}</NavigationTransitionShell>
     </NavigationTransitionProvider>
   );

@@ -20,6 +20,7 @@ export function ManualJobDrawer({ open, resumeId, onClose, onSuccess }: Props) {
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
   const [location, setLocation] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [description, setDescription] = useState("");
 
@@ -44,6 +45,7 @@ export function ManualJobDrawer({ open, resumeId, onClose, onSuccess }: Props) {
         description: description.trim(),
         company: company.trim() || undefined,
         location: location.trim() || undefined,
+        deadline: deadline || undefined,
         source_url: sourceUrl.trim() || undefined,
         resume_id: resumeId,
       },
@@ -55,6 +57,7 @@ export function ManualJobDrawer({ open, resumeId, onClose, onSuccess }: Props) {
           setTitle("");
           setCompany("");
           setLocation("");
+          setDeadline("");
           setSourceUrl("");
           setDescription("");
         },
@@ -117,6 +120,14 @@ export function ManualJobDrawer({ open, resumeId, onClose, onSuccess }: Props) {
                 />
               </Field>
             </div>
+            <Field label="Application deadline">
+              <input
+                value={deadline}
+                onChange={(event) => setDeadline(event.target.value)}
+                className="h-10 w-full rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                type="date"
+              />
+            </Field>
             <Field label="Posting URL">
               <input
                 value={sourceUrl}
