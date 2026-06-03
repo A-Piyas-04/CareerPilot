@@ -6,12 +6,7 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/admin", () => ({
-  createCoverLetterDbClient: vi.fn(),
-}));
-
 const { createClient } = await import("@/lib/supabase/server");
-const { createCoverLetterDbClient } = await import("@/lib/supabase/admin");
 const route = await import("@/app/api/cover-letter/route");
 
 describe("GET /api/cover-letter", () => {
@@ -20,7 +15,6 @@ describe("GET /api/cover-letter", () => {
   beforeEach(() => {
     supabase = new FakeSupabase();
     vi.mocked(createClient).mockResolvedValue(supabase as never);
-    vi.mocked(createCoverLetterDbClient).mockReturnValue(supabase as never);
   });
 
   it("returns normalized cover letters for authenticated user", async () => {

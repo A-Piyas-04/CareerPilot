@@ -5,9 +5,9 @@ import {
   buildCoverLetterTitle,
   coverLetterDbErrorMessage,
   CoverLetterHttpError,
-  createCoverLetterDbClient,
   fetchCoverLetterForUser,
   getAuthenticatedCoverLetterUser,
+  mutateCoverLettersTable,
   isUuid,
   jsonError,
   loadCoverLetterResumeContext,
@@ -32,8 +32,7 @@ export async function POST(_request: Request, context: RouteContext) {
     }
 
     const { supabase, user } = await getAuthenticatedCoverLetterUser();
-    const db = createCoverLetterDbClient();
-    const existing = await fetchCoverLetterForUser(id, user.id, db);
+    const existing = await fetchCoverLetterForUser(id, user.id, supabase);
     const job = await resolveJobContext({
       jobId: existing.job_id ?? undefined,
       supabase,
@@ -75,15 +74,16 @@ export async function POST(_request: Request, context: RouteContext) {
     const generated = parseCoverLetterJson(rawResponse);
     const version = await nextCoverLetterVersion({
       companyName,
-      db,
+      db: supabase,
       jobId: existing.job_id,
       jobTitle,
       userId: user.id,
     });
     const title = buildCoverLetterTitle(jobTitle, companyName);
-    const { data, error } = await db
-      .from("cover_letters")
-      .insert({
+    const { data, error } = await mutateCoverLettersTable(supabase, (client) =>
+      client
+        .from("cover_letters")
+        .insert({
         company_name: companyName,
         content: generated.content,
         extra_notes: existing.extra_notes,
@@ -100,9 +100,10 @@ export async function POST(_request: Request, context: RouteContext) {
         tone: existing.tone ?? "professional",
         user_id: user.id,
         version,
-      })
-      .select("*")
-      .single();
+        })
+        .select("*")
+        .single(),
+    );
 
     if (error || !data) {
       return jsonError(

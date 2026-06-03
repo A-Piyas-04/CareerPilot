@@ -141,7 +141,12 @@ npx supabase link --project-ref <your-ref>
 npx supabase db push
 ```
 
-If cover letters (or other features) show **permission denied for table**, the remote DB is missing `GRANT`s. Run the SQL in [`scripts/apply-remote-grants.sql`](scripts/apply-remote-grants.sql) once in [Supabase SQL Editor](https://supabase.com/dashboard/project/hiqdwrjoqfpelrhujtoj/sql/new).
+If cover letters (or other features) show **permission denied for table**, the remote DB is missing `GRANT`s. Either:
+
+- Run [`scripts/apply-remote-grants.sql`](scripts/apply-remote-grants.sql) in [Supabase SQL Editor](https://supabase.com/dashboard/project/_/sql/new), or
+- Set `DATABASE_URL` in `backend/.env` (Dashboard → Connect → pooler URI) and run: `python backend/scripts/apply_remote_grants.py`
+
+Or push migrations: `npx supabase link --project-ref <ref>` then `npx supabase db push`.
 
 ---
 

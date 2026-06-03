@@ -6,10 +6,6 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/admin", () => ({
-  createCoverLetterDbClient: vi.fn(),
-}));
-
 vi.mock("@/lib/gemini", () => ({
   GEMINI_MODEL: "gemini-test",
   GeminiApiError: class GeminiApiError extends Error {
@@ -43,7 +39,6 @@ vi.mock("@/lib/assistant/getResumeContext", () => ({
 }));
 
 const { createClient } = await import("@/lib/supabase/server");
-const { createCoverLetterDbClient } = await import("@/lib/supabase/admin");
 const { createGeminiText, GeminiApiError } = await import("@/lib/gemini");
 const route = await import("./route");
 
@@ -53,7 +48,6 @@ describe("POST /api/cover-letter/generate", () => {
   beforeEach(() => {
     supabase = new FakeSupabase();
     vi.mocked(createClient).mockResolvedValue(supabase as never);
-    vi.mocked(createCoverLetterDbClient).mockReturnValue(supabase as never);
     vi.mocked(createGeminiText).mockReset();
   });
 

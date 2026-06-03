@@ -6,12 +6,7 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/admin", () => ({
-  createCoverLetterDbClient: vi.fn(),
-}));
-
 const { createClient } = await import("@/lib/supabase/server");
-const { createCoverLetterDbClient } = await import("@/lib/supabase/admin");
 const route = await import("@/app/api/cover-letter/[id]/route");
 
 const LETTER_ID = "00000000-0000-4000-8000-000000000001";
@@ -22,7 +17,6 @@ describe("cover letter detail route", () => {
   beforeEach(() => {
     supabase = new FakeSupabase();
     vi.mocked(createClient).mockResolvedValue(supabase as never);
-    vi.mocked(createCoverLetterDbClient).mockReturnValue(supabase as never);
   });
 
   it("GET rejects invalid id", async () => {

@@ -9,8 +9,8 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const { user } = await getAuthenticatedCoverLetterUser();
-    const coverLetters = await listCoverLettersForUser(user.id);
+    const { supabase, user } = await getAuthenticatedCoverLetterUser();
+    const coverLetters = await listCoverLettersForUser(user.id, supabase);
 
     return Response.json({ coverLetters });
   } catch (error) {

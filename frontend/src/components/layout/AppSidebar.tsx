@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { TransitionLink } from "@/components/navigation/navigation-transition";
+import { suppressExtensionHydrationProps } from "@/lib/hydration";
 import { SIDEBAR_NAV_GROUPS } from "@/lib/navigation-config";
 import { isNavItemActive, NAV_ACCENT_STYLES } from "@/lib/nav-styles";
 
@@ -102,6 +103,7 @@ export function AppSidebar({ collapsed, onToggleCollapse }: AppSidebarProps) {
         aria-expanded={!collapsed}
         aria-controls="workspace-sidebar"
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        {...suppressExtensionHydrationProps}
       >
         {collapsed ? (
           <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />

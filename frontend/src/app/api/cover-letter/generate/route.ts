@@ -7,8 +7,8 @@ import {
   buildCoverLetterTitle,
   coverLetterDbErrorMessage,
   CoverLetterHttpError,
-  createCoverLetterDbClient,
   getAuthenticatedCoverLetterUser,
+  mutateCoverLettersTable,
   jsonError,
   loadCoverLetterResumeContext,
   loadProfile,
@@ -84,28 +84,29 @@ export async function POST(request: NextRequest) {
     });
     const generated = parseCoverLetterJson(rawResponse);
     const title = buildCoverLetterTitle(jobTitle, companyName);
-    const db = createCoverLetterDbClient();
-    const { data, error } = await db
-      .from("cover_letters")
-      .insert({
-        company_name: companyName,
-        content: generated.content,
-        extra_notes: extraNotes || null,
-        job_description: jobDescription,
-        job_id: job?.id ?? null,
-        job_title: jobTitle,
-        metadata: {
-          evidence_chunks: resumeContext.evidenceChunks,
-          used_resume_chunks: resumeContext.usedResumeChunks,
-        },
-        resume_id: resumeContext.resumeId,
-        title,
-        tone,
-        user_id: user.id,
-        version: 1,
-      })
-      .select("*")
-      .single();
+    const { data, error } = await mutateCoverLettersTable(supabase, (client) =>
+      client
+        .from("cover_letters")
+        .insert({
+          company_name: companyName,
+          content: generated.content,
+          extra_notes: extraNotes || null,
+          job_description: jobDescription,
+          job_id: job?.id ?? null,
+          job_title: jobTitle,
+          metadata: {
+            evidence_chunks: resumeContext.evidenceChunks,
+            used_resume_chunks: resumeContext.usedResumeChunks,
+          },
+          resume_id: resumeContext.resumeId,
+          title,
+          tone,
+          user_id: user.id,
+          version: 1,
+        })
+        .select("*")
+        .single(),
+    );
 
     if (error || !data) {
       return jsonError(
