@@ -61,7 +61,8 @@ export function NavigationTransitionProvider({
     }
 
     if (routesMatch(pathname, pendingHref)) {
-      setPendingHref(null);
+      const timeout = window.setTimeout(() => setPendingHref(null), 0);
+      return () => window.clearTimeout(timeout);
     }
   }, [pathname, pendingHref]);
 
@@ -129,7 +130,13 @@ export function NavigationTransitionShell({
           <ContentPageSkeleton variant={variant} />
         </div>
       ) : null}
-      <div className={showOverlay ? "invisible" : "cp-page-transition"}>
+      <div
+        className={
+          showOverlay
+            ? "invisible flex min-h-0 flex-1 flex-col"
+            : "cp-page-transition flex min-h-0 flex-1 flex-col"
+        }
+      >
         {children}
       </div>
     </div>

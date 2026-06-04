@@ -11,18 +11,15 @@ import { MessageSquarePlus, MessageSquareText, Pencil, Trash2, X } from "lucide-
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { TransitionLink } from "@/components/navigation/navigation-transition";
 import { ListCardSkeleton, SpinnerButton } from "@/components/ui";
 import {
   isTemporaryAssistantConversationId,
 } from "@/lib/hooks/useAssistantConversations";
-import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import type { AssistantConversation } from "@/lib/types/assistant";
 import {
   btnPrimarySky,
   iconTile,
   inputFieldSky,
-  relatedLinkPill,
   surfaceCardHeader,
 } from "@/lib/ui-theme";
 
@@ -65,7 +62,7 @@ export function ConversationSidebar({
   const grouped = groupConversations(conversations);
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-sky-100/80 bg-gradient-to-b from-white via-white to-sky-50/30 lg:w-80">
+    <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden border-r border-sky-100/80 bg-gradient-to-b from-white via-white to-sky-50/30 lg:h-full lg:w-80">
       <header className={`${surfaceCardHeader("sky")} space-y-4`}>
         <div className="flex items-start gap-3">
           <div
@@ -74,9 +71,6 @@ export function ConversationSidebar({
             <MessageSquareText className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-              AI Assistant
-            </p>
             <h1 className="text-lg font-semibold tracking-tight text-zinc-950">
               Career Assistant
             </h1>
@@ -95,21 +89,6 @@ export function ConversationSidebar({
           <MessageSquarePlus className="h-4 w-4" />
           New Chat
         </button>
-
-        <nav
-          aria-label="Related pages"
-          className="flex flex-wrap gap-1.5"
-        >
-          {PAGE_RELATED_LINKS["/chat"].map((link) => (
-            <TransitionLink
-              key={link.href}
-              href={link.href}
-              className={relatedLinkPill("sky")}
-            >
-              {link.label}
-            </TransitionLink>
-          ))}
-        </nav>
       </header>
 
       {errorMessage ? (
