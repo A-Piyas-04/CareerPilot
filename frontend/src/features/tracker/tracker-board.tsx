@@ -133,10 +133,13 @@ export function TrackerBoard() {
         {statusError ? <p className={alertError}>{statusError}</p> : null}
 
         {applicationsQuery.isLoading ? (
-          <div className="flex gap-4 overflow-x-auto pb-2" aria-busy="true">
+          <div
+            className="grid min-w-0 gap-3 overflow-x-auto pb-2 lg:grid-cols-5 xl:gap-4"
+            aria-busy="true"
+          >
             {APPLICATION_STATUSES.map((status) => (
               <Skeleton
-                className="h-[520px] w-72 shrink-0 rounded-2xl"
+                className="h-[520px] min-w-[16rem] rounded-2xl lg:min-w-0"
                 key={status}
               />
             ))}
@@ -169,7 +172,7 @@ export function TrackerBoard() {
           />
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="flex gap-4 justify-center pb-2">
+            <div className="grid min-w-0 gap-3 overflow-x-auto pb-2 lg:grid-cols-5 xl:gap-4">
               {APPLICATION_STATUSES.map((status) => (
                 <KanbanColumn
                   key={status}
