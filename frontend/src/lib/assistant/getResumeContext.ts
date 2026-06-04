@@ -68,9 +68,25 @@ export async function getResumeContext(
       if (fallback.hasResume) {
         return fallback;
       }
+      return resumeContextFromRagResponse(data);
     }
 
-    return resumeContextFromRagResponse(data);
+    const ragResult = resumeContextFromRagResponse(data);
+    const hasRagEvidence =
+      data.context_text.trim().length > 0 ||
+      data.chunk_ids.length > 0 ||
+      data.user_skills.length > 0;
+
+    if (hasRagEvidence) {
+      return ragResult;
+    }
+
+    const fallback = await getSupabaseResumeFallback(params.userId);
+    if (fallback.hasResume && fallback.text.trim()) {
+      return fallback;
+    }
+
+    return ragResult;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to load resume context.";
@@ -169,7 +185,7 @@ async function getSupabaseResumeFallback(
 
     return {
       text,
-      usedResumeChunks: [],
+      usedResumeChunks: resume.id ? [`fallback:${resume.id}`] : [],
       resumeId: resume.id,
       hasResume: true,
       emptyReason:

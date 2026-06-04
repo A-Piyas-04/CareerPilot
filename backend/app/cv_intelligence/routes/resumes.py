@@ -229,6 +229,22 @@ def create_manual_resume(
     )
 
 
+@router.patch(
+    "/{resume_id}/active",
+    response_model=Resume,
+    summary="Set a processed resume as the active CV",
+)
+def set_active_resume(
+    resume_id: str,
+    user_id: str = Depends(get_current_user),
+) -> Resume:
+    """Mark this resume active for AI chat, job fit, and cover letters."""
+    return resume_service.set_active_resume(
+        user_id=user_id,
+        resume_id=resume_id,
+    )
+
+
 @router.get(
     "/{resume_id}",
     response_model=ResumeDetailResponse,

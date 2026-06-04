@@ -30,6 +30,7 @@ type ActiveResumeSelectorProps = {
   resumes: Resume[];
   effectiveResumeId: string | null;
   selectedResume?: Resume | null;
+  isActivating?: boolean;
   onSelect: (resumeId: string) => void;
 };
 
@@ -37,6 +38,7 @@ export function ActiveResumeSelector({
   resumes,
   effectiveResumeId,
   selectedResume,
+  isActivating = false,
   onSelect,
 }: ActiveResumeSelectorProps) {
   if (resumes.length === 0) return null;
@@ -59,7 +61,8 @@ export function ActiveResumeSelector({
         {resumes.length > 1 ? (
           <div className="relative mt-2.5 max-w-xl">
             <select
-              className={`${resumeSelect} appearance-none`}
+              className={`${resumeSelect} appearance-none pr-10 disabled:cursor-wait disabled:opacity-70`}
+              disabled={isActivating}
               id="resume-select"
               value={effectiveResumeId ?? ""}
               onChange={(e) => onSelect(e.target.value)}
@@ -69,13 +72,21 @@ export function ActiveResumeSelector({
                 <option key={resume.id} value={resume.id}>
                   {resume.file_name}
                   {resume.is_active ? " (active)" : ""}
+                  {resume.status !== "processed" ? ` (${resume.status})` : ""}
                 </option>
               ))}
             </select>
-            <ChevronDown
-              className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-700"
-              aria-hidden
-            />
+            {isActivating ? (
+              <Loader2
+                className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-emerald-700"
+                aria-hidden
+              />
+            ) : (
+              <ChevronDown
+                className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-700"
+                aria-hidden
+              />
+            )}
           </div>
         ) : (
           <div
@@ -102,11 +113,13 @@ export function ActiveResumeSelector({
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center gap-2 self-start sm:self-center">
-        {selectedResume?.is_active && (
+        {selectedResume?.is_active ? (
           <Badge tone="emerald" icon={<CheckCircle2 className="h-3 w-3" />}>
             Active
           </Badge>
-        )}
+        ) : selectedResume?.status === "processed" ? (
+          <Badge tone="sky">Preview</Badge>
+        ) : null}
         {isProcessed && (
           <Badge tone="completed" icon={<Sparkles className="h-3 w-3" />}>
             Processed

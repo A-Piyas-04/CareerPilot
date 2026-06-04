@@ -20,7 +20,7 @@ import { alertError, alertWarning, chipAmber, chipEmerald, chipSky } from "@/lib
 
 import { ExtractedSectionsList } from "./components/extracted-sections-list";
 import { ResumeStatsGrid } from "./components/resume-stats-grid";
-import { useDeleteResume } from "./hooks";
+import { useActivateResume, useDeleteResume } from "./hooks";
 import { ResumeDeleteDialog } from "./resume-delete-dialog";
 import { ResumeSectionViewerDrawer } from "./resume-section-viewer-drawer";
 import {
@@ -77,6 +77,7 @@ export function ResumeSummary({
   );
 
   const deleteMutation = useDeleteResume();
+  const activateMutation = useActivateResume();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [viewingSection, setViewingSection] = useState<
     ResumeDetail["sections"][number] | null
@@ -171,6 +172,22 @@ export function ResumeSummary({
             </Badge>
           </div>
         </div>
+
+        {isProcessed && !resume.is_active && (
+          <button
+            className={`${resumeSecondaryButton} w-full sm:w-auto`}
+            disabled={activateMutation.isPending}
+            type="button"
+            onClick={() => activateMutation.mutate(resume.id)}
+          >
+            {activateMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            Use for AI features
+          </button>
+        )}
 
         {isProcessed && onEditInBuilder && resume.file_type === "builder" && (
           <button

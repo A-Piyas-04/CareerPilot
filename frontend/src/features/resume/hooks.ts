@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
+  activateResume,
   askCvQuestion,
   buildResume,
   createManualResume,
@@ -96,6 +97,24 @@ export function useUploadResume() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Upload failed. Please try again.");
+    },
+  });
+}
+
+export function useActivateResume() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: activateResume,
+    onSuccess: (resume) => {
+      queryClient.invalidateQueries({ queryKey: resumeKeys.list });
+      queryClient.invalidateQueries({
+        queryKey: resumeKeys.detail(resume.id),
+      });
+      toast.success(`"${resume.file_name}" is now your active resume.`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Could not set active resume.");
     },
   });
 }

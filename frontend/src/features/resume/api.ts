@@ -92,6 +92,12 @@ export function deleteResume(resumeId: string) {
   });
 }
 
+export function activateResume(resumeId: string) {
+  return apiRequest<Resume>(`/api/v1/resumes/${resumeId}/active`, {
+    method: "PATCH",
+  });
+}
+
 export function queryResume(payload: ResumeQueryRequest) {
   return apiRequest<ResumeQueryResponse>("/api/v1/resumes/query", {
     method: "POST",

@@ -8,7 +8,9 @@ services:
       - ./backend:/app
       - ./supabase:/supabase:ro
     env_file:
+      - ./frontend/.env
       - ./backend/.env
+      - ./.env
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
   frontend:

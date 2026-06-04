@@ -14,7 +14,7 @@ import {
   type CvInputMode,
 } from "./components/resume-mode-tabs";
 import { ResumeWorkspacePanel } from "./components/resume-workspace-panel";
-import { useResume, useResumes } from "./hooks";
+import { useActivateResume, useResume, useResumes } from "./hooks";
 import { ManualResumeEditor } from "./manual-resume-editor";
 import { ResumeAnswerBox } from "./resume-answer-box";
 import { ResumeBuilderCard } from "./resume-builder-card";
@@ -61,6 +61,7 @@ function ResumeEmptyState({
 
 export function ResumePageClient() {
   const resumesQuery = useResumes();
+  const activateMutation = useActivateResume();
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState<CvInputMode>("upload");
   const [builderEditDetail, setBuilderEditDetail] = useState<ResumeDetail | null>(
@@ -116,6 +117,18 @@ export function ResumePageClient() {
     setBuilderEditId(null);
   }
 
+  function handleSelectResume(resumeId: string) {
+    setSelectedResumeId(resumeId);
+    const resume = resumes.find((r) => r.id === resumeId);
+    if (
+      resume?.status === "processed" &&
+      !resume.is_active &&
+      !activateMutation.isPending
+    ) {
+      activateMutation.mutate(resumeId);
+    }
+  }
+
   const sectionCount = detailQuery.data?.sections.length;
   const chunkCount = detailQuery.data?.chunk_count;
 
@@ -125,7 +138,8 @@ export function ResumePageClient() {
         resumes={resumes}
         effectiveResumeId={effectiveResumeId}
         selectedResume={selectedResume}
-        onSelect={setSelectedResumeId}
+        isActivating={activateMutation.isPending}
+        onSelect={handleSelectResume}
       />
     ) : (
       <div className="flex items-start gap-4 rounded-2xl border border-dashed border-emerald-300/60 bg-white/85 p-5 shadow-sm ring-1 ring-emerald-900/[0.05] backdrop-blur-sm">

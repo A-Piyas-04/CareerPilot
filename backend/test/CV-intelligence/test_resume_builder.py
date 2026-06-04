@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 from fastapi import HTTPException
 
+from app.core.enums import ResumeStatus
 from app.cv_intelligence.services import resume_service
 from app.cv_intelligence.services.resume_service import (
     compose_raw_text,
@@ -80,6 +81,48 @@ class TestValidateBuilderSections:
         with pytest.raises(HTTPException) as exc_info:
             validate_builder_sections(sections)
         assert exc_info.value.status_code == 422
+
+
+class TestSetActiveResume:
+    def test_rejects_non_processed_resume(self):
+        with patch(
+            "app.cv_intelligence.services.resume_service._get_owned_resume",
+            return_value=SimpleNamespace(status=ResumeStatus.UPLOADED),
+        ):
+            with pytest.raises(HTTPException) as exc_info:
+                resume_service.set_active_resume("user-1", "r1")
+            assert exc_info.value.status_code == 422
+
+    def test_activates_processed_resume(self):
+        with patch(
+            "app.cv_intelligence.services.resume_service._get_owned_resume",
+            return_value=SimpleNamespace(status=ResumeStatus.PROCESSED),
+        ):
+            with patch(
+                "app.cv_intelligence.services.resume_service._deactivate_other_resumes",
+            ) as deactivate:
+                with patch(
+                    "app.cv_intelligence.services.resume_service.run_supabase",
+                    return_value=SimpleNamespace(data={}),
+                ):
+                    with patch(
+                        "app.cv_intelligence.services.resume_service._row",
+                        return_value={
+                            "id": "r1",
+                            "user_id": "user-1",
+                            "file_name": "cv.pdf",
+                            "file_type": "pdf",
+                            "status": ResumeStatus.PROCESSED.value,
+                            "is_active": True,
+                            "created_at": "2025-01-01T00:00:00Z",
+                            "updated_at": "2025-01-01T00:00:00Z",
+                        },
+                    ):
+                        result = resume_service.set_active_resume("user-1", "r1")
+
+        deactivate.assert_called_once()
+        assert result.id == "r1"
+        assert result.is_active is True
 
 
 class TestActiveResumeLookup:

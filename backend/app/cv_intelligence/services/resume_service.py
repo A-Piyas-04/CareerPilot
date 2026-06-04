@@ -177,6 +177,36 @@ def get_resume(user_id: str, resume_id: str) -> Resume:
     return _get_owned_resume(user_id, resume_id)
 
 
+def set_active_resume(user_id: str, resume_id: str) -> Resume:
+    """Mark one processed resume as active and deactivate all others for the user."""
+    resume = _get_owned_resume(user_id, resume_id)
+    if resume.status != ResumeStatus.PROCESSED:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Only processed resumes can be set as active.",
+        )
+
+    supabase = get_supabase_client()
+    _deactivate_other_resumes(supabase, user_id, resume_id)
+    update_resp = run_supabase(
+        "set active resume",
+        lambda: (
+            supabase.table("resumes")
+            .update({"is_active": True})
+            .eq("id", resume_id)
+            .eq("user_id", user_id)
+            .execute()
+        ),
+    )
+    row = _row(update_resp)
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not set active resume.",
+        )
+    return Resume(**row)
+
+
 def get_resume_detail(user_id: str, resume_id: str) -> dict[str, Any]:
     """
     Return resume metadata together with its sections, extracted skills,

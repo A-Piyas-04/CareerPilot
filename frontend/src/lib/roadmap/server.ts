@@ -35,31 +35,18 @@ export async function loadRoadmapResumeContext(
   userId: string,
   query: string,
 ) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session?.access_token) {
-    throw new RoadmapHttpError("Upload your CV at /resume before generating a roadmap.", 400);
-  }
+  const accessToken = await getServerAccessToken(supabase);
 
   const context = await getResumeContext({
-    accessToken: session.access_token,
+    accessToken,
     intent: "roadmap_generation",
     query,
     userId,
   });
 
-  if (!context.hasResume) {
+  if (!hasUsableResumeContext(context)) {
     throw new RoadmapHttpError(
       context.emptyReason || "Upload your CV at /resume before generating a roadmap.",
-      400,
-    );
-  }
-
-  if (context.usedResumeChunks.length === 0) {
-    throw new RoadmapHttpError(
-      context.emptyReason || "No relevant CV evidence was found for this roadmap.",
       400,
     );
   }
@@ -69,6 +56,49 @@ export async function loadRoadmapResumeContext(
     text: context.text,
     usedResumeChunks: context.usedResumeChunks,
   };
+}
+
+async function getServerAccessToken(supabase: SupabaseServerClient): Promise<string> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (session?.access_token) {
+    return session.access_token;
+  }
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new RoadmapHttpError("User not authenticated", 401);
+  }
+
+  const {
+    data: { session: refreshed },
+  } = await supabase.auth.getSession();
+
+  if (refreshed?.access_token) {
+    return refreshed.access_token;
+  }
+
+  throw new RoadmapHttpError(
+    "Your session expired. Sign in again, then retry generating the roadmap.",
+    401,
+  );
+}
+
+function hasUsableResumeContext(context: {
+  hasResume: boolean;
+  text: string;
+  usedResumeChunks: string[];
+}): boolean {
+  return (
+    context.hasResume &&
+    (context.text.trim().length > 0 || context.usedResumeChunks.length > 0)
+  );
 }
 
 export async function fetchRoadmapDetail(
