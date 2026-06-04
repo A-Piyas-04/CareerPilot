@@ -1,4 +1,4 @@
-export const DEFAULT_AUTH_DESTINATION = "/tracker";
+export const DEFAULT_AUTH_DESTINATION = "/dashboard";
 
 export function sanitizeNextPath(next: string | null | undefined): string {
   if (!next || !next.startsWith("/") || next.startsWith("//")) {

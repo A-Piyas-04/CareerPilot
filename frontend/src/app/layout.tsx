@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="flex min-h-full flex-col bg-[var(--cp-page-bg)]">
+      <body className="flex min-h-full flex-col bg-[var(--cp-workspace-main)]">
         <Providers>{children}</Providers>
       </body>
     </html>

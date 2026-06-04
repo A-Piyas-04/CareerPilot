@@ -61,8 +61,7 @@ export function NavigationTransitionProvider({
     }
 
     if (routesMatch(pathname, pendingHref)) {
-      const timeout = window.setTimeout(() => setPendingHref(null), 0);
-      return () => window.clearTimeout(timeout);
+      setPendingHref(null);
     }
   }, [pathname, pendingHref]);
 
@@ -118,11 +117,16 @@ export function NavigationTransitionShell({
     ? getSkeletonVariantForHref(pendingHref)
     : "singleColumn";
 
+  const immersiveChat =
+    pathname === "/chat" || pathname.startsWith("/chat/");
+
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div
+      className={`relative flex min-h-0 flex-1 flex-col ${immersiveChat ? "overflow-hidden" : ""}`}
+    >
       {showOverlay ? (
         <div
-          className="cp-page-transition absolute inset-0 z-20 overflow-hidden bg-[var(--cp-page-bg)]"
+          className="cp-page-transition absolute inset-0 z-20 overflow-hidden bg-[var(--cp-workspace-main)]"
           aria-busy="true"
           aria-live="polite"
           aria-label="Loading page"
@@ -131,11 +135,9 @@ export function NavigationTransitionShell({
         </div>
       ) : null}
       <div
-        className={
-          showOverlay
-            ? "invisible flex min-h-0 flex-1 flex-col"
-            : "cp-page-transition flex min-h-0 flex-1 flex-col"
-        }
+        className={`${showOverlay ? "invisible" : "cp-page-transition"} ${
+          immersiveChat ? "flex min-h-0 flex-1 flex-col overflow-hidden" : ""
+        }`}
       >
         {children}
       </div>

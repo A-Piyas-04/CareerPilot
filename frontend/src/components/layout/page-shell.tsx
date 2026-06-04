@@ -22,32 +22,11 @@ import {
 type PageShellProps = {
   children: ReactNode;
   width?: "default" | "wide" | "full";
-  /** Neutral flat background without decorative gradients */
-  flatBackground?: boolean;
 };
-
-function PageBackgroundDecor() {
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-emerald-300/20 blur-3xl" />
-      <div className="absolute -right-16 top-32 h-64 w-64 rounded-full bg-sky-300/15 blur-3xl" />
-      <div className="absolute bottom-0 left-1/3 h-48 w-48 rounded-full bg-violet-300/10 blur-3xl" />
-      <div
-        className="absolute inset-0 opacity-[0.015]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, #047857 1px, transparent 1px)",
-          backgroundSize: "28px 28px",
-        }}
-      />
-    </div>
-  );
-}
 
 export function PageShell({
   children,
   width = "default",
-  flatBackground = false,
 }: PageShellProps) {
   const containerClass =
     width === "wide"
@@ -57,14 +36,7 @@ export function PageShell({
         : pageContainer;
 
   return (
-    <div
-      className={
-        flatBackground
-          ? "relative w-full flex-1 bg-[var(--cp-workspace-main)]"
-          : pageShell
-      }
-    >
-      {!flatBackground && <PageBackgroundDecor />}
+    <div className={pageShell}>
       <div className={containerClass}>{children}</div>
     </div>
   );
@@ -100,10 +72,17 @@ export function PageHeader({
   const pathname = usePathname();
   const accent = accentProp ?? getAccentForPath(pathname);
   const styles = getPageAccentStyles(accent);
+  const hasBottomSection = Boolean(
+    nextAction || (relatedLinks && relatedLinks.length > 0) || children,
+  );
 
   return (
-    <header className={`mb-6 overflow-hidden pb-5 ${surfaceCardElevated}`}>
-      <div className={`px-5 pt-5 ${styles.headerBand}`}>
+    <header
+      className={`mb-6 overflow-hidden ${hasBottomSection ? "pb-5" : ""} ${surfaceCardElevated}`}
+    >
+      <div
+        className={`px-5 pt-5 ${!hasBottomSection ? "pb-5" : ""} ${styles.headerBand}`}
+      >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
             {Icon ? (
@@ -132,7 +111,8 @@ export function PageHeader({
         </div>
       </div>
 
-      <div className="px-5">
+      {hasBottomSection ? (
+        <div className="px-5">
         {nextAction ? (
           <div className="mt-4 rounded-xl border border-zinc-200/80 bg-gradient-to-r from-white to-zinc-50/80 px-4 py-3 shadow-sm">
             {nextAction}
@@ -157,7 +137,8 @@ export function PageHeader({
         ) : null}
 
         {children ? <div className="mt-4">{children}</div> : null}
-      </div>
+        </div>
+      ) : null}
     </header>
   );
 }

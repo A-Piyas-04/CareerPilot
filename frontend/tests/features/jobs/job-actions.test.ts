@@ -45,14 +45,13 @@ describe("job action link builders", () => {
     expect(href).toContain("jobDescription=");
   });
 
-  it("returns standard actions and tracker when application exists", () => {
-    const actions = getMatchJobActions(baseMatch, { applicationId: "app-1" });
+  it("returns standard job actions", () => {
+    const actions = getMatchJobActions(baseMatch);
     expect(actions.map((a) => a.key)).toEqual([
       "coverLetter",
       "skillGap",
       "roadmap",
       "chat",
-      "tracker",
     ]);
   });
 

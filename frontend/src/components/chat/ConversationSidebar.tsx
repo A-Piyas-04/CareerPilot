@@ -16,12 +16,7 @@ import {
   isTemporaryAssistantConversationId,
 } from "@/lib/hooks/useAssistantConversations";
 import type { AssistantConversation } from "@/lib/types/assistant";
-import {
-  btnPrimarySky,
-  iconTile,
-  inputFieldSky,
-  surfaceCardHeader,
-} from "@/lib/ui-theme";
+import { btnPrimarySky, iconTile, inputFieldSky } from "@/lib/ui-theme";
 
 type Props = {
   activeConversationId: string | null;
@@ -62,26 +57,21 @@ export function ConversationSidebar({
   const grouped = groupConversations(conversations);
 
   return (
-    <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden border-r border-sky-100/80 bg-gradient-to-b from-white via-white to-sky-50/30 lg:h-full lg:w-80">
-      <header className={`${surfaceCardHeader("sky")} space-y-4`}>
-        <div className="flex items-start gap-3">
+    <aside className="flex h-full min-h-0 w-full shrink-0 flex-col border-r border-zinc-200/90 bg-zinc-50/50 lg:w-72 xl:w-80">
+      <header className="shrink-0 space-y-3 border-b border-zinc-200/90 bg-white px-4 py-4">
+        <div className="flex items-center gap-3">
           <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${iconTile("sky")}`}
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconTile("sky")}`}
           >
             <MessageSquareText className="h-5 w-5" />
           </div>
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-zinc-950">
-              Career Assistant
-            </h1>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              CV-grounded career guidance
-            </p>
-          </div>
+          <h1 className="min-w-0 text-base font-semibold tracking-tight text-zinc-950">
+            Career Assistant
+          </h1>
         </div>
 
         <button
-          className={`${btnPrimarySky} h-10 w-full shadow-sm`}
+          className={`${btnPrimarySky} h-10 w-full rounded-xl shadow-sm`}
           type="button"
           onClick={onCreateConversation}
           disabled={isCreating}
@@ -97,7 +87,7 @@ export function ConversationSidebar({
         </p>
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3">
         {isLoading ? (
           <ListCardSkeleton count={4} cardClassName="h-16 rounded-md" className="space-y-2" />
         ) : conversations.length ? (
@@ -105,7 +95,7 @@ export function ConversationSidebar({
             {(Object.keys(GROUP_LABELS) as GroupKey[]).map((group) =>
               grouped[group].length ? (
                 <section key={group}>
-                  <h2 className="mb-2 px-2 text-[11px] font-bold uppercase tracking-wide text-sky-600/80">
+                  <h2 className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                     {GROUP_LABELS[group]}
                   </h2>
                   <ul className="space-y-1">
@@ -131,7 +121,7 @@ export function ConversationSidebar({
             )}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-sky-200/80 bg-sky-50/40 p-4 text-sm text-sky-900/70">
+          <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-4 text-sm text-zinc-600">
             No conversations yet. Start a new chat to save your first career
             question.
           </div>
@@ -237,16 +227,16 @@ function ConversationButton({
 
   return (
     <div
-      className={`group relative flex items-start gap-2 rounded-xl border transition ${
+      className={`group relative flex items-start gap-1 rounded-xl border transition ${
         isActive
-          ? "border-sky-300/80 bg-gradient-to-r from-sky-50 via-sky-50/90 to-cyan-50/70 shadow-sm ring-1 ring-sky-200/70"
-          : "border-transparent hover:border-sky-100 hover:bg-sky-50/40"
+          ? "border-sky-200 bg-white shadow-sm ring-1 ring-sky-100"
+          : "border-transparent hover:border-zinc-200 hover:bg-white/80"
       }`}
     >
       {isActive ? (
         <span
           aria-hidden
-          className="absolute bottom-2 left-0 top-2 w-1 rounded-full bg-gradient-to-b from-sky-500 to-sky-700"
+          className="absolute bottom-2 left-0 top-2 w-0.5 rounded-full bg-sky-600"
         />
       ) : null}
       <button

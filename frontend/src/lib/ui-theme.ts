@@ -4,8 +4,10 @@ import type { NavGroupAccent } from "@/lib/navigation-config";
 
 export type AccentTone = NavGroupAccent;
 
-export const pageShell =
-  "relative w-full flex-1 bg-gradient-to-b from-emerald-50/25 via-[var(--cp-page-bg)] to-slate-200/60";
+/** Flat workspace canvas — matches CV Intelligence (`/resume`) page background */
+export const workspacePageBackground = "bg-[var(--cp-workspace-main)]";
+
+export const pageShell = `relative w-full flex-1 ${workspacePageBackground}`;
 
 export const pageBackgroundDecor =
   "pointer-events-none absolute inset-0 overflow-hidden aria-hidden";

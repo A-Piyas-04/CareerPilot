@@ -22,7 +22,7 @@ import { ResumeSummary } from "./resume-summary";
 import { ResumeUploadCard } from "./resume-upload-card";
 import { resumePageStack } from "./resume-ui";
 import type { ResumeDetail } from "./types";
-import { getPageStatusBadge, pickPrimaryResume } from "./types";
+import { pickPrimaryResume } from "./types";
 
 function ResumeEmptyState({
   onUpload,
@@ -81,7 +81,6 @@ export function ResumePageClient() {
     resumes.find((r) => r.id === effectiveResumeId) ??
     primaryResume;
 
-  const pageBadge = getPageStatusBadge(resumes, selectedResume);
   const showEmptyHero = resumes.length === 0 && !resumesQuery.isLoading;
 
   function handleCvSuccess(resumeId: string) {
@@ -129,9 +128,6 @@ export function ResumePageClient() {
     }
   }
 
-  const sectionCount = detailQuery.data?.sections.length;
-  const chunkCount = detailQuery.data?.chunk_count;
-
   const activeResumeBar =
     resumes.length > 0 ? (
       <ActiveResumeSelector
@@ -161,14 +157,9 @@ export function ResumePageClient() {
   const showOverview = resumes.length > 0 || resumesQuery.isLoading;
 
   return (
-    <PageShell flatBackground>
+    <PageShell>
       <div className={resumePageStack}>
-          <ResumeIntelligenceHeader
-            pageBadge={pageBadge}
-            hasActiveResume={resumes.length > 0}
-            sectionCount={sectionCount}
-            chunkCount={chunkCount}
-          />
+          <ResumeIntelligenceHeader />
 
           {resumesQuery.error && (
             <div className={alertError}>{resumesQuery.error.message}</div>

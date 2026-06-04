@@ -44,23 +44,23 @@ export function ChatMessage({ message }: Props) {
 
   return (
     <div
-      className={`flex gap-3 ${isUser ? "flex-row-reverse justify-start" : "justify-start"}`}
+      className={`flex gap-2.5 sm:gap-3 ${isUser ? "flex-row-reverse" : ""}`}
     >
       <span
-        className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl shadow-sm ${
+        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
           isUser
-            ? "bg-gradient-to-br from-sky-500 to-sky-700 text-white"
-            : "border border-sky-100 bg-sky-50 text-sky-700"
+            ? "bg-sky-600 text-white"
+            : "border border-zinc-200 bg-zinc-50 text-zinc-600"
         }`}
         aria-hidden
       >
         {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
       </span>
       <article
-        className={`group max-w-[min(78%,42rem)] px-4 py-3 shadow-sm ${
+        className={`group min-w-0 max-w-[min(88%,36rem)] px-3.5 py-3 sm:px-4 ${
           isUser
-            ? "rounded-2xl rounded-tr-md bg-gradient-to-br from-sky-600 via-sky-600 to-sky-700 text-white shadow-md shadow-sky-900/15 ring-1 ring-sky-500/20"
-            : "rounded-2xl rounded-tl-md border border-zinc-200/90 bg-white text-zinc-900 ring-1 ring-zinc-950/[0.03]"
+            ? "rounded-2xl rounded-tr-sm bg-sky-600 text-white"
+            : "rounded-2xl rounded-tl-sm border border-zinc-200/90 bg-white text-zinc-900 shadow-sm"
         }`}
       >
         {showNoResumeBanner ? (
@@ -84,7 +84,7 @@ export function ChatMessage({ message }: Props) {
                 <IntentBadge intent={intent} />
               </div>
             ) : null}
-            <div className="prose prose-sm max-w-none prose-zinc prose-headings:text-zinc-900 prose-a:text-sky-700 leading-6">
+            <div className="prose prose-sm max-w-none prose-zinc prose-p:leading-relaxed prose-headings:mb-2 prose-headings:mt-4 prose-headings:text-zinc-900 prose-a:text-sky-700 prose-li:my-0.5 prose-pre:rounded-lg prose-pre:bg-zinc-50">
               <ReactMarkdown>{message.content}</ReactMarkdown>
             </div>
             {hasResume && evidenceChunks.length > 0 ? (

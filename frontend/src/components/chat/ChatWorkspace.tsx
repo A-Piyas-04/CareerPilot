@@ -59,8 +59,8 @@ export function ChatWorkspace() {
 
   useEffect(() => {
     if (!jobIdParam) {
-      const timeout = window.setTimeout(() => setJobContext(null), 0);
-      return () => window.clearTimeout(timeout);
+      setJobContext(null);
+      return;
     }
 
     const jobId = jobIdParam;
@@ -117,7 +117,7 @@ export function ChatWorkspace() {
   }
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--cp-page-bg)] lg:flex-row">
+    <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--cp-workspace-main)] lg:flex-row">
       <ConfirmDialog
         isOpen={deleteTargetId !== null}
         title="Delete conversation?"

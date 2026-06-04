@@ -104,8 +104,8 @@ export function GuidedWorkflows({
             </div>
           </div>
         ) : (
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-sky-700/80">
-            Guided workflows
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+            Quick workflows
           </p>
         )}
         <div
@@ -123,8 +123,8 @@ export function GuidedWorkflows({
               onClick={() => setActiveWorkflow(card.id)}
               className={
                 compact
-                  ? "inline-flex h-9 items-center gap-2 rounded-full border border-sky-200/80 bg-white px-3 text-xs font-semibold text-sky-900 shadow-sm transition hover:border-sky-300 hover:bg-sky-50 disabled:opacity-50"
-                  : `${surfaceCardElevated} group p-4 text-left transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-lg hover:shadow-sky-900/10 disabled:opacity-50 disabled:hover:translate-y-0`
+                  ? "inline-flex h-8 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-900 disabled:opacity-50"
+                  : `${surfaceCardElevated} group rounded-xl p-4 text-left transition hover:border-sky-200 hover:shadow-md disabled:opacity-50`
               }
             >
               <card.icon

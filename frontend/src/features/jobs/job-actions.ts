@@ -1,11 +1,6 @@
 import type { MatchSummary } from "./types";
 
-export type JobActionKey =
-  | "coverLetter"
-  | "skillGap"
-  | "roadmap"
-  | "chat"
-  | "tracker";
+export type JobActionKey = "coverLetter" | "skillGap" | "roadmap" | "chat";
 
 export type JobActionLink = {
   key: JobActionKey;
@@ -48,10 +43,7 @@ export function buildTrackerHref(applicationId: string): string {
   return `/tracker?applicationId=${encodeURIComponent(applicationId)}`;
 }
 
-export function getMatchJobActions(
-  match: MatchSummary,
-  options?: { applicationId?: string | null },
-): JobActionLink[] {
+export function getMatchJobActions(match: MatchSummary): JobActionLink[] {
   const jobId = match.job.id;
   if (!jobId) {
     return [];
@@ -83,17 +75,6 @@ export function getMatchJobActions(
       shortLabel: "Chat",
     },
   ];
-
-  const applicationId =
-    options?.applicationId ?? match.tracker_application_id ?? null;
-  if (applicationId) {
-    actions.push({
-      key: "tracker",
-      href: buildTrackerHref(applicationId),
-      label: "Open in tracker",
-      shortLabel: "Tracker",
-    });
-  }
 
   return actions;
 }

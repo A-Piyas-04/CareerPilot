@@ -14,7 +14,7 @@ export function AuthRedirectOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-[var(--cp-page-bg)]"
+      className="fixed inset-0 z-50 bg-[var(--cp-workspace-main)]"
       aria-busy="true"
       role="status"
       aria-live="polite"

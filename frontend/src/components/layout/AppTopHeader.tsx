@@ -52,10 +52,8 @@ export function AppTopHeader() {
           <TransitionLink
             href={DASHBOARD_NAV_ITEM.href}
             aria-current={dashboardActive ? "page" : undefined}
-            className={`inline-flex items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold transition-all duration-150 sm:px-3.5 ${
-              dashboardActive
-                ? "bg-violet-600 text-white shadow-sm ring-1 ring-violet-700/30"
-                : "border border-zinc-300 bg-white text-zinc-700 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-900"
+            className={`inline-flex items-center gap-2 rounded-xl bg-violet-900 px-2.5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-violet-800 sm:px-3.5 ${
+              dashboardActive ? "ring-2 ring-violet-400/80" : ""
             }`}
           >
             <DashboardIcon className="h-4 w-4" />
@@ -71,8 +69,9 @@ export function AppTopHeader() {
             {...suppressExtensionHydrationProps}
             type="button"
             onClick={handleSignOut}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-300 bg-white px-3.5 text-sm font-semibold text-zinc-600 transition hover:border-zinc-400 hover:bg-zinc-50 hover:text-zinc-900"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-red-600 px-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700"
             title="Sign out"
+       
           >
             <LogOut className="h-4 w-4" />
             <span className="hidden md:inline">Sign out</span>
