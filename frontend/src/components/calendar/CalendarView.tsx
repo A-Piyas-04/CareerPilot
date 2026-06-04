@@ -7,9 +7,9 @@ import {
   type EventPropGetter,
   type View,
 } from "react-big-calendar";
-import { format, getDay, parse, startOfWeek } from "date-fns";
+import { addMonths, addWeeks, format, getDay, parse, startOfWeek } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
-import { CalendarDays, CalendarPlus } from "lucide-react";
+import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Calendar } from "react-big-calendar";
 
@@ -42,6 +42,8 @@ const localizer = dateFnsLocalizer({
 
 export function CalendarView() {
   const eventsQuery = useCalendarEvents();
+  const accentStyles = getPageAccentStyles("violet");
+  const [date, setDate] = useState(() => new Date());
   const [view, setView] = useState<View>(Views.MONTH);
   const [selectedEvent, setSelectedEvent] = useState<CalendarDisplayEvent | null>(
     null,
@@ -72,6 +74,25 @@ export function CalendarView() {
     setSelectedEvent(event);
   }
 
+  function handleNavigate(direction: "back" | "next" | "today") {
+    if (direction === "today") {
+      setDate(new Date());
+      return;
+    }
+
+    const amount = direction === "next" ? 1 : -1;
+    setDate((currentDate) =>
+      view === Views.WEEK
+        ? addWeeks(currentDate, amount)
+        : addMonths(currentDate, amount),
+    );
+  }
+
+  const calendarLabel =
+    view === Views.WEEK
+      ? `Week of ${format(startOfWeek(date, { locale: enUS }), "MMM d, yyyy")}`
+      : format(date, "MMMM yyyy");
+
   return (
     <PageShell width="wide">
       <PageHeader
@@ -96,11 +117,44 @@ export function CalendarView() {
       <div className="flex flex-1 flex-col gap-5 xl:flex-row">
         <div className={`min-w-0 flex-1 overflow-hidden p-4 ${premiumCard}`}>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex rounded-full border border-zinc-200 bg-white p-1 ring-1 ring-zinc-100">
+                <button
+                  className="h-8 rounded-full px-4 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+                  type="button"
+                  onClick={() => handleNavigate("today")}
+                >
+                  Today
+                </button>
+              </div>
+
+              <div className="flex rounded-full border border-zinc-200 bg-white p-1 ring-1 ring-zinc-100">
+                <button
+                  className="flex h-8 items-center gap-1 rounded-full px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+                  type="button"
+                  onClick={() => handleNavigate("back")}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Back
+                </button>
+                <button
+                  className="flex h-8 items-center gap-1 rounded-full px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+                  type="button"
+                  onClick={() => handleNavigate("next")}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <p className="text-sm font-semibold text-zinc-700">{calendarLabel}</p>
+
             <div className="flex rounded-full border border-zinc-200 bg-white p-1 ring-1 ring-zinc-100">
               <button
                 className={`h-8 rounded-full px-4 text-sm font-semibold transition ${
                   view === Views.MONTH
-                    ? getPageAccentStyles("violet").pillActive
+                    ? accentStyles.pillActive
                     : "text-zinc-700 hover:bg-zinc-50"
                 }`}
                 type="button"
@@ -111,7 +165,7 @@ export function CalendarView() {
               <button
                 className={`h-8 rounded-full px-4 text-sm font-semibold transition ${
                   view === Views.WEEK
-                    ? getPageAccentStyles("violet").pillActive
+                    ? accentStyles.pillActive
                     : "text-zinc-700 hover:bg-zinc-50"
                 }`}
                 type="button"
@@ -141,8 +195,11 @@ export function CalendarView() {
               events={events}
               startAccessor="start"
               endAccessor="end"
+              date={date}
               view={view}
               views={[Views.MONTH, Views.WEEK]}
+              toolbar={false}
+              onNavigate={(nextDate) => setDate(nextDate)}
               onView={(nextView) => setView(nextView)}
               selectable
               popup
