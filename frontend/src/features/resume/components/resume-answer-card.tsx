@@ -1,6 +1,7 @@
 "use client";
 
 import { BookOpen, MessageSquare } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 import { ChunkEvidenceCard } from "@/components/resume/chunk-evidence-card";
 
@@ -24,9 +25,27 @@ export function ResumeAnswerCard({
           <MessageSquare className="h-3.5 w-3.5" />
           Answer
         </div>
-        <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-zinc-800">
-          {result.answer}
-        </p>
+        <div className="resume-answer-markdown mt-2 text-sm leading-relaxed text-zinc-800">
+          <ReactMarkdown
+            components={{
+              p: ({ children }) => (
+                <p className="mb-2 last:mb-0">{children}</p>
+              ),
+              strong: ({ children }) => (
+                <strong className="font-semibold text-zinc-900">{children}</strong>
+              ),
+              ul: ({ children }) => (
+                <ul className="my-2 list-disc space-y-1.5 pl-5">{children}</ul>
+              ),
+              ol: ({ children }) => (
+                <ol className="my-2 list-decimal space-y-1.5 pl-5">{children}</ol>
+              ),
+              li: ({ children }) => <li>{children}</li>,
+            }}
+          >
+            {result.answer}
+          </ReactMarkdown>
+        </div>
       </article>
 
       {result.evidence_chunks.length > 0 && (
