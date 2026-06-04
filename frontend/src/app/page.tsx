@@ -249,7 +249,7 @@ const cardHoverLift =
 const sectionTitle =
   "bg-gradient-to-r from-emerald-950 via-emerald-800 to-teal-800 bg-clip-text text-transparent";
 const navSignInStyles =
-  "h-11 items-center justify-center rounded-lg border border-emerald-200/90 bg-emerald-50 px-5 text-[15px] font-semibold text-emerald-800 transition duration-200 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-900";
+  "h-11 items-center justify-center rounded-lg bg-emerald-900 px-5 text-[15px] font-semibold text-white shadow-sm shadow-emerald-950/20 transition duration-200 hover:bg-emerald-800 hover:shadow-md hover:shadow-emerald-950/30 active:scale-[0.98]";
 const navSignIn = `hidden sm:inline-flex ${navSignInStyles}`;
 const navCtaPrimary =
   "inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-900 px-5 text-[15px] font-semibold text-white shadow-md shadow-emerald-900/25 ring-1 ring-emerald-700/30 transition duration-200 hover:shadow-lg hover:shadow-emerald-900/30 hover:brightness-110";

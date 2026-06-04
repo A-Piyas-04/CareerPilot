@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  LineChart,
-  Mail,
-  Map,
-  MessageSquareText,
-  BriefcaseBusiness,
-} from "lucide-react";
+import { LineChart, Mail, Map, MessageSquareText } from "lucide-react";
 import { TransitionLink } from "@/components/navigation/navigation-transition";
 
 import type { JobActionKey, JobActionLink } from "./job-actions";
@@ -18,23 +12,26 @@ const ICONS: Record<JobActionKey, typeof Mail> = {
   skillGap: LineChart,
   roadmap: Map,
   chat: MessageSquareText,
-  tracker: BriefcaseBusiness,
 };
+
+const actionBtnBase =
+  "rounded-md border border-zinc-300 bg-white font-medium text-zinc-700 shadow-sm shadow-zinc-900/5 ring-1 ring-zinc-200/60 transition hover:border-zinc-400 hover:bg-zinc-50 hover:shadow-md hover:shadow-zinc-900/10";
+
+export const matchJobActionBtnFull = `flex h-10 items-center gap-2 px-3 text-sm ${actionBtnBase}`;
+export const matchJobActionBtnCompact = `flex h-9 items-center gap-1.5 px-2.5 text-xs ${actionBtnBase}`;
 
 type Props = {
   match: MatchSummary;
-  applicationId?: string | null;
   variant?: "compact" | "full";
   className?: string;
 };
 
 export function MatchJobActions({
   match,
-  applicationId,
   variant = "full",
   className = "",
 }: Props) {
-  const actions = getMatchJobActions(match, { applicationId });
+  const actions = getMatchJobActions(match);
 
   if (!actions.length) {
     return null;
@@ -62,11 +59,7 @@ function JobActionLinkButton({
   return (
     <TransitionLink
       href={action.href}
-      className={
-        variant === "compact"
-          ? "flex h-9 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50"
-          : "flex h-10 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-      }
+      className={variant === "compact" ? matchJobActionBtnCompact : matchJobActionBtnFull}
     >
       <Icon className={variant === "compact" ? "h-3.5 w-3.5" : "h-4 w-4"} />
       {label}

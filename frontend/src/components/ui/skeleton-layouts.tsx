@@ -51,7 +51,7 @@ export function DetailPageSkeleton({
 }: DetailPageSkeletonProps) {
   return (
     <main
-      className="min-h-full bg-[var(--cp-page-bg)] px-5 py-6"
+      className="min-h-full bg-[var(--cp-workspace-main)] px-5 py-6"
       aria-busy="true"
     >
       <div className="mx-auto max-w-5xl">
@@ -122,7 +122,7 @@ export function ContentPageSkeleton({
 function PageShell({ children }: { children: ReactNode }) {
   return (
     <main
-      className="min-h-full flex-1 bg-[var(--cp-page-bg)] px-5 py-6"
+      className="min-h-full flex-1 bg-[var(--cp-workspace-main)] px-5 py-6"
       aria-busy="true"
     >
       {children}
@@ -250,7 +250,7 @@ function CalendarPageSkeleton() {
 function ChatPageSkeleton() {
   return (
     <div
-      className="flex min-h-0 flex-1 bg-[var(--cp-page-bg)]"
+      className="flex min-h-0 flex-1 bg-[var(--cp-workspace-main)]"
       aria-busy="true"
     >
       <aside className="w-72 border-r border-zinc-200 bg-white p-4">

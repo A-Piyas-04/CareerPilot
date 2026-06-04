@@ -88,7 +88,7 @@ export function MobileNavDrawer({
               onClose();
               onSignOut();
             }}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 text-sm font-semibold text-zinc-700 transition hover:border-zinc-300 hover:bg-white"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700"
           >
             <LogOut className="h-4 w-4" />
             Sign out

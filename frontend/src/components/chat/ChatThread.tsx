@@ -102,7 +102,7 @@ export function ChatThread({
     (!conversation && !onCreateConversation);
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col bg-gradient-to-b from-[var(--cp-page-bg)] to-sky-50/20">
+    <section className="flex min-h-0 flex-1 flex-col bg-[var(--cp-workspace-main)]">
       <header
         className={`${surfaceCardHeader("sky")} flex min-h-16 shrink-0 flex-col justify-center gap-2 py-3`}
       >

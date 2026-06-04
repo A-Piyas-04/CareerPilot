@@ -23,9 +23,14 @@ import {
 } from "@/lib/ui-theme";
 
 import { useSaveMatchToTracker } from "./hooks";
-import { MatchJobActions } from "./match-job-actions";
 import type { MatchSummary } from "./types";
 import { getFitTier } from "./types";
+
+const matchCardBtnEmerald =
+  "flex h-9 items-center gap-1.5 rounded-md border border-emerald-600/25 bg-emerald-500 px-3 text-sm font-medium text-white shadow-sm shadow-emerald-900/15 ring-1 ring-emerald-500/30 transition hover:border-emerald-700/35 hover:bg-emerald-600 hover:shadow-md hover:shadow-emerald-900/20";
+
+const matchCardBtnSecondary =
+  "flex h-9 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 shadow-sm shadow-zinc-900/5 ring-1 ring-zinc-200/60 transition hover:border-zinc-400 hover:bg-zinc-50 hover:shadow-md hover:shadow-zinc-900/10";
 
 type Props = {
   match: MatchSummary;
@@ -168,18 +173,9 @@ export function MatchCard({ match, onOpenDetails, onSaved }: Props) {
         ) : null}
       </div>
 
-      <MatchJobActions
-        match={match}
-        applicationId={savedApplicationId}
-        variant="compact"
-      />
-
       <footer className="flex flex-wrap items-center gap-2">
         {isSaved ? (
-          <Link
-            href="/tracker"
-            className="flex h-9 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3 text-sm font-medium text-emerald-800"
-          >
+          <Link href="/tracker" className={matchCardBtnEmerald}>
             <BookmarkCheck className="h-4 w-4" />
             In Tracker
           </Link>
@@ -192,7 +188,7 @@ export function MatchCard({ match, onOpenDetails, onSaved }: Props) {
             onClick={handleSave}
             disabled={save.isPending || !match.match_id}
             icon={<Bookmark className="h-4 w-4" />}
-            className="h-9 px-3"
+            className="h-9 px-3 hover:shadow-md hover:shadow-emerald-900/20"
           >
             Save to Tracker
           </SpinnerButton>
@@ -200,7 +196,7 @@ export function MatchCard({ match, onOpenDetails, onSaved }: Props) {
         <button
           type="button"
           onClick={() => onOpenDetails(match)}
-          className="h-9 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+          className={matchCardBtnSecondary}
         >
           Match details
         </button>
@@ -209,7 +205,7 @@ export function MatchCard({ match, onOpenDetails, onSaved }: Props) {
             href={job.source_url}
             target="_blank"
             rel="noreferrer"
-            className="flex h-9 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+            className={matchCardBtnSecondary}
           >
             <ExternalLink className="h-4 w-4" />
             View posting

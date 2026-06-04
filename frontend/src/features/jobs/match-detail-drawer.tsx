@@ -1,7 +1,6 @@
 "use client";
 
-import { Bookmark, ExternalLink, X } from "lucide-react";
-import Link from "next/link";
+import { Bookmark, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -168,21 +167,9 @@ export function MatchDetailDrawer({ match, onClose, onSaved }: Props) {
           )}
         </div>
 
-        <footer className="space-y-3 border-t border-emerald-100/80 bg-white/80 p-5 backdrop-blur-sm">
-          <MatchJobActions
-            match={source}
-            applicationId={savedApplicationId ?? source.tracker_application_id}
-            variant="full"
-          />
-          <div className="flex flex-wrap gap-2">
-          {isSaved ? (
-            <Link
-              href="/tracker"
-              className="flex h-10 items-center rounded-md border border-emerald-300 bg-emerald-50 px-4 text-sm font-medium text-emerald-800"
-            >
-              Open in Tracker
-            </Link>
-          ) : (
+        <footer className="flex flex-wrap gap-2 border-t border-emerald-100/80 bg-white/80 p-5 backdrop-blur-sm">
+          <MatchJobActions match={source} variant="full" />
+          {!isSaved ? (
             <SpinnerButton
               type="button"
               variant="emerald"
@@ -191,23 +178,11 @@ export function MatchDetailDrawer({ match, onClose, onSaved }: Props) {
               onClick={handleSave}
               disabled={save.isPending || !source.match_id}
               icon={<Bookmark className="h-4 w-4" />}
-              className="h-10 px-4"
+              className="h-10 px-4 hover:shadow-md hover:shadow-emerald-900/20"
             >
               Save to Tracker
             </SpinnerButton>
-          )}
-          {source.job.source_url ? (
-            <a
-              href={source.job.source_url}
-              target="_blank"
-              rel="noreferrer"
-              className="flex h-10 items-center gap-2 rounded-md border border-zinc-300 px-4 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-            >
-              <ExternalLink className="h-4 w-4" />
-              View posting
-            </a>
           ) : null}
-          </div>
         </footer>
       </aside>
     </div>

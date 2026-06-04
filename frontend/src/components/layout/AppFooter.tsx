@@ -30,7 +30,7 @@ export function AppFooter() {
 /** Main page scroll area with footer appended after page content. */
 export function AppFooterScrollRegion({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-[var(--cp-page-bg)]">
+    <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-[var(--cp-workspace-main)]">
       {children}
       <AppFooter />
     </div>

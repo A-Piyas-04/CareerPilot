@@ -161,7 +161,7 @@ export function ResumePageClient() {
   const showOverview = resumes.length > 0 || resumesQuery.isLoading;
 
   return (
-    <PageShell flatBackground>
+    <PageShell>
       <div className={resumePageStack}>
           <ResumeIntelligenceHeader
             pageBadge={pageBadge}

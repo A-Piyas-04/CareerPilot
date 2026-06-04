@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -8,7 +8,6 @@ import { PageHeader, PageShell } from "@/components/layout";
 import { EmptyState, Skeleton } from "@/components/ui";
 import { useResumes } from "@/features/resume/hooks";
 import { pickPrimaryResume } from "@/features/resume/types";
-import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import { alertWarning, surfaceCard } from "@/lib/ui-theme";
 
 import { listMatches } from "./api";
@@ -19,16 +18,32 @@ import { MatchDetailDrawer } from "./match-detail-drawer";
 import { MatchFilters } from "./match-filters";
 import { SearchHistoryPanel } from "./search-history-panel";
 import type { JobSearchResponse, JobSearchSummary, MatchSummary } from "./types";
+import { JobsPageHelpButton } from "./jobs-page-help";
 import {
   DEFAULT_MATCH_FILTERS,
   filterAndSortMatches,
   type MatchFilterState,
 } from "./types";
 
+const JOB_HUNTER_DESCRIPTION =
+  "Search live roles, see how each posting fits your CV, review skill gaps, and save strong matches to your application tracker.";
+
 const STEPS = [
-  "Pick a processed CV",
-  "Search or paste a job description",
-  "Review fit, gaps, and save to tracker",
+  {
+    title: "Pick a processed CV",
+    description:
+      "Choose the résumé you want to compare. Only processed CVs can be scored against roles.",
+  },
+  {
+    title: "Search or paste a job",
+    description:
+      "Run a live job search, or paste a posting to analyze a single role in detail.",
+  },
+  {
+    title: "Review fit and save matches",
+    description:
+      "Check fit scores and skill gaps, then save strong opportunities to your application tracker.",
+  },
 ];
 
 export function JobsPageClient() {
@@ -136,26 +151,15 @@ export function JobsPageClient() {
     <PageShell>
       <PageHeader
         accent="emerald"
-        eyebrowText="Discover"
-        icon={Sparkles}
+        icon={Search}
         title="Job Hunter"
-        description="Search live roles, see how each posting fits your CV, review skill gaps, and save strong matches to your application tracker."
-        relatedLinks={PAGE_RELATED_LINKS["/jobs"]}
-      >
-        <ol className="grid gap-2 md:grid-cols-3">
-          {STEPS.map((step, index) => (
-            <li
-              key={step}
-              className="rounded-lg border border-emerald-200/70 bg-gradient-to-r from-emerald-50/80 to-teal-50/60 px-3 py-2 text-sm text-zinc-700"
-            >
-              <span className="mr-2 font-semibold text-emerald-700">
-                {index + 1}.
-              </span>
-              {step}
-            </li>
-          ))}
-        </ol>
-      </PageHeader>
+        actions={
+          <JobsPageHelpButton
+            description={JOB_HUNTER_DESCRIPTION}
+            steps={STEPS}
+          />
+        }
+      />
 
       <div className="flex flex-col gap-5">
         {resumesQuery.isLoading ? (
