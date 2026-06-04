@@ -5,12 +5,35 @@ import type { ReactNode } from "react";
 
 const COPYRIGHT_YEAR = new Date().getFullYear();
 
+type AppFooterProps = {
+  compact?: boolean;
+};
+
 /** Routes that use a fixed viewport panel (internal scroll only). */
 function isImmersiveWorkspaceRoute(pathname: string) {
   return pathname === "/chat" || pathname.startsWith("/chat/");
 }
 
-export function AppFooter() {
+export function AppFooter({ compact = false }: AppFooterProps) {
+  if (compact) {
+    return (
+      <footer
+        className="shrink-0 border-t border-[var(--cp-footer-border)] bg-[var(--cp-footer-bg)] px-4 py-2.5 text-center sm:px-6"
+        aria-label="Site footer"
+      >
+        <div className="mx-auto flex w-full max-w-[1560px] flex-col items-center justify-center gap-1 text-white/90 sm:flex-row sm:gap-3">
+          <p className="text-xs font-semibold tracking-tight">CareerPilot</p>
+          <p
+            className="text-[11px] text-white/65"
+            suppressHydrationWarning
+          >
+            © {COPYRIGHT_YEAR} CareerPilot · Your data stays in your account
+          </p>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer
       className="shrink-0 border-t border-[var(--cp-footer-border)] bg-[var(--cp-footer-bg)] px-4 py-4 text-center sm:px-6"
@@ -49,7 +72,7 @@ export function AppFooterScrollRegion({ children }: { children: ReactNode }) {
       >
         {children}
       </div>
-      <AppFooter />
+      <AppFooter compact={immersive} />
     </div>
   );
 }

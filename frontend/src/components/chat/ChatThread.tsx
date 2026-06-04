@@ -1,17 +1,14 @@
 "use client";
 
-import { Bot, Sparkles, X } from "lucide-react";
-import Link from "next/link";
+import { Bot, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
 import { useAssistantMessages, useSendAssistantMessage } from "@/lib/hooks/useAssistantMessages";
 import type { AssistantConversation } from "@/lib/types/assistant";
 
-import { Badge, ListCardSkeleton } from "@/components/ui";
+import { ListCardSkeleton } from "@/components/ui";
 import { chipSky, surfaceCardElevated } from "@/lib/ui-theme";
 
-import { getIntentFromMetadata, IntentBadge } from "./intent-badge";
-import { GuidedWorkflows } from "./guided-workflows";
 import type { ActiveJobContext } from "./ChatWorkspace";
 import { ChatMessage } from "./ChatMessage";
 import { MessageComposer } from "./MessageComposer";
@@ -72,16 +69,6 @@ export function ChatThread({
     [jobContext],
   );
 
-  const latestIntent = useMemo(() => {
-    for (let index = messages.length - 1; index >= 0; index -= 1) {
-      const message = messages[index];
-      if (message.role !== "assistant") continue;
-      const intent = getIntentFromMetadata(message.metadata);
-      if (intent) return intent;
-    }
-    return null;
-  }, [messages]);
-
   useEffect(() => {
     scrollMessagesToBottom(messagesScrollRef.current, "smooth");
   }, [messageContentKey, sendMessageMutation.isPending]);
@@ -113,40 +100,6 @@ export function ChatThread({
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col border-zinc-200/80 bg-white lg:border-l">
-      <header className="shrink-0 border-b border-zinc-200/90 bg-white px-4 py-3.5 sm:px-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
-              Conversation
-            </p>
-            <h2 className="truncate text-base font-semibold tracking-tight text-zinc-950 sm:text-lg">
-              {conversation?.title?.trim() || "No conversation selected"}
-            </h2>
-          </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-            {latestIntent ? <IntentBadge intent={latestIntent} /> : null}
-            <Badge tone="sky" className="hidden sm:inline-flex">
-              CV-grounded
-            </Badge>
-          </div>
-        </div>
-        {jobContext ? (
-          <div className="mt-2.5 flex items-center gap-2">
-            <Badge tone="emerald" className="max-w-full truncate capitalize">
-              Job context: {jobContext.title}
-              {jobContext.company ? ` · ${jobContext.company}` : ""}
-            </Badge>
-            <Link
-              href="/chat"
-              className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800"
-              aria-label="Clear job context"
-            >
-              <X className="h-4 w-4" />
-            </Link>
-          </div>
-        ) : null}
-      </header>
-
       <div
         ref={messagesScrollRef}
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6"
@@ -187,29 +140,9 @@ export function ChatThread({
             prompts={suggestedPrompts}
             onPromptClick={handlePromptClick}
             disabled={promptsDisabled}
-            workflows={
-              conversation ? (
-                <GuidedWorkflows
-                  jobContext={jobContext}
-                  disabled={sendMessageMutation.isPending}
-                  onSubmitPrompt={handleSend}
-                />
-              ) : null
-            }
           />
         )}
       </div>
-
-      {conversation && messages.length > 0 ? (
-        <div className="shrink-0 border-t border-zinc-100 bg-zinc-50/60 px-4 py-2.5 sm:px-6">
-          <GuidedWorkflows
-            jobContext={jobContext}
-            disabled={sendMessageMutation.isPending}
-            onSubmitPrompt={handleSend}
-            compact
-          />
-        </div>
-      ) : null}
 
       <MessageComposer
         disabled={!conversation}
@@ -247,14 +180,12 @@ function EmptyThread({
   prompts,
   onPromptClick,
   disabled,
-  workflows,
 }: {
   description: string;
   title: string;
   prompts: string[];
   onPromptClick?: (prompt: string) => void;
   disabled?: boolean;
-  workflows?: React.ReactNode;
 }) {
   return (
     <div className="mx-auto flex min-h-full max-w-2xl flex-col items-center justify-center py-8 text-center">
@@ -295,7 +226,6 @@ function EmptyThread({
           ),
         )}
       </div>
-      {workflows ? <div className="mt-8 w-full text-left">{workflows}</div> : null}
       {!onPromptClick ? (
         <p className={`mt-4 ${chipSky}`}>
           Select a conversation from the sidebar to use these prompts
