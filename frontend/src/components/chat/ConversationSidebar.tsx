@@ -11,19 +11,12 @@ import { MessageSquarePlus, MessageSquareText, Pencil, Trash2, X } from "lucide-
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { TransitionLink } from "@/components/navigation/navigation-transition";
 import { ListCardSkeleton, SpinnerButton } from "@/components/ui";
 import {
   isTemporaryAssistantConversationId,
 } from "@/lib/hooks/useAssistantConversations";
-import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import type { AssistantConversation } from "@/lib/types/assistant";
-import {
-  btnPrimarySky,
-  iconTile,
-  inputFieldSky,
-  relatedLinkPill,
-} from "@/lib/ui-theme";
+import { btnPrimarySky, iconTile, inputFieldSky } from "@/lib/ui-theme";
 
 type Props = {
   activeConversationId: string | null;
@@ -66,23 +59,15 @@ export function ConversationSidebar({
   return (
     <aside className="flex h-full min-h-0 w-full shrink-0 flex-col border-r border-zinc-200/90 bg-zinc-50/50 lg:w-72 xl:w-80">
       <header className="shrink-0 space-y-3 border-b border-zinc-200/90 bg-white px-4 py-4">
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconTile("sky")}`}
           >
             <MessageSquareText className="h-5 w-5" />
           </div>
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
-              AI Assistant
-            </p>
-            <h1 className="text-base font-semibold tracking-tight text-zinc-950">
-              Career Assistant
-            </h1>
-            <p className="mt-0.5 text-xs leading-snug text-zinc-500">
-              CV-grounded guidance
-            </p>
-          </div>
+          <h1 className="min-w-0 text-base font-semibold tracking-tight text-zinc-950">
+            Career Assistant
+          </h1>
         </div>
 
         <button
@@ -94,21 +79,6 @@ export function ConversationSidebar({
           <MessageSquarePlus className="h-4 w-4" />
           New Chat
         </button>
-
-        <nav
-          aria-label="Related pages"
-          className="flex flex-wrap gap-1.5"
-        >
-          {PAGE_RELATED_LINKS["/chat"].map((link) => (
-            <TransitionLink
-              key={link.href}
-              href={link.href}
-              className={relatedLinkPill("sky")}
-            >
-              {link.label}
-            </TransitionLink>
-          ))}
-        </nav>
       </header>
 
       {errorMessage ? (
