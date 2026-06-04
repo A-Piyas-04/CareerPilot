@@ -117,8 +117,13 @@ export function NavigationTransitionShell({
     ? getSkeletonVariantForHref(pendingHref)
     : "singleColumn";
 
+  const immersiveChat =
+    pathname === "/chat" || pathname.startsWith("/chat/");
+
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div
+      className={`relative flex min-h-0 flex-1 flex-col ${immersiveChat ? "overflow-hidden" : ""}`}
+    >
       {showOverlay ? (
         <div
           className="cp-page-transition absolute inset-0 z-20 overflow-hidden bg-[var(--cp-workspace-main)]"
@@ -129,7 +134,11 @@ export function NavigationTransitionShell({
           <ContentPageSkeleton variant={variant} />
         </div>
       ) : null}
-      <div className={showOverlay ? "invisible" : "cp-page-transition"}>
+      <div
+        className={`${showOverlay ? "invisible" : "cp-page-transition"} ${
+          immersiveChat ? "flex min-h-0 flex-1 flex-col overflow-hidden" : ""
+        }`}
+      >
         {children}
       </div>
     </div>

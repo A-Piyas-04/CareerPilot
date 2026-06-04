@@ -8,7 +8,7 @@ import { useAssistantMessages, useSendAssistantMessage } from "@/lib/hooks/useAs
 import type { AssistantConversation } from "@/lib/types/assistant";
 
 import { Badge, ListCardSkeleton } from "@/components/ui";
-import { chipSky, surfaceCardElevated, surfaceCardHeader } from "@/lib/ui-theme";
+import { chipSky, surfaceCardElevated } from "@/lib/ui-theme";
 
 import { getIntentFromMetadata, IntentBadge } from "./intent-badge";
 import { GuidedWorkflows } from "./guided-workflows";
@@ -37,6 +37,16 @@ function buildJobPrompts(title: string) {
   ];
 }
 
+function scrollMessagesToBottom(container: HTMLDivElement | null, behavior: ScrollBehavior) {
+  if (!container) {
+    return;
+  }
+  container.scrollTo({
+    top: container.scrollHeight,
+    behavior,
+  });
+}
+
 export function ChatThread({
   conversation,
   jobContext,
@@ -44,7 +54,7 @@ export function ChatThread({
 }: Props) {
   const messagesQuery = useAssistantMessages(conversation?.id ?? null);
   const sendMessageMutation = useSendAssistantMessage();
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const messagesScrollRef = useRef<HTMLDivElement | null>(null);
   const messages = useMemo(
     () => messagesQuery.data ?? [],
     [messagesQuery.data],
@@ -73,8 +83,8 @@ export function ChatThread({
   }, [messages]);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messageContentKey]);
+    scrollMessagesToBottom(messagesScrollRef.current, "smooth");
+  }, [messageContentKey, sendMessageMutation.isPending]);
 
   async function handleSend(content: string) {
     if (!conversation) {
@@ -102,20 +112,18 @@ export function ChatThread({
     (!conversation && !onCreateConversation);
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col bg-[var(--cp-workspace-main)]">
-      <header
-        className={`${surfaceCardHeader("sky")} flex min-h-16 shrink-0 flex-col justify-center gap-2 py-3`}
-      >
-        <div className="flex items-center justify-between gap-3">
+    <section className="flex min-h-0 min-w-0 flex-1 flex-col border-zinc-200/80 bg-white lg:border-l">
+      <header className="shrink-0 border-b border-zinc-200/90 bg-white px-4 py-3.5 sm:px-6">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
               Conversation
             </p>
-            <h2 className="truncate text-lg font-semibold tracking-tight text-zinc-950">
+            <h2 className="truncate text-base font-semibold tracking-tight text-zinc-950 sm:text-lg">
               {conversation?.title?.trim() || "No conversation selected"}
             </h2>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
             {latestIntent ? <IntentBadge intent={latestIntent} /> : null}
             <Badge tone="sky" className="hidden sm:inline-flex">
               CV-grounded
@@ -123,14 +131,14 @@ export function ChatThread({
           </div>
         </div>
         {jobContext ? (
-          <div className="flex items-center gap-2">
+          <div className="mt-2.5 flex items-center gap-2">
             <Badge tone="emerald" className="max-w-full truncate capitalize">
               Job context: {jobContext.title}
               {jobContext.company ? ` · ${jobContext.company}` : ""}
             </Badge>
             <Link
               href="/chat"
-              className="rounded-lg p-1.5 text-sky-600 transition hover:bg-sky-100 hover:text-sky-800"
+              className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800"
               aria-label="Clear job context"
             >
               <X className="h-4 w-4" />
@@ -139,11 +147,14 @@ export function ChatThread({
         ) : null}
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6">
+      <div
+        ref={messagesScrollRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6"
+      >
         {!conversation ? (
           <EmptyThread
             title="Select or create a conversation"
-            description="Your saved career chats will appear here once you choose a thread from the sidebar — or start a new chat with a suggested prompt below."
+            description="Choose a thread from the sidebar or start a new chat with a suggested prompt below."
             prompts={suggestedPrompts}
             onPromptClick={handlePromptClick}
             disabled={promptsDisabled}
@@ -151,19 +162,19 @@ export function ChatThread({
         ) : messagesQuery.isLoading ? (
           <ListCardSkeleton
             count={3}
-            cardClassName="h-20 rounded-lg"
-            className="mx-auto max-w-4xl space-y-4"
+            cardClassName="h-20 rounded-xl"
+            className="mx-auto max-w-3xl space-y-4"
           />
         ) : messagesQuery.error ? (
-          <p className="mx-auto max-w-4xl rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="mx-auto max-w-3xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {messagesQuery.error.message}
           </p>
         ) : messages.length ? (
-          <div className="mx-auto max-w-4xl space-y-4">
+          <div className="mx-auto max-w-3xl space-y-5">
             {messages.map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))}
-            <div ref={scrollRef} />
+            {sendMessageMutation.isPending ? <AssistantTypingIndicator /> : null}
           </div>
         ) : (
           <EmptyThread
@@ -171,7 +182,7 @@ export function ChatThread({
             description={
               jobContext
                 ? "Ask about readiness, skill gaps, a roadmap, or a cover letter for the selected job posting."
-                : "Ask a question now. CareerPilot will respond using the current CV context and recent conversation memory."
+                : "Ask a question now. CareerPilot uses your CV and this thread for grounded answers."
             }
             prompts={suggestedPrompts}
             onPromptClick={handlePromptClick}
@@ -190,7 +201,7 @@ export function ChatThread({
       </div>
 
       {conversation && messages.length > 0 ? (
-        <div className="border-t border-sky-100/80 bg-white/80 px-5 py-3 backdrop-blur-sm">
+        <div className="shrink-0 border-t border-zinc-100 bg-zinc-50/60 px-4 py-2.5 sm:px-6">
           <GuidedWorkflows
             jobContext={jobContext}
             disabled={sendMessageMutation.isPending}
@@ -206,6 +217,27 @@ export function ChatThread({
         onSend={handleSend}
       />
     </section>
+  );
+}
+
+function AssistantTypingIndicator() {
+  return (
+    <div className="flex gap-3" aria-live="polite" aria-label="Assistant is responding">
+      <span
+        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-sky-50 text-sky-700"
+        aria-hidden
+      >
+        <Bot className="h-4 w-4" />
+      </span>
+      <div className="rounded-2xl rounded-tl-md border border-zinc-200/90 bg-zinc-50 px-4 py-3.5 shadow-sm">
+        <p className="text-xs font-medium text-zinc-500">CareerPilot is thinking</p>
+        <div className="mt-2 flex items-center gap-1.5">
+          <span className="h-2 w-2 animate-bounce rounded-full bg-sky-500 [animation-delay:0ms]" />
+          <span className="h-2 w-2 animate-bounce rounded-full bg-sky-500 [animation-delay:150ms]" />
+          <span className="h-2 w-2 animate-bounce rounded-full bg-sky-500 [animation-delay:300ms]" />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -225,17 +257,17 @@ function EmptyThread({
   workflows?: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto flex min-h-[420px] max-w-3xl flex-col items-center justify-center text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-800 text-white shadow-md shadow-sky-900/25">
-        <Bot className="h-7 w-7" />
+    <div className="mx-auto flex min-h-full max-w-2xl flex-col items-center justify-center py-8 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-md shadow-sky-900/20">
+        <Bot className="h-6 w-6" />
       </span>
-      <h3 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-950">
+      <h3 className="mt-4 text-xl font-semibold tracking-tight text-zinc-950">
         {title}
       </h3>
-      <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-600">
+      <p className="mt-2 max-w-md text-sm leading-6 text-zinc-600">
         {description}
       </p>
-      <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
+      <div className="mt-6 grid w-full gap-2.5 sm:grid-cols-2">
         {prompts.map((prompt) =>
           onPromptClick ? (
             <button
@@ -243,27 +275,27 @@ function EmptyThread({
               key={prompt}
               disabled={disabled}
               onClick={() => onPromptClick(prompt)}
-              className={`${surfaceCardElevated} group p-4 text-left transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-lg hover:shadow-sky-900/10 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0`}
+              className={`${surfaceCardElevated} group rounded-xl p-3.5 text-left transition hover:border-sky-200 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50`}
             >
-              <Sparkles className="mb-2 h-4 w-4 text-sky-600 transition group-hover:text-sky-700" />
-              <span className="text-sm font-medium leading-6 text-zinc-800 group-hover:text-sky-950">
+              <Sparkles className="mb-2 h-4 w-4 text-sky-600" />
+              <span className="text-sm font-medium leading-snug text-zinc-800 group-hover:text-zinc-950">
                 {prompt}
               </span>
             </button>
           ) : (
             <div
-              className={`${surfaceCardElevated} p-4 text-left`}
+              className={`${surfaceCardElevated} rounded-xl p-3.5 text-left`}
               key={prompt}
             >
               <Sparkles className="mb-2 h-4 w-4 text-sky-600" />
-              <span className="text-sm font-medium leading-6 text-zinc-700">
+              <span className="text-sm font-medium leading-snug text-zinc-700">
                 {prompt}
               </span>
             </div>
           ),
         )}
       </div>
-      {workflows ? <div className="mt-8 w-full">{workflows}</div> : null}
+      {workflows ? <div className="mt-8 w-full text-left">{workflows}</div> : null}
       {!onPromptClick ? (
         <p className={`mt-4 ${chipSky}`}>
           Select a conversation from the sidebar to use these prompts

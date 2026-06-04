@@ -69,8 +69,9 @@ export function AppTopHeader() {
             {...suppressExtensionHydrationProps}
             type="button"
             onClick={handleSignOut}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-red-600 px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-red-600 px-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700"
             title="Sign out"
+       
           >
             <LogOut className="h-4 w-4" />
             <span className="hidden md:inline">Sign out</span>
