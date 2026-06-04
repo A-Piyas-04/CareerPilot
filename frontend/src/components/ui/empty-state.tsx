@@ -38,16 +38,16 @@ export function EmptyState({
       >
         <Icon className="h-7 w-7" aria-hidden />
       </div>
-      <h3 className="text-base font-semibold text-zinc-900">{title}</h3>
+      <h3 className="text-base font-semibold text-[var(--cp-text-primary)]">{title}</h3>
       {description ? (
-        <p className="mt-1 max-w-sm text-sm text-zinc-600">{description}</p>
+        <p className="mt-1 max-w-sm text-sm text-[var(--cp-text-muted)]">{description}</p>
       ) : null}
       {actions ? <div className="mt-4 flex flex-wrap justify-center gap-2">{actions}</div> : null}
       {prompts && prompts.length > 0 ? (
         <div className="mt-5 grid w-full max-w-md gap-2 sm:grid-cols-2">
           {prompts.map((prompt) => {
             const inner = (
-              <span className="block rounded-xl border border-zinc-200/80 bg-white/80 px-3 py-2.5 text-left text-xs font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-white hover:shadow-sm">
+              <span className="block rounded-xl border border-[var(--cp-border)] bg-[var(--cp-surface)] px-3 py-2.5 text-left text-xs font-medium text-[var(--cp-text-secondary)] transition hover:border-[var(--cp-border-strong)] hover:bg-[var(--cp-surface-hover)] hover:text-[var(--cp-text-primary)] hover:shadow-sm">
                 {prompt.label}
               </span>
             );

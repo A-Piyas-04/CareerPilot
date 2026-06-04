@@ -14,7 +14,9 @@ export function Skeleton({ className, shimmer = true, ...props }: SkeletonProps)
       aria-busy="true"
       className={cn(
         "rounded",
-        shimmer ? "cp-skeleton-shimmer" : "animate-pulse bg-zinc-200",
+        shimmer
+          ? "cp-skeleton-shimmer"
+          : "animate-pulse bg-zinc-200 dark:bg-slate-700/60",
         className,
       )}
       {...props}

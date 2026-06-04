@@ -84,7 +84,7 @@ export function ChatMessage({ message }: Props) {
                 <IntentBadge intent={intent} />
               </div>
             ) : null}
-            <div className="prose prose-sm max-w-none prose-zinc prose-p:leading-relaxed prose-headings:mb-2 prose-headings:mt-4 prose-headings:text-zinc-900 prose-a:text-sky-700 prose-li:my-0.5 prose-pre:rounded-lg prose-pre:bg-zinc-50">
+            <div className="prose prose-sm max-w-none prose-zinc prose-p:leading-relaxed prose-headings:mb-2 prose-headings:mt-4 prose-headings:text-zinc-900 prose-a:text-sky-700 prose-li:my-0.5 prose-pre:rounded-lg prose-pre:bg-zinc-50 dark:prose-invert dark:prose-headings:text-slate-50 dark:prose-a:text-sky-200 dark:prose-pre:bg-slate-950/40">
               <ReactMarkdown>{message.content}</ReactMarkdown>
             </div>
             {hasResume && evidenceChunks.length > 0 ? (

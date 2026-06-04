@@ -54,16 +54,16 @@ export function MobileNavDrawer({
         onClick={onClose}
       />
 
-      <aside className="absolute inset-y-0 right-0 flex w-[min(100vw-3rem,360px)] flex-col border-l border-zinc-200 bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
+      <aside className="absolute inset-y-0 right-0 flex w-[min(100vw-3rem,360px)] flex-col border-l border-[var(--cp-border)] bg-[var(--cp-card-bg)] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[var(--cp-border-soft)] px-4 py-3">
           <div>
-            <p className="text-sm font-bold text-zinc-900">Navigation</p>
-            <p className="text-xs text-zinc-500">Jump to any workspace</p>
+            <p className="text-sm font-bold text-[var(--cp-text-primary)]">Navigation</p>
+            <p className="text-xs text-[var(--cp-text-muted)]">Jump to any workspace</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
+            className="rounded-lg p-2 text-[var(--cp-text-muted)] transition hover:bg-[var(--cp-surface-hover)] hover:text-[var(--cp-text-primary)]"
             aria-label="Close menu"
           >
             <X className="h-5 w-5" />
@@ -81,7 +81,7 @@ export function MobileNavDrawer({
           ))}
         </div>
 
-        <div className="border-t border-zinc-100 p-3">
+        <div className="border-t border-[var(--cp-border-soft)] p-3">
           <button
             type="button"
             onClick={() => {
@@ -118,7 +118,7 @@ function MobileNavSection({
         <p className={`text-xs font-bold uppercase tracking-wider ${styles.panelHeader}`}>
           {group.label}
         </p>
-        <p className="text-[11px] text-zinc-500">{group.description}</p>
+        <p className="text-[11px] text-[var(--cp-text-muted)]">{group.description}</p>
       </div>
 
       <ul className="space-y-1 p-2">
@@ -132,7 +132,7 @@ function MobileNavSection({
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
                   isActive
                     ? styles.itemActive
-                    : `bg-white/80 text-zinc-800 ${styles.itemHover}`
+                    : `bg-[var(--cp-surface)] text-[var(--cp-text-secondary)] ${styles.itemHover}`
                 }`}
               >
                 <span
@@ -149,7 +149,7 @@ function MobileNavSection({
                   {description ? (
                     <span
                       className={`block text-xs ${
-                        isActive ? "text-white/85" : "text-zinc-500"
+                        isActive ? "text-white/85" : "text-[var(--cp-text-muted)]"
                       }`}
                     >
                       {description}
@@ -174,7 +174,7 @@ export function MobileNavTrigger({
     <button
       type="button"
       onClick={onOpen}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 lg:hidden"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--cp-border)] bg-[var(--cp-surface)] text-[var(--cp-text-secondary)] transition hover:border-[var(--cp-border-strong)] hover:bg-[var(--cp-surface-hover)] lg:hidden"
       aria-label="Open navigation menu"
     >
       <Menu className="h-5 w-5" />

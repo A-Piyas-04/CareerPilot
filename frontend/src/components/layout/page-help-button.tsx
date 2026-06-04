@@ -39,7 +39,8 @@ export function PageHelpButton({
   const panelId = useId();
 
   useEffect(() => {
-    setMounted(true);
+    const timeout = window.setTimeout(() => setMounted(true), 0);
+    return () => window.clearTimeout(timeout);
   }, []);
 
   useLayoutEffect(() => {
@@ -142,15 +143,15 @@ export function PageHelpButton({
           zIndex: 200,
           visibility: panelStyle ? "visible" : "hidden",
         }}
-        className="overflow-y-auto rounded-xl border border-zinc-200 bg-white p-5 shadow-xl ring-1 ring-black/5"
+        className="overflow-y-auto rounded-xl border border-[var(--cp-border)] bg-[var(--cp-card-bg)] p-5 text-[var(--cp-text-primary)] shadow-xl ring-1 ring-black/5 dark:ring-white/5"
       >
         <h2
           id={`${panelId}-title`}
-          className="text-base font-semibold text-zinc-950"
+          className="text-base font-semibold text-[var(--cp-text-primary)]"
         >
           {dialogTitle}
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+        <p className="mt-2 text-sm leading-relaxed text-[var(--cp-text-muted)]">
           {description}
         </p>
 
@@ -167,10 +168,10 @@ export function PageHelpButton({
                 {index + 1}
               </span>
               <div className="min-w-0 pt-0.5">
-                <p className="text-sm font-semibold text-zinc-900">
+                <p className="text-sm font-semibold text-[var(--cp-text-primary)]">
                   {step.title}
                 </p>
-                <p className="mt-0.5 text-sm leading-relaxed text-zinc-600">
+                <p className="mt-0.5 text-sm leading-relaxed text-[var(--cp-text-muted)]">
                   {step.description}
                 </p>
               </div>
@@ -190,7 +191,7 @@ export function PageHelpButton({
         aria-haspopup="dialog"
         aria-label={ariaLabel}
         onClick={() => setOpen((value) => !value)}
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-300/80 bg-white text-base font-semibold leading-none text-zinc-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--cp-border)] bg-[var(--cp-surface)] text-base font-semibold leading-none text-[var(--cp-text-muted)] shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-400/12 dark:hover:text-emerald-100"
       >
         ?
       </button>

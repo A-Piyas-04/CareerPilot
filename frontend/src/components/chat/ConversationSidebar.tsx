@@ -57,15 +57,15 @@ export function ConversationSidebar({
   const grouped = groupConversations(conversations);
 
   return (
-    <aside className="flex h-full min-h-0 w-full shrink-0 flex-col border-r border-zinc-200/90 bg-zinc-50/50 lg:w-72 xl:w-80">
-      <header className="shrink-0 space-y-3 border-b border-zinc-200/90 bg-white px-4 py-4">
+    <aside className="flex h-full min-h-0 w-full shrink-0 flex-col border-r border-[var(--cp-border)] bg-[var(--cp-surface-muted)] lg:w-72 xl:w-80">
+      <header className="shrink-0 space-y-3 border-b border-[var(--cp-border)] bg-[var(--cp-card-bg)] px-4 py-4">
         <div className="flex items-center gap-3">
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconTile("sky")}`}
           >
             <MessageSquareText className="h-5 w-5" />
           </div>
-          <h1 className="min-w-0 text-base font-semibold tracking-tight text-zinc-950">
+          <h1 className="min-w-0 text-base font-semibold tracking-tight text-[var(--cp-text-primary)]">
             Career Assistant
           </h1>
         </div>
@@ -121,7 +121,7 @@ export function ConversationSidebar({
             )}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-4 text-sm text-zinc-600">
+          <div className="rounded-xl border border-dashed border-[var(--cp-border)] bg-[var(--cp-surface)] p-4 text-sm text-[var(--cp-text-muted)]">
             No conversations yet. Start a new chat to save your first career
             question.
           </div>
@@ -179,7 +179,7 @@ function ConversationButton({
 
   if (isEditing) {
     return (
-      <div className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50/60 p-2 shadow-sm ring-1 ring-sky-100">
+      <div className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50/60 p-2 shadow-sm ring-1 ring-sky-100 dark:border-sky-300/25 dark:from-sky-400/12 dark:to-cyan-400/8 dark:ring-sky-300/15">
         <input
           className={`${inputFieldSky} text-sm`}
           value={draftTitle}
@@ -200,7 +200,7 @@ function ConversationButton({
         <div className="mt-2 flex items-center justify-end gap-1">
           <button
             type="button"
-            className="rounded-md p-1.5 text-zinc-500 hover:bg-white"
+            className="rounded-md p-1.5 text-[var(--cp-text-muted)] hover:bg-[var(--cp-surface-hover)]"
             onClick={() => {
               setDraftTitle(conversation.title ?? "");
               setIsEditing(false);
@@ -229,8 +229,8 @@ function ConversationButton({
     <div
       className={`group relative flex items-start gap-1 rounded-xl border transition ${
         isActive
-          ? "border-sky-200 bg-white shadow-sm ring-1 ring-sky-100"
-          : "border-transparent hover:border-zinc-200 hover:bg-white/80"
+          ? "border-sky-200 bg-white shadow-sm ring-1 ring-sky-100 dark:border-sky-300/30 dark:bg-sky-400/12 dark:ring-sky-300/15"
+          : "border-transparent hover:border-zinc-200 hover:bg-white/80 dark:hover:border-[var(--cp-border)] dark:hover:bg-[var(--cp-surface-hover)]"
       }`}
     >
       {isActive ? (

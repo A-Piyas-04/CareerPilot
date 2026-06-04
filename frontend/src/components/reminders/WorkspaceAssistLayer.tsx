@@ -20,8 +20,12 @@ export function WorkspaceAssistLayer() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setDismissedNudges(readDismissedNudges());
-    setMounted(true);
+    const timeout = window.setTimeout(() => {
+      setDismissedNudges(readDismissedNudges());
+      setMounted(true);
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
   }, []);
   const reminder = reminders[0] ?? null;
   const nudge = useMemo(
@@ -60,7 +64,7 @@ export function WorkspaceAssistLayer() {
   }
 
   return (
-    <div className="sticky top-16 z-30 border-b border-zinc-200/80 bg-white/95 px-4 py-2 shadow-sm backdrop-blur">
+    <div className="sticky top-16 z-30 border-b border-[var(--cp-border)] bg-[var(--cp-card-bg)]/95 px-4 py-2 shadow-sm backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         {reminder ? (
           <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -68,8 +72,8 @@ export function WorkspaceAssistLayer() {
               <BellRing className="h-4 w-4" />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-zinc-950">{reminder.title}</p>
-              <p className="text-sm text-zinc-600">{reminder.message}</p>
+              <p className="text-sm font-semibold text-[var(--cp-text-primary)]">{reminder.title}</p>
+              <p className="text-sm text-[var(--cp-text-muted)]">{reminder.message}</p>
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">
               {typeof Notification !== "undefined" &&
@@ -88,7 +92,7 @@ export function WorkspaceAssistLayer() {
               </Link>
               <button
                 type="button"
-                className="rounded-md p-2 text-zinc-500 hover:bg-zinc-100"
+                className="rounded-md p-2 text-[var(--cp-text-muted)] hover:bg-[var(--cp-surface-hover)]"
                 onClick={() => dismiss(reminder.id)}
                 aria-label="Dismiss reminder"
               >
@@ -102,8 +106,8 @@ export function WorkspaceAssistLayer() {
               <Sparkles className="h-4 w-4" />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-zinc-950">{nudge.title}</p>
-              <p className="text-sm text-zinc-600">{nudge.message}</p>
+              <p className="text-sm font-semibold text-[var(--cp-text-primary)]">{nudge.title}</p>
+              <p className="text-sm text-[var(--cp-text-muted)]">{nudge.message}</p>
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">
               <Link href={nudge.actionHref} className={btnPrimary}>
@@ -111,7 +115,7 @@ export function WorkspaceAssistLayer() {
               </Link>
               <button
                 type="button"
-                className="rounded-md p-2 text-zinc-500 hover:bg-zinc-100"
+                className="rounded-md p-2 text-[var(--cp-text-muted)] hover:bg-[var(--cp-surface-hover)]"
                 onClick={() => dismissNudge(nudge.id)}
                 aria-label="Dismiss nudge"
               >

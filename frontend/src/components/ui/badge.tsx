@@ -33,11 +33,11 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   deadline: badgeDeadline,
   inProgress: badgeInProgress,
   completed: badgeCompleted,
-  neutral: `${badgeBase} bg-zinc-100 text-zinc-700 ring-zinc-200/70`,
-  emerald: `${badgeBase} bg-emerald-50 text-emerald-800 ring-emerald-200/70`,
-  sky: `${badgeBase} bg-sky-50 text-sky-800 ring-sky-200/70`,
-  violet: `${badgeBase} bg-violet-50 text-violet-800 ring-violet-200/70`,
-  amber: `${badgeBase} bg-amber-50 text-amber-900 ring-amber-200/70`,
+  neutral: `${badgeBase} bg-zinc-100 text-zinc-700 ring-zinc-200/70 dark:bg-white/10 dark:text-slate-100 dark:ring-white/15`,
+  emerald: `${badgeBase} bg-emerald-50 text-emerald-800 ring-emerald-200/70 dark:bg-emerald-400/12 dark:text-emerald-100 dark:ring-emerald-300/25`,
+  sky: `${badgeBase} bg-sky-50 text-sky-800 ring-sky-200/70 dark:bg-sky-400/12 dark:text-sky-100 dark:ring-sky-300/25`,
+  violet: `${badgeBase} bg-violet-50 text-violet-800 ring-violet-200/70 dark:bg-violet-400/12 dark:text-violet-100 dark:ring-violet-300/25`,
+  amber: `${badgeBase} bg-amber-50 text-amber-900 ring-amber-200/70 dark:bg-amber-400/12 dark:text-amber-100 dark:ring-amber-300/25`,
 };
 
 type BadgeProps = {

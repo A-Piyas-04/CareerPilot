@@ -17,13 +17,17 @@ export function WorkspaceChrome({ children }: WorkspaceChromeProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    try {
-      setSidebarCollapsed(
-        window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1",
-      );
-    } catch {
-      /* ignore storage errors */
-    }
+    const timeout = window.setTimeout(() => {
+      try {
+        setSidebarCollapsed(
+          window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1",
+        );
+      } catch {
+        /* ignore storage errors */
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
   }, []);
 
   const toggleSidebar = useCallback(() => {

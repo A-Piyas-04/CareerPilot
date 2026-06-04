@@ -40,11 +40,11 @@ export function MessageComposer({ disabled, isSending, onSend }: Props) {
   }
 
   return (
-    <div className="shrink-0 border-t border-zinc-200/90 bg-white px-4 py-3.5 sm:px-6">
+    <div className="shrink-0 border-t border-[var(--cp-border)] bg-[var(--cp-card-bg)] px-4 py-3.5 sm:px-6">
       <div className="mx-auto max-w-3xl">
-        <div className="flex items-end gap-2 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-2 shadow-sm transition focus-within:border-sky-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-sky-100">
+        <div className="flex items-end gap-2 rounded-2xl border border-[var(--cp-border)] bg-[var(--cp-surface-muted)] p-2 shadow-sm transition focus-within:border-sky-300 focus-within:bg-[var(--cp-surface)] focus-within:ring-2 focus-within:ring-sky-100 dark:focus-within:ring-sky-400/20">
           <textarea
-            className="max-h-36 min-h-11 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-zinc-950 outline-none placeholder:text-zinc-400"
+            className="max-h-36 min-h-11 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-[var(--cp-text-primary)] outline-none placeholder:text-[var(--cp-text-subtle)]"
             value={content}
             onChange={(event) => setContent(event.target.value)}
             onKeyDown={handleKeyDown}
@@ -73,12 +73,12 @@ export function MessageComposer({ disabled, isSending, onSend }: Props) {
             <span className="sr-only">Send message</span>
           </SpinnerButton>
         </div>
-        <p className="mt-2 text-center text-[11px] text-zinc-500 sm:text-left">
-          <kbd className="rounded border border-zinc-200 bg-white px-1 py-0.5 font-sans text-[10px] text-zinc-600">
+        <p className="mt-2 text-center text-[11px] text-[var(--cp-text-muted)] sm:text-left">
+          <kbd className="rounded border border-[var(--cp-border)] bg-[var(--cp-surface)] px-1 py-0.5 font-sans text-[10px] text-[var(--cp-text-muted)]">
             Enter
           </kbd>{" "}
           to send ·{" "}
-          <kbd className="rounded border border-zinc-200 bg-white px-1 py-0.5 font-sans text-[10px] text-zinc-600">
+          <kbd className="rounded border border-[var(--cp-border)] bg-[var(--cp-surface)] px-1 py-0.5 font-sans text-[10px] text-[var(--cp-text-muted)]">
             Shift+Enter
           </kbd>{" "}
           for a new line

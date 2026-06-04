@@ -92,7 +92,7 @@ export function AppSidebar({ collapsed, onToggleCollapse }: AppSidebarProps) {
       <button
         type="button"
         onClick={onToggleCollapse}
-        className="absolute top-[42%] right-0 z-50 flex h-8 w-8 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300/90 bg-white text-slate-600 shadow-sm transition-colors duration-150 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+        className="absolute top-[42%] right-0 z-50 flex h-8 w-8 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--cp-border)] bg-[var(--cp-surface)] text-[var(--cp-text-muted)] shadow-sm transition-colors duration-150 hover:border-[var(--cp-border-strong)] hover:bg-[var(--cp-surface-hover)] hover:text-[var(--cp-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cp-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--cp-workspace-main)]"
         aria-expanded={!collapsed}
         aria-controls="workspace-sidebar"
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}

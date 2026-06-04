@@ -4,6 +4,7 @@ import { CheckCircle2, Sparkles } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { LoginBenefitsPanel } from "@/components/layout/error-page-content";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Skeleton } from "@/components/ui";
 
 import { LoginForm } from "./login-form";
@@ -64,11 +65,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-md ${forestGradient}`}>
             <Sparkles className="h-5 w-5" />
           </span>
-          <span className="text-sm font-bold text-zinc-900">CareerPilot</span>
+          <span className="text-sm font-bold text-[var(--cp-text-primary)]">CareerPilot</span>
         </Link>
-        <Link className={btnSecondary} href="/">
-          Back to landing
-        </Link>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Link className={btnSecondary} href="/">
+            Back to landing
+          </Link>
+        </div>
       </header>
 
       <Suspense fallback={

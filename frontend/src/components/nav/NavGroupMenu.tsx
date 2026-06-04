@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef } from "react";
 
 import { TransitionLink } from "@/components/navigation/navigation-transition";
 
@@ -72,7 +72,7 @@ export function NavGroupMenu({
         className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all duration-200 ${
           isOpen || groupIsActive
             ? styles.triggerActive
-            : `text-zinc-600 ${styles.triggerHover}`
+            : `text-[var(--cp-text-muted)] ${styles.triggerHover}`
         }`}
       >
         <span>{group.label}</span>
@@ -92,13 +92,13 @@ export function NavGroupMenu({
         <div
           id={menuId}
           role="menu"
-          className={`absolute left-0 top-[calc(100%+0.5rem)] z-50 w-72 overflow-hidden rounded-2xl border bg-white shadow-xl shadow-zinc-900/10 ${styles.panelBorder}`}
+          className={`absolute left-0 top-[calc(100%+0.5rem)] z-50 w-72 overflow-hidden rounded-2xl border bg-[var(--cp-card-bg)] shadow-xl shadow-zinc-900/10 dark:shadow-black/30 ${styles.panelBorder}`}
         >
-          <div className="border-b border-zinc-100 px-4 py-3">
+          <div className="border-b border-[var(--cp-border-soft)] px-4 py-3">
             <p className={`text-xs font-bold uppercase tracking-wider ${styles.panelHeader}`}>
               {group.label}
             </p>
-            <p className="mt-0.5 text-xs leading-5 text-zinc-500">
+            <p className="mt-0.5 text-xs leading-5 text-[var(--cp-text-muted)]">
               {group.description}
             </p>
           </div>
@@ -115,7 +115,7 @@ export function NavGroupMenu({
                     className={`group flex items-start gap-3 rounded-xl border border-transparent px-3 py-2.5 transition-all duration-150 ${
                       isActive
                         ? styles.itemActive
-                        : `text-zinc-800 ${styles.itemHover}`
+                        : `text-[var(--cp-text-secondary)] ${styles.itemHover}`
                     }`}
                   >
                     <span
@@ -132,7 +132,7 @@ export function NavGroupMenu({
                       {description ? (
                         <span
                           className={`mt-0.5 block text-xs leading-5 ${
-                            isActive ? "text-white/85" : "text-zinc-500"
+                            isActive ? "text-white/85" : "text-[var(--cp-text-muted)]"
                           }`}
                         >
                           {description}

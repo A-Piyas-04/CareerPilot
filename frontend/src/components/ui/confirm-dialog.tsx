@@ -49,35 +49,35 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/55 p-4 backdrop-blur-sm"
       role="presentation"
       onClick={isPending ? undefined : onCancel}
     >
       <div
-        className="w-full max-w-md rounded-xl bg-white shadow-xl"
+        className="w-full max-w-md rounded-xl border border-[var(--cp-border)] bg-[var(--cp-card-bg)] text-[var(--cp-text-primary)] shadow-xl"
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby="confirm-dialog-desc"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4">
+        <div className="flex items-start justify-between gap-3 border-b border-[var(--cp-border-soft)] px-5 py-4">
           <div className="flex items-start gap-3">
             {destructive ? (
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-400/12">
+                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-100" />
               </div>
             ) : null}
             <div>
               <h2
-                className="text-lg font-semibold text-zinc-950"
+                className="text-lg font-semibold text-[var(--cp-text-primary)]"
                 id="confirm-dialog-title"
               >
                 {title}
               </h2>
               {description ? (
                 <p
-                  className="mt-1 text-sm text-zinc-600"
+                  className="mt-1 text-sm text-[var(--cp-text-muted)]"
                   id="confirm-dialog-desc"
                 >
                   {description}
@@ -85,7 +85,7 @@ export function ConfirmDialog({
               ) : null}
               {children ? (
                 <div
-                  className="mt-1 text-sm text-zinc-600"
+                  className="mt-1 text-sm text-[var(--cp-text-muted)]"
                   id={description ? undefined : "confirm-dialog-desc"}
                 >
                   {children}
@@ -94,7 +94,7 @@ export function ConfirmDialog({
             </div>
           </div>
           <button
-            className="shrink-0 rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-40"
+            className="shrink-0 rounded-md p-1.5 text-[var(--cp-text-subtle)] hover:bg-[var(--cp-surface-hover)] hover:text-[var(--cp-text-primary)] disabled:opacity-40"
             type="button"
             onClick={onCancel}
             disabled={isPending}

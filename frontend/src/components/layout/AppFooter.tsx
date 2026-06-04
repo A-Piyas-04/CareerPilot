@@ -56,21 +56,26 @@ export function AppFooter({ compact = false }: AppFooterProps) {
   );
 }
 
-/** Main page scroll area; footer sits after content (scroll to reveal). */
+/** Main page scroll area; immersive pages keep content and footer fixed in-frame. */
 export function AppFooterScrollRegion({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const immersive = isImmersiveWorkspaceRoute(pathname);
 
-  return (
-    <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-[var(--cp-workspace-main)]">
-      {immersive ? (
-        <div className="flex min-h-[calc(100dvh-var(--cp-header-height))] flex-col overflow-hidden">
+  if (immersive) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--cp-workspace-main)]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {children}
         </div>
-      ) : (
-        children
-      )}
-      <AppFooter compact={immersive} />
+        <AppFooter compact />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-[var(--cp-workspace-main)]">
+      {children}
+      <AppFooter />
     </div>
   );
 }

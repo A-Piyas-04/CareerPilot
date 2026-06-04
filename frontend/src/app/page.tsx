@@ -28,6 +28,7 @@ import { AuthEntryLink } from "@/components/auth/auth-entry-link";
 import { LandingBrandLogo } from "@/components/landing/landing-brand-logo";
 import { LandingMobileNavLinks } from "@/components/landing/landing-mobile-nav-links";
 import { LandingSectionNav } from "@/components/landing/landing-section-nav";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { createClient } from "@/lib/supabase/server";
 
 const LANDING_SECTION_SCROLL_MARGIN = "scroll-mt-[88px]";
@@ -316,6 +317,8 @@ function LandingNavbar({ isSignedIn }: { isSignedIn: boolean }) {
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
+
             <details className="relative lg:hidden">
               <summary
                 className="flex h-11 w-11 list-none cursor-pointer items-center justify-center rounded-lg border border-zinc-200/90 bg-zinc-50 text-zinc-700 transition hover:border-emerald-300/60 hover:bg-white hover:text-emerald-900 marker:content-none [&::-webkit-details-marker]:hidden"

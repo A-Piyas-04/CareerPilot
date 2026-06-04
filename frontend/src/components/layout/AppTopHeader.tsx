@@ -10,6 +10,7 @@ import {
   MobileNavTrigger,
 } from "@/components/nav/MobileNavDrawer";
 import { TransitionLink } from "@/components/navigation/navigation-transition";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { suppressExtensionHydrationProps } from "@/lib/hydration";
 import { DASHBOARD_NAV_ITEM } from "@/lib/navigation-config";
 import { isNavItemActive } from "@/lib/nav-styles";
@@ -38,17 +39,19 @@ export function AppTopHeader() {
 
         <Link
           href="/"
-          className="flex min-w-0 items-center gap-3 rounded-xl py-1 pr-2 transition hover:bg-zinc-50"
+          className="flex min-w-0 items-center gap-3 rounded-xl py-1 pr-2 transition hover:bg-[var(--cp-surface-hover)]"
         >
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 shadow-md shadow-emerald-900/20">
             <LayoutDashboard className="h-5 w-5 text-white" />
           </div>
-          <span className="truncate text-lg font-bold tracking-tight text-zinc-900">
+          <span className="truncate text-lg font-bold tracking-tight text-[var(--cp-text-primary)]">
             CareerPilot
           </span>
         </Link>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <ThemeToggle />
+
           <TransitionLink
             href={DASHBOARD_NAV_ITEM.href}
             aria-current={dashboardActive ? "page" : undefined}

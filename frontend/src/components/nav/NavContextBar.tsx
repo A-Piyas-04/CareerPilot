@@ -21,7 +21,7 @@ export function NavContextBar({ pathname }: NavContextBarProps) {
 
   return (
     <div
-      className={`hidden border-b bg-white/90 lg:block ${styles.panelBorder}`}
+      className={`hidden border-b bg-[var(--cp-card-bg)]/90 lg:block ${styles.panelBorder}`}
       aria-label={`${group.label} section`}
     >
       <div className="mx-auto flex max-w-[1560px] items-center gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -30,7 +30,7 @@ export function NavContextBar({ pathname }: NavContextBarProps) {
         >
           {group.label}
         </span>
-        <span className="hidden h-4 w-px shrink-0 bg-zinc-200 sm:block" />
+        <span className="hidden h-4 w-px shrink-0 bg-[var(--cp-border)] sm:block" />
 
         <div className="flex min-w-0 items-center gap-1.5">
           {group.items.map(({ href, label, icon: Icon, shortLabel }) => {
@@ -42,7 +42,7 @@ export function NavContextBar({ pathname }: NavContextBarProps) {
                 className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 ${
                   isActive
                     ? `${styles.itemActive} scale-[1.02]`
-                    : `border border-transparent text-zinc-600 ${styles.itemHover}`
+                    : `border border-transparent text-[var(--cp-text-muted)] ${styles.itemHover}`
                 }`}
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" />

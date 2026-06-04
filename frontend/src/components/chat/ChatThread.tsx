@@ -99,10 +99,10 @@ export function ChatThread({
     (!conversation && !onCreateConversation);
 
   return (
-    <section className="flex min-h-0 min-w-0 flex-1 flex-col border-zinc-200/80 bg-white lg:border-l">
+    <section className="flex min-h-0 min-w-0 flex-1 flex-col border-[var(--cp-border)] bg-[var(--cp-card-bg)] lg:border-l">
       <div
         ref={messagesScrollRef}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[var(--cp-card-bg)] px-4 py-5 sm:px-6"
       >
         {!conversation ? (
           <EmptyThread
@@ -192,10 +192,10 @@ function EmptyThread({
       <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-md shadow-sky-900/20">
         <Bot className="h-6 w-6" />
       </span>
-      <h3 className="mt-4 text-xl font-semibold tracking-tight text-zinc-950">
+      <h3 className="mt-4 text-xl font-semibold tracking-tight text-[var(--cp-text-primary)]">
         {title}
       </h3>
-      <p className="mt-2 max-w-md text-sm leading-6 text-zinc-600">
+      <p className="mt-2 max-w-md text-sm leading-6 text-[var(--cp-text-muted)]">
         {description}
       </p>
       <div className="mt-6 grid w-full gap-2.5 sm:grid-cols-2">
@@ -209,7 +209,7 @@ function EmptyThread({
               className={`${surfaceCardElevated} group rounded-xl p-3.5 text-left transition hover:border-sky-200 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50`}
             >
               <Sparkles className="mb-2 h-4 w-4 text-sky-600" />
-              <span className="text-sm font-medium leading-snug text-zinc-800 group-hover:text-zinc-950">
+              <span className="text-sm font-medium leading-snug text-[var(--cp-text-secondary)] group-hover:text-[var(--cp-text-primary)]">
                 {prompt}
               </span>
             </button>
@@ -219,7 +219,7 @@ function EmptyThread({
               key={prompt}
             >
               <Sparkles className="mb-2 h-4 w-4 text-sky-600" />
-              <span className="text-sm font-medium leading-snug text-zinc-700">
+              <span className="text-sm font-medium leading-snug text-[var(--cp-text-secondary)]">
                 {prompt}
               </span>
             </div>
