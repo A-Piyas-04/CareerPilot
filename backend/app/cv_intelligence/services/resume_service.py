@@ -118,7 +118,7 @@ def validate_builder_sections(sections: list[dict[str, Any]]) -> list[dict[str, 
 # ---------------------------------------------------------------------------
 
 def get_active_resume_id(user_id: str) -> Optional[str]:
-    """Return the active processed resume id for the user, if any."""
+    """Return the active processed resume id, falling back to newest processed."""
     response = run_supabase(
         "get active resume",
         lambda: (
@@ -134,9 +134,26 @@ def get_active_resume_id(user_id: str) -> Optional[str]:
         ),
     )
     rows = _rows(response)
-    if not rows:
+    if rows:
+        return str(rows[0]["id"])
+
+    fallback_response = run_supabase(
+        "get latest processed resume",
+        lambda: (
+            get_supabase_client()
+            .table("resumes")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("status", ResumeStatus.PROCESSED.value)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        ),
+    )
+    fallback_rows = _rows(fallback_response)
+    if not fallback_rows:
         return None
-    return str(rows[0]["id"])
+    return str(fallback_rows[0]["id"])
 
 
 def list_resumes(user_id: str) -> list[Resume]:

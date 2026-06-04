@@ -28,7 +28,13 @@ vi.mock("@/lib/assistant/detectIntent", () => ({
 vi.mock("@/lib/gemini", () => ({
   GEMINI_MODEL: "gemini-test",
   GeminiApiError: class GeminiApiError extends Error {
-    status = 500;
+    constructor(
+      message = "Gemini failed",
+      public status = 500,
+    ) {
+      super(message);
+      this.name = "GeminiApiError";
+    }
   },
   createGeminiStream: vi.fn(),
   extractGeminiTextFromSsePayload: vi.fn((payload: string) => {
@@ -38,7 +44,7 @@ vi.mock("@/lib/gemini", () => ({
 }));
 
 const { createClient } = await import("@/lib/supabase/server");
-const { createGeminiStream } = await import("@/lib/gemini");
+const { createGeminiStream, GeminiApiError } = await import("@/lib/gemini");
 const route = await import("./route");
 
 describe("POST /api/assistant/chat", () => {
@@ -113,6 +119,58 @@ describe("POST /api/assistant/chat", () => {
     expect(messageInserts[1].payload).toMatchObject({
       content: "Hello there",
       role: "assistant",
+    });
+    expect(
+      supabase.calls.some(
+        (call) => call.table === "assistant_conversations" && call.mode === "update",
+      ),
+    ).toBe(true);
+  });
+
+  it("returns and persists a fallback assistant message when Gemini models are unavailable", async () => {
+    const conversationId = "00000000-0000-4000-8000-000000000010";
+    supabase.setTable("assistant_conversations", [
+      {
+        data: {
+          id: conversationId,
+          title: "New conversation",
+          user_id: "00000000-0000-0000-0000-000000000001",
+        },
+      },
+    ]);
+    supabase.setTable("profiles", [{ data: { full_name: "John Doe" } }]);
+    vi.mocked(createGeminiStream).mockRejectedValue(
+      new GeminiApiError(
+        "models/gemini-1.5-flash is not found for API version v1beta",
+        404,
+      ),
+    );
+
+    const response = await route.POST(
+      new Request("http://localhost/api/assistant/chat", {
+        body: JSON.stringify({
+          conversationId,
+          message: "Help me apply better",
+        }),
+        method: "POST",
+      }) as never,
+    );
+
+    await expect(response.text()).resolves.toContain(
+      "configured Gemini model is not available",
+    );
+    expect(response.status).toBe(200);
+
+    const messageInserts = supabase.calls.filter(
+      (call) => call.table === "assistant_messages" && call.mode === "insert",
+    );
+    expect(messageInserts).toHaveLength(2);
+    expect(messageInserts[1].payload).toMatchObject({
+      role: "assistant",
+      metadata: expect.objectContaining({
+        fallback: true,
+        error_status: 404,
+      }),
     });
     expect(
       supabase.calls.some(

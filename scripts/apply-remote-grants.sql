@@ -6,6 +6,8 @@
 
 grant usage on schema public to authenticated, service_role;
 
+grant select, insert, update, delete on public.profiles to authenticated, service_role;
+grant select, insert, update, delete on public.evaluation_tests to authenticated, service_role;
 grant select, insert, update, delete on public.cover_letters to authenticated, service_role;
 grant select, insert, update, delete on public.skill_gap_analysis to authenticated, service_role;
 grant select, insert, update, delete on public.roadmaps to authenticated, service_role;
@@ -19,6 +21,7 @@ grant select, insert, update, delete on public.resume_chunks to authenticated, s
 grant select, insert, update, delete on public.user_skills to authenticated, service_role;
 grant select, insert, update, delete on public.assistant_conversations to authenticated, service_role;
 grant select, insert, delete on public.assistant_messages to authenticated, service_role;
+grant select, insert, delete on public.application_history to authenticated, service_role;
 grant select, insert, update, delete on public.job_searches to authenticated, service_role;
 grant select, insert, update, delete on public.jobs to authenticated, service_role;
 grant select, insert, update, delete on public.job_matches to authenticated, service_role;

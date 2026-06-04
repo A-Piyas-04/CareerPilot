@@ -39,7 +39,7 @@ describe("gemini model cascade", () => {
   it("parses and deduplicates comma-separated fallback model lists", () => {
     expect(
       parseGeminiModelList(
-        " gemini-2.0-flash,gemini-1.5-flash,,gemini-2.0-flash ",
+        " gemini-2.0-flash,models/gemini-1.5-flash,,gemini-2.0-flash ",
       ),
     ).toEqual(["gemini-2.0-flash", "gemini-1.5-flash"]);
   });
@@ -54,6 +54,9 @@ describe("gemini model cascade", () => {
       "gemini-primary",
       "gemini-custom-a",
       "gemini-custom-b",
+      "gemini-2.5-pro",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
     ]);
   });
 
@@ -67,6 +70,8 @@ describe("gemini model cascade", () => {
       "gemini-intent-primary",
       "gemini-intent-a",
       "gemini-intent-b",
+      "gemini-2.5-flash-lite",
+      "gemini-2.0-flash-lite",
     ]);
   });
 
@@ -156,6 +161,65 @@ describe("gemini model cascade", () => {
     expect(result.model).toBe("gemini-2.5-pro");
     expect(fetchMock.mock.calls[1]?.[0]).toContain("gemini-2.5-pro");
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("discovers available models when configured text models are unavailable", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            error: {
+              message:
+                "models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent.",
+            },
+          }),
+          { status: 404 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            models: [
+              {
+                name: "models/embedding-001",
+                supportedGenerationMethods: ["embedContent"],
+              },
+              {
+                name: "models/gemini-2.0-flash",
+                supportedGenerationMethods: ["generateContent"],
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            candidates: [{ content: { parts: [{ text: '{"intent":"general"}' }] } }],
+          }),
+          { status: 200 },
+        ),
+      );
+
+    const text = await createGeminiText({
+      modelCascade: ["models/gemini-1.5-flash"],
+      model: "models/gemini-1.5-flash",
+      prompt: "hello",
+    });
+
+    expect(text).toContain("general");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[0]?.[0]).toContain(
+      "/models/gemini-1.5-flash:generateContent",
+    );
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      "https://generativelanguage.googleapis.com/v1beta/models?key=test-key",
+    );
+    expect(fetchMock.mock.calls[2]?.[0]).toContain(
+      "/models/gemini-2.0-flash:generateContent",
+    );
   });
 
   it("throws the last error when every model in the cascade fails", async () => {

@@ -10,22 +10,25 @@ export const GEMINI_INTENT_MODEL =
   process.env.GEMINI_MODEL?.trim() ||
   "gemini-2.5-flash-lite";
 
-/** Ordered fallback models for streamed chat replies (matches backend llm_service). */
+/** Ordered fallback models for streamed chat replies. */
 export const DEFAULT_GENERATION_CASCADE = [
   "gemini-2.5-pro",
   "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-1.5-flash",
 ] as const;
 
 /** Lighter models for intent classification. */
 export const DEFAULT_INTENT_CASCADE = [
   "gemini-2.5-flash-lite",
   "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
 ] as const;
 
 const MODEL_LIST_SEPARATOR = ",";
+const GEMINI_MODEL_NAME_PREFIX = "models/";
+const GEMINI_MODEL_LIST_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models";
+
+const discoveredGenerationModelsCache = new Map<string, Promise<string[]>>();
 
 export class GeminiApiError extends Error {
   status: number;
@@ -81,9 +84,7 @@ export function generationModelCascade(preferred?: string) {
 
   return resolveModelCascade(
     preferred ?? process.env.GEMINI_MODEL?.trim() ?? GEMINI_MODEL,
-    configuredFallbacks.length > 0
-      ? configuredFallbacks
-      : DEFAULT_GENERATION_CASCADE,
+    [...configuredFallbacks, ...DEFAULT_GENERATION_CASCADE],
   );
 }
 
@@ -94,12 +95,16 @@ export function intentModelCascade(preferred?: string) {
 
   return resolveModelCascade(
     preferred ?? process.env.GEMINI_INTENT_MODEL?.trim() ?? GEMINI_INTENT_MODEL,
-    configuredFallbacks.length > 0 ? configuredFallbacks : DEFAULT_INTENT_CASCADE,
+    [...configuredFallbacks, ...DEFAULT_INTENT_CASCADE],
   );
 }
 
 export function isRetryableGeminiError(status: number, message: string) {
   if (status === 429) {
+    return true;
+  }
+
+  if (isModelAvailabilityGeminiError(status, message)) {
     return true;
   }
 
@@ -111,17 +116,9 @@ export function isRetryableGeminiError(status: number, message: string) {
     normalized.includes("limit") ||
     normalized.includes("exhausted") ||
     normalized.includes("billing");
-  const isModelAvailability =
-    normalized.includes("model") &&
-    (normalized.includes("not found") ||
-      normalized.includes("not supported") ||
-      normalized.includes("unsupported") ||
-      normalized.includes("unavailable"));
 
   return (
     (status === 403 && isQuotaOrBilling) ||
-    (status === 404 && isModelAvailability) ||
-    (status === 400 && isModelAvailability) ||
     (status === 503 &&
       (normalized.includes("unavailable") ||
         normalized.includes("overloaded") ||
@@ -232,6 +229,24 @@ export function extractGeminiTextFromSsePayload(payload: string) {
   );
 }
 
+export function isModelAvailabilityGeminiError(
+  status: number,
+  message: string,
+) {
+  const normalized = message.toLowerCase();
+  const isModelAvailability =
+    normalized.includes("model") &&
+    (normalized.includes("not found") ||
+      normalized.includes("not supported") ||
+      normalized.includes("unsupported") ||
+      normalized.includes("unavailable"));
+
+  return (
+    (status === 404 && isModelAvailability) ||
+    (status === 400 && isModelAvailability)
+  );
+}
+
 async function requestGeminiStreamWithCascade({
   apiKey,
   body,
@@ -242,10 +257,12 @@ async function requestGeminiStreamWithCascade({
   models: string[];
 }): Promise<GeminiStreamResult> {
   let lastError: GeminiApiError | null = null;
+  let modelQueue = dedupeModels(models);
+  let triedDiscoveredModels = false;
 
-  for (let index = 0; index < models.length; index += 1) {
-    const model = models[index];
-    const isLast = index === models.length - 1;
+  for (let index = 0; index < modelQueue.length; index += 1) {
+    const model = modelQueue[index];
+    const isLast = index === modelQueue.length - 1;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
     const response = await fetch(url, {
       method: "POST",
@@ -262,6 +279,23 @@ async function requestGeminiStreamWithCascade({
 
     const message = await readGeminiError(response);
     lastError = new GeminiApiError(message, response.status);
+
+    if (
+      isLast &&
+      !triedDiscoveredModels &&
+      isModelAvailabilityGeminiError(response.status, message)
+    ) {
+      triedDiscoveredModels = true;
+      const expandedModels = dedupeModels([
+        ...modelQueue,
+        ...(await listAvailableGenerateContentModels(apiKey)),
+      ]);
+
+      if (expandedModels.length > modelQueue.length) {
+        modelQueue = expandedModels;
+        continue;
+      }
+    }
 
     if (!isLast && isRetryableGeminiError(response.status, message)) {
       continue;
@@ -283,10 +317,12 @@ async function requestGeminiTextWithCascade({
   models: string[];
 }) {
   let lastError: GeminiApiError | null = null;
+  let modelQueue = dedupeModels(models);
+  let triedDiscoveredModels = false;
 
-  for (let index = 0; index < models.length; index += 1) {
-    const model = models[index];
-    const isLast = index === models.length - 1;
+  for (let index = 0; index < modelQueue.length; index += 1) {
+    const model = modelQueue[index];
+    const isLast = index === modelQueue.length - 1;
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
@@ -319,6 +355,23 @@ async function requestGeminiTextWithCascade({
 
     const message = await readGeminiError(response);
     lastError = new GeminiApiError(message, response.status);
+
+    if (
+      isLast &&
+      !triedDiscoveredModels &&
+      isModelAvailabilityGeminiError(response.status, message)
+    ) {
+      triedDiscoveredModels = true;
+      const expandedModels = dedupeModels([
+        ...modelQueue,
+        ...(await listAvailableGenerateContentModels(apiKey)),
+      ]);
+
+      if (expandedModels.length > modelQueue.length) {
+        modelQueue = expandedModels;
+        continue;
+      }
+    }
 
     if (!isLast && isRetryableGeminiError(response.status, message)) {
       continue;
@@ -365,7 +418,7 @@ function dedupeModels(models: readonly string[]) {
   const deduped: string[] = [];
 
   for (const model of models) {
-    const cleanModel = model.trim();
+    const cleanModel = normalizeGeminiModelName(model);
 
     if (!cleanModel || seen.has(cleanModel)) {
       continue;
@@ -376,6 +429,52 @@ function dedupeModels(models: readonly string[]) {
   }
 
   return deduped;
+}
+
+function normalizeGeminiModelName(model: string) {
+  const cleanModel = model.trim();
+
+  return cleanModel.startsWith(GEMINI_MODEL_NAME_PREFIX)
+    ? cleanModel.slice(GEMINI_MODEL_NAME_PREFIX.length)
+    : cleanModel;
+}
+
+function listAvailableGenerateContentModels(apiKey: string) {
+  const cached = discoveredGenerationModelsCache.get(apiKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const request = fetch(`${GEMINI_MODEL_LIST_URL}?key=${encodeURIComponent(apiKey)}`, {
+    headers: {
+      "x-goog-api-key": apiKey,
+    },
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        return [];
+      }
+
+      const data = (await response.json()) as {
+        models?: Array<{
+          name?: string;
+          supportedGenerationMethods?: string[];
+        }>;
+      };
+
+      return dedupeModels(
+        data.models
+          ?.filter((model) =>
+            model.supportedGenerationMethods?.includes("generateContent"),
+          )
+          .map((model) => model.name ?? "") ?? [],
+      );
+    })
+    .catch(() => []);
+
+  discoveredGenerationModelsCache.set(apiKey, request);
+  return request;
 }
 
 async function readGeminiError(response: Response) {

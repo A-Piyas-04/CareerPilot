@@ -1,7 +1,11 @@
 """Tests for in-app CV builder — section validation and raw text composition."""
+from types import SimpleNamespace
+from unittest.mock import patch
+
 import pytest
 from fastapi import HTTPException
 
+from app.cv_intelligence.services import resume_service
 from app.cv_intelligence.services.resume_service import (
     compose_raw_text,
     validate_builder_sections,
@@ -76,3 +80,15 @@ class TestValidateBuilderSections:
         with pytest.raises(HTTPException) as exc_info:
             validate_builder_sections(sections)
         assert exc_info.value.status_code == 422
+
+
+class TestActiveResumeLookup:
+    def test_falls_back_to_latest_processed_resume_when_none_is_active(self):
+        with patch(
+            "app.cv_intelligence.services.resume_service.run_supabase",
+            side_effect=[
+                SimpleNamespace(data=[]),
+                SimpleNamespace(data=[{"id": "resume-processed"}]),
+            ],
+        ):
+            assert resume_service.get_active_resume_id("user-1") == "resume-processed"

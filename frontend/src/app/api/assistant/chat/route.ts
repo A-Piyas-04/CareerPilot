@@ -129,11 +129,85 @@ export async function POST(request: NextRequest) {
       return jsonError(userMessageError.message, 500);
     }
 
-    const { body: geminiStream, model: geminiModel } = await createGeminiStream({
-      currentMessage: message,
-      memory,
-      systemPrompt,
-    });
+    let geminiStream: ReadableStream<Uint8Array>;
+    let geminiModel: string;
+
+    try {
+      const result = await createGeminiStream({
+        currentMessage: message,
+        memory,
+        systemPrompt,
+      });
+
+      geminiStream = result.body;
+      geminiModel = result.model;
+    } catch (error) {
+      if (error instanceof GeminiApiError) {
+        const fallbackContent = assistantFallbackMessage(error);
+        const { error: assistantMessageError } = await supabase
+          .from("assistant_messages")
+          .insert({
+            conversation_id: conversationId,
+            user_id: user.id,
+            role: "assistant",
+            content: fallbackContent,
+            used_resume_chunks: validUuidArray(resumeContext.usedResumeChunks),
+            used_job_id: jobContext?.jobId ?? null,
+            metadata: {
+              model: null,
+              streamed: false,
+              fallback: true,
+              error_status: error.status,
+              error_message: error.message,
+              intent,
+              intent_confidence: intentDetection.confidence,
+              intent_detection_method: intentDetection.method,
+              intent_reason: intentDetection.reason,
+              matched_pattern: intentDetection.matchedPattern,
+              rag_used: true,
+              has_resume: resumeContext.hasResume,
+              resume_id: resumeContext.resumeId,
+              chunk_count: resumeContext.usedResumeChunks.length,
+              evidence_chunks: resumeContext.evidenceChunks,
+              user_skills: resumeContext.userSkills,
+              empty_reason: resumeContext.emptyReason,
+              source_user_message: message,
+              job_id: jobContext?.jobId ?? null,
+              job_title: jobContext?.title ?? null,
+              job_company: jobContext?.company ?? null,
+              job_fit_score: jobContext?.fitScore ?? null,
+              can_save_roadmap: false,
+              can_save_cover_letter: false,
+            },
+          });
+
+        if (assistantMessageError) {
+          return jsonError(assistantMessageError.message, 500);
+        }
+
+        const { error: updateConversationError } = await supabase
+          .from("assistant_conversations")
+          .update({
+            title: nextTitle,
+            updated_at: now,
+          })
+          .eq("id", conversationId)
+          .eq("user_id", user.id);
+
+        if (updateConversationError) {
+          return jsonError(updateConversationError.message, 500);
+        }
+
+        return new Response(fallbackContent, {
+          headers: {
+            "Cache-Control": "no-cache, no-transform",
+            "Content-Type": "text/plain; charset=utf-8",
+          },
+        });
+      }
+
+      throw error;
+    }
 
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
@@ -311,4 +385,20 @@ function isUuid(value: string) {
 
 function jsonError(message: string, status: number) {
   return Response.json({ detail: message }, { status });
+}
+
+function assistantFallbackMessage(error: GeminiApiError) {
+  if (error.status === 429 || error.status === 403) {
+    return "I saved your message, but Gemini is currently rate-limited or quota-limited. Please try again in a little while.";
+  }
+
+  if (
+    error.status === 400 ||
+    error.status === 404 ||
+    error.message.toLowerCase().includes("model")
+  ) {
+    return "I saved your message, but the configured Gemini model is not available for chat right now. Please update the Gemini model settings or try again after the model list refreshes.";
+  }
+
+  return "I saved your message, but AI generation is temporarily unavailable. Please try again later.";
 }
