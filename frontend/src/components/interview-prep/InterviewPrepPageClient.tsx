@@ -362,27 +362,6 @@ export function InterviewPrepPageClient() {
     }
   }
 
-  function sendAttemptToChat(attempt: InterviewPrepAttempt) {
-    const prompt = `I want to discuss this interview question and my answer.
-
-Question:
-${attempt.question.prompt}
-
-My answer:
-${attempt.answer || "I skipped this question."}
-
-Evaluation:
-Score: ${attempt.evaluation.score}/10
-Expected: ${attempt.evaluation.expectedAnswer}
-Assessment: ${attempt.evaluation.answerAssessment}
-Missing: ${attempt.evaluation.missing.join(", ") || "None listed"}
-
-Please explain what I misunderstood and help me improve my answer.`;
-
-    window.localStorage.setItem("careerpilot_chat_draft", prompt);
-    window.location.href = "/chat";
-  }
-
   return (
     <PageShell width="wide">
       <PageHeader
@@ -397,7 +376,6 @@ Please explain what I misunderstood and help me improve my answer.`;
         {selectedHistory ? (
           <HistoryReport
             onBack={() => setSelectedHistory(null)}
-            onDiscuss={sendAttemptToChat}
             session={selectedHistory}
           />
         ) : stage === "setup" ? (
@@ -793,11 +771,9 @@ function HistoryPanel({
 
 function HistoryReport({
   onBack,
-  onDiscuss,
   session,
 }: {
   onBack: () => void;
-  onDiscuss: (attempt: InterviewPrepAttempt) => void;
   session: InterviewPrepSession;
 }) {
   return (
@@ -827,7 +803,6 @@ function HistoryReport({
         attempts={session.attempts}
         averageScore={Math.round(session.averageScore)}
         historyMode
-        onDiscuss={onDiscuss}
         onReset={onBack}
       />
     </div>
@@ -838,13 +813,11 @@ function FinalReport({
   attempts,
   averageScore,
   historyMode = false,
-  onDiscuss,
   onReset,
 }: {
   attempts: InterviewPrepAttempt[];
   averageScore: number;
   historyMode?: boolean;
-  onDiscuss?: (attempt: InterviewPrepAttempt) => void;
   onReset: () => void;
 }) {
   return (
@@ -868,7 +841,7 @@ function FinalReport({
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+              <p className="text-2xl font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
                 Question {index + 1} - {attempt.question.type}
               </p>
               <h3 className="mt-1 text-base font-semibold text-[var(--cp-text-primary)]">
@@ -881,44 +854,52 @@ function FinalReport({
           </div>
 
           <div className="mt-3 grid gap-3">
-            <ReportBlock title="Question asked" text={attempt.question.prompt} />
+            <ReportBlock
+              title="Question asked"
+              text={attempt.question.prompt}
+              variant="question"
+            />
             <ReportBlock
               title="What was expected"
               text={attempt.evaluation.expectedAnswer}
+              variant="expected"
             />
             <ReportBlock
               title="What you answered"
               text={attempt.skipped ? "Skipped. No answer submitted." : attempt.answer}
+              variant="answer"
             />
             <ReportBlock
               title="Evaluation"
               text={attempt.evaluation.answerAssessment}
+              variant="evaluation"
             />
           </div>
 
           <div className="mt-3 grid gap-3 lg:grid-cols-3">
-            <FeedbackList title="Strengths" items={attempt.evaluation.strengths} />
-            <FeedbackList title="Missing" items={attempt.evaluation.missing} />
+            <FeedbackList
+              title="Strengths"
+              items={attempt.evaluation.strengths}
+              variant="strengths"
+            />
+            <FeedbackList
+              title="Missing"
+              items={attempt.evaluation.missing}
+              variant="missing"
+            />
             <FeedbackList
               title="CV evidence"
               items={attempt.evaluation.cvEvidence}
+              variant="cvEvidence"
             />
           </div>
 
-          <ReportBlock title="Detailed feedback" text={attempt.evaluation.feedback} />
           <ReportBlock
-            title="Improved answer or approach"
-            text={attempt.evaluation.idealAnswer}
+            title="Detailed feedback"
+            text={attempt.evaluation.feedback}
+            variant="feedback"
+            expanded
           />
-          {onDiscuss ? (
-            <button
-              className="mt-3 h-9 rounded-xl border border-sky-200 bg-sky-50 px-3 text-xs font-semibold text-sky-800 hover:bg-sky-100"
-              type="button"
-              onClick={() => onDiscuss(attempt)}
-            >
-              Discuss this question with chatbot
-            </button>
-          ) : null}
         </article>
       ))}
 
@@ -936,23 +917,131 @@ function FinalReport({
   );
 }
 
-function ReportBlock({ text, title }: { text: string; title: string }) {
+type ReportVariant =
+  | "question"
+  | "expected"
+  | "answer"
+  | "evaluation"
+  | "feedback";
+
+type FeedbackVariant = "strengths" | "missing" | "cvEvidence";
+
+type SectionTone = {
+  accent: string;
+  bg: string;
+  border: string;
+  title: string;
+};
+
+const REPORT_TONES: Record<ReportVariant, SectionTone> = {
+  question: {
+    border: "border-sky-200 dark:border-sky-500/35",
+    bg: "bg-sky-50 dark:bg-sky-950/45",
+    title: "text-sky-900 dark:text-sky-300",
+    accent: "bg-sky-500",
+  },
+  expected: {
+    border: "border-violet-200 dark:border-violet-500/35",
+    bg: "bg-violet-50 dark:bg-violet-950/45",
+    title: "text-violet-900 dark:text-violet-300",
+    accent: "bg-violet-500",
+  },
+  answer: {
+    border: "border-zinc-300 dark:border-zinc-500/35",
+    bg: "bg-zinc-50 dark:bg-zinc-900/55",
+    title: "text-zinc-900 dark:text-zinc-200",
+    accent: "bg-zinc-400 dark:bg-zinc-500",
+  },
+  evaluation: {
+    border: "border-amber-200 dark:border-amber-500/35",
+    bg: "bg-amber-50 dark:bg-amber-950/45",
+    title: "text-amber-950 dark:text-amber-300",
+    accent: "bg-amber-500",
+  },
+  feedback: {
+    border: "border-indigo-200 dark:border-indigo-500/35",
+    bg: "bg-indigo-50 dark:bg-indigo-950/45",
+    title: "text-indigo-900 dark:text-indigo-300",
+    accent: "bg-indigo-500",
+  },
+};
+
+const FEEDBACK_TONES: Record<FeedbackVariant, SectionTone> = {
+  strengths: {
+    border: "border-emerald-200 dark:border-emerald-500/35",
+    bg: "bg-emerald-50 dark:bg-emerald-950/45",
+    title: "text-emerald-900 dark:text-emerald-300",
+    accent: "bg-emerald-500",
+  },
+  missing: {
+    border: "border-rose-200 dark:border-rose-500/35",
+    bg: "bg-rose-50 dark:bg-rose-950/45",
+    title: "text-rose-900 dark:text-rose-300",
+    accent: "bg-rose-500",
+  },
+  cvEvidence: {
+    border: "border-cyan-200 dark:border-cyan-500/35",
+    bg: "bg-cyan-50 dark:bg-cyan-950/45",
+    title: "text-cyan-900 dark:text-cyan-300",
+    accent: "bg-cyan-500",
+  },
+};
+
+function ReportBlock({
+  text,
+  title,
+  variant,
+  expanded = false,
+}: {
+  text: string;
+  title: string;
+  variant: ReportVariant;
+  expanded?: boolean;
+}) {
+  const tone = REPORT_TONES[variant];
+
   return (
-    <div className="rounded-xl border border-[var(--cp-border)] bg-white px-4 py-3">
-      <p className="text-sm font-semibold text-[var(--cp-text-primary)]">
-        {title}
-      </p>
-      <p className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-[var(--cp-text-secondary)]">
+    <div
+      className={`relative rounded-xl border px-4 py-3 pl-5 ${tone.border} ${tone.bg}`}
+    >
+      <span
+        aria-hidden
+        className={`absolute bottom-3 left-0 top-3 w-1 rounded-full ${tone.accent}`}
+      />
+      <p className={`text-sm font-semibold ${tone.title}`}>{title}</p>
+      <div
+        className={`mt-2 whitespace-pre-wrap text-sm leading-6 text-[var(--cp-text-secondary)] ${
+          expanded
+            ? "min-h-[24rem] max-h-[min(52.5vh,36rem)] overflow-y-auto overscroll-y-contain pr-2"
+            : "max-h-56 overflow-y-auto"
+        }`}
+      >
         {text || "None provided."}
-      </p>
+      </div>
     </div>
   );
 }
 
-function FeedbackList({ items, title }: { items: string[]; title: string }) {
+function FeedbackList({
+  items,
+  title,
+  variant,
+}: {
+  items: string[];
+  title: string;
+  variant: FeedbackVariant;
+}) {
+  const tone = FEEDBACK_TONES[variant];
+
   return (
-    <div className="rounded-xl border border-[var(--cp-border)] bg-[var(--cp-surface)] px-4 py-3">
-      <p className="text-sm font-semibold text-[var(--cp-text-primary)]">{title}</p>
+    <div
+      className={`relative overflow-hidden rounded-xl border px-4 py-3 pl-5 ${tone.border} ${tone.bg}`}
+    >
+      <span
+        aria-hidden
+        className={`absolute bottom-3 left-0 top-3 w-1 rounded-full ${tone.accent}`}
+      />
+      <p className={`text-sm font-semibold ${tone.title}`}>{title}</p>
       {items.length ? (
         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--cp-text-secondary)]">
           {items.map((item) => (
