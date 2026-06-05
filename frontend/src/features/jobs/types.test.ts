@@ -6,6 +6,7 @@ import {
   getFitTier,
   type MatchSummary,
 } from "./types";
+import { normalizeJobSearchInput } from "./search-query";
 
 function makeMatch(overrides: Partial<MatchSummary> = {}): MatchSummary {
   return {
@@ -85,5 +86,30 @@ describe("getFitTier", () => {
 
   it("labels weak matches", () => {
     expect(getFitTier(30).label).toBe("Weak match");
+  });
+});
+
+describe("normalizeJobSearchInput", () => {
+  it("extracts role and location from natural language", () => {
+    expect(
+      normalizeJobSearchInput({
+        query: "Find me ML internships in Dhaka open this month",
+      }),
+    ).toEqual({
+      query: "machine learning internships",
+      location: "Dhaka",
+    });
+  });
+
+  it("keeps explicit location field over parsed location", () => {
+    expect(
+      normalizeJobSearchInput({
+        query: "backend dev jobs in Dhaka",
+        location: "Remote",
+      }),
+    ).toEqual({
+      query: "backend developer in Dhaka",
+      location: "Remote",
+    });
   });
 });

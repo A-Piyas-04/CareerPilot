@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { CoverLetterDetailClient } from "@/components/cover-letters/CoverLetterDetailClient";
+import { getServerUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
 type CoverLetterDetailPageProps = {
@@ -11,9 +12,7 @@ export default async function CoverLetterDetailPage({
   params,
 }: CoverLetterDetailPageProps) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerUser(supabase, "cover letter detail page");
 
   if (!user) {
     redirect("/login?next=/cover-letters");

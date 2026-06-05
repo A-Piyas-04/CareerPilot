@@ -93,8 +93,19 @@ class JSearchAdapter:
         num_pages = max(1, min(3, math.ceil(limit / 10)))
         params = {"query": full_query, "num_pages": str(num_pages)}
 
-        with httpx.Client(timeout=_TIMEOUT_SECONDS) as client:
-            response = client.get(url, headers=headers, params=params)
+        try:
+            with httpx.Client(timeout=_TIMEOUT_SECONDS) as client:
+                response = client.get(url, headers=headers, params=params)
+        except httpx.TimeoutException as exc:
+            raise JSearchError(
+                "JSearch request timed out. Check your network connection and RapidAPI availability, then try again.",
+                status_code=504,
+            ) from exc
+        except httpx.RequestError as exc:
+            raise JSearchError(
+                "Could not reach JSearch through RapidAPI. Check your internet connection, DNS, proxy/VPN, and JSEARCH_API_KEY settings.",
+                status_code=502,
+            ) from exc
 
         if response.status_code >= 400:
             _raise_for_upstream_error(response)

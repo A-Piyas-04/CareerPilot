@@ -5,6 +5,7 @@ from datetime import date
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from postgrest.exceptions import APIError
 from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user
@@ -128,6 +129,21 @@ def _match_summary_from_dict(data: dict[str, Any]) -> MatchSummary:
     )
 
 
+def _supabase_error_detail(exc: APIError) -> str:
+    payload = getattr(exc, "args", [None])[0]
+    if isinstance(payload, dict):
+        message = payload.get("message") or "Supabase request failed."
+        code = payload.get("code")
+        hint = payload.get("hint")
+        parts = [str(message)]
+        if code:
+            parts.append(f"Code: {code}")
+        if hint:
+            parts.append(f"Hint: {hint}")
+        return " ".join(parts)
+    return str(exc) or "Supabase request failed."
+
+
 @router.post("/search", response_model=JobSearchResponse)
 def search_jobs(
     payload: JobSearchRequest,
@@ -160,6 +176,11 @@ def search_jobs(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=str(exc),
         ) from exc
+    except APIError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_supabase_error_detail(exc),
+        ) from exc
     return JobSearchResponse(
         search_id=result["search_id"],
         matches=[_match_summary_from_dict(m) for m in result["matches"]],
@@ -173,11 +194,17 @@ def list_searches(
 ) -> list[JobSearchSummary]:
     """Return the current user's previous job searches, newest first."""
     supabase = get_supabase_client()
-    rows = job_service.list_searches_for_user(
-        user_id=user_id,
-        supabase=supabase,
-        limit=min(max(limit, 1), 100),
-    )
+    try:
+        rows = job_service.list_searches_for_user(
+            user_id=user_id,
+            supabase=supabase,
+            limit=min(max(limit, 1), 100),
+        )
+    except APIError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_supabase_error_detail(exc),
+        ) from exc
     return [JobSearchSummary(**row) for row in rows]
 
 
@@ -225,6 +252,11 @@ def add_manual_job(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
+    except APIError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_supabase_error_detail(exc),
+        ) from exc
     if not result["matches"]:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -245,16 +277,22 @@ def list_matches(
 ) -> list[MatchSummary]:
     """Return stored matches for the user, optionally filtered."""
     supabase = get_supabase_client()
-    summaries = job_service.list_matches_for_user(
-        user_id=user_id,
-        supabase=supabase,
-        resume_id=resume_id,
-        search_id=search_id,
-        job_id=job_id,
-        min_score=min_score,
-        saved_only=saved_only,
-        limit=limit,
-    )
+    try:
+        summaries = job_service.list_matches_for_user(
+            user_id=user_id,
+            supabase=supabase,
+            resume_id=resume_id,
+            search_id=search_id,
+            job_id=job_id,
+            min_score=min_score,
+            saved_only=saved_only,
+            limit=limit,
+        )
+    except APIError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_supabase_error_detail(exc),
+        ) from exc
     return [_match_summary_from_dict(item) for item in summaries]
 
 
@@ -264,11 +302,17 @@ def get_match(
     user_id: str = Depends(get_current_user),
 ) -> MatchSummary:
     supabase = get_supabase_client()
-    detail = job_service.get_match_detail(
-        user_id=user_id,
-        match_id=match_id,
-        supabase=supabase,
-    )
+    try:
+        detail = job_service.get_match_detail(
+            user_id=user_id,
+            match_id=match_id,
+            supabase=supabase,
+        )
+    except APIError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_supabase_error_detail(exc),
+        ) from exc
     return _match_summary_from_dict(detail)
 
 

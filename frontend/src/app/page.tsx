@@ -29,6 +29,7 @@ import { LandingBrandLogo } from "@/components/landing/landing-brand-logo";
 import { LandingMobileNavLinks } from "@/components/landing/landing-mobile-nav-links";
 import { LandingSectionNav } from "@/components/landing/landing-section-nav";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { getServerUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
 const LANDING_SECTION_SCROLL_MARGIN = "scroll-mt-[88px]";
@@ -875,9 +876,7 @@ function LandingFooter() {
 
 export default async function Home() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerUser(supabase, "home page");
 
   return (
     <main className="min-h-screen bg-zinc-200/50 text-zinc-950">

@@ -15,6 +15,7 @@ import {
 } from "@/lib/ui-theme";
 
 import { useSearchJobs } from "./hooks";
+import { normalizeJobSearchInput } from "./search-query";
 
 const EXAMPLE_QUERIES = [
   "Python backend engineer",
@@ -51,37 +52,27 @@ export function JobSearchForm({
   const [query, setQuery] = useState(prefill?.query ?? "");
   const [location, setLocation] = useState(prefill?.location ?? "");
   const [limit, setLimit] = useState<number>(20);
-  const [searchStep, setSearchStep] = useState<"idle" | "fetching" | "scoring">(
-    "idle",
-  );
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const search = useSearchJobs();
 
-  const readyResumes = resumes.filter((resume) => resume.status === "processed");
+  const readyResumes = resumes.filter(
+    (resume) => resume.status === "processed",
+  );
+  const searchStep = elapsedSeconds >= 3 ? "scoring" : "fetching";
 
   useEffect(() => {
     if (!search.isPending) {
-      setSearchStep("idle");
       return;
     }
 
-    setSearchStep("fetching");
-    const stepTimer = window.setTimeout(() => setSearchStep("scoring"), 2500);
     const elapsedTimer = window.setInterval(
       () => setElapsedSeconds((value) => value + 1),
       1000,
     );
 
     return () => {
-      window.clearTimeout(stepTimer);
       window.clearInterval(elapsedTimer);
     };
-  }, [search.isPending]);
-
-  useEffect(() => {
-    if (!search.isPending) {
-      setElapsedSeconds(0);
-    }
   }, [search.isPending]);
 
   useEffect(() => {
@@ -101,11 +92,17 @@ export function JobSearchForm({
       return;
     }
 
+    const normalized = normalizeJobSearchInput({
+      query: query.trim(),
+      location,
+    });
+
     onSearchStart();
+    setElapsedSeconds(0);
     search.mutate(
       {
-        query: query.trim(),
-        location: location.trim() || undefined,
+        query: normalized.query,
+        location: normalized.location,
         source: "jsearch",
         resume_id: selectedResumeId,
         limit,
@@ -116,6 +113,7 @@ export function JobSearchForm({
           toast.success(`Found ${result.matches.length} scored matches.`);
         },
         onError: (error) => toast.error(error.message),
+        onSettled: () => setElapsedSeconds(0),
       },
     );
   }
@@ -124,7 +122,11 @@ export function JobSearchForm({
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         <TabButton active label="Search jobs" />
-        <TabButton active={false} label="Paste a posting" onClick={onOpenManual} />
+        <TabButton
+          active={false}
+          label="Paste a posting"
+          onClick={onOpenManual}
+        />
       </div>
 
       <form
@@ -136,10 +138,6 @@ export function JobSearchForm({
           <label className="text-sm font-medium text-zinc-900">
             What kind of role are you looking for?
           </label>
-          <p className={`${formHintPanel} mt-2 border-sky-200/60 bg-sky-50/60 text-xs text-sky-900`}>
-            Describe the role in natural language. You can include location in the
-            query or use the optional field below.
-          </p>
           <input
             type="text"
             placeholder='e.g. "ML internships in Dhaka open this month"'
@@ -147,18 +145,6 @@ export function JobSearchForm({
             onChange={(event) => setQuery(event.target.value)}
             className={`${inputField} mt-2 h-11`}
           />
-          <div className="mt-2 flex flex-wrap gap-2">
-            {EXAMPLE_QUERIES.map((example) => (
-              <button
-                key={example}
-                type="button"
-                onClick={() => setQuery(example)}
-                className={chipSky}
-              >
-                {example}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_160px_160px]">
@@ -224,8 +210,8 @@ export function JobSearchForm({
 
       {readyResumes.length === 0 ? (
         <p className={formHintPanel}>
-          No processed CV found. Upload and wait for indexing on the CV Intelligence
-          page before searching.
+          No processed CV found. Upload and wait for indexing on the CV
+          Intelligence page before searching.
         </p>
       ) : null}
     </div>

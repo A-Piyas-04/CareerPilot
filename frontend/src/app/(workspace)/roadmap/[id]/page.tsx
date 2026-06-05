@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { RoadmapDetailClient } from "@/components/roadmap/RoadmapDetailClient";
+import { getServerUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
 type RoadmapDetailPageProps = {
@@ -11,9 +12,7 @@ export default async function RoadmapDetailPage({
   params,
 }: RoadmapDetailPageProps) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerUser(supabase, "roadmap detail page");
 
   if (!user) {
     redirect("/login?next=/roadmap");

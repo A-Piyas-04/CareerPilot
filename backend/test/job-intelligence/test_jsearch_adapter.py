@@ -1,6 +1,7 @@
 """Tests for JSearchAdapter — RapidAPI JSearch HTTP client."""
 from unittest.mock import MagicMock, patch
 
+import httpx
 import pytest
 
 from app.job_intelligence.services.sources.jsearch import JSearchAdapter
@@ -159,6 +160,24 @@ class TestJSearchAdapter:
             client.get.return_value = _make_response(status_code=503, json_data={})
             with pytest.raises(JSearchError, match="JSearch upstream returned 503"):
                 adapter.search("python")
+
+    def test_search_maps_timeout_to_jsearch_error(self):
+        adapter = JSearchAdapter(api_key="k", host="jsearch.p.rapidapi.com")
+        with patch("app.job_intelligence.services.sources.jsearch.httpx.Client") as client_cls:
+            client = client_cls.return_value.__enter__.return_value
+            client.get.side_effect = httpx.ConnectTimeout("timed out")
+            with pytest.raises(JSearchError, match="timed out") as exc_info:
+                adapter.search("python")
+        assert exc_info.value.status_code == 504
+
+    def test_search_maps_network_error_to_jsearch_error(self):
+        adapter = JSearchAdapter(api_key="k", host="jsearch.p.rapidapi.com")
+        with patch("app.job_intelligence.services.sources.jsearch.httpx.Client") as client_cls:
+            client = client_cls.return_value.__enter__.return_value
+            client.get.side_effect = httpx.ConnectError("dns failed")
+            with pytest.raises(JSearchError, match="Could not reach JSearch") as exc_info:
+                adapter.search("python")
+        assert exc_info.value.status_code == 502
 
     def test_search_raises_subscription_error_on_403(self):
         adapter = JSearchAdapter(api_key="k", host="jsearch.p.rapidapi.com")

@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui";
 
 import { LoginForm } from "./login-form";
 import { sanitizeNextPath } from "@/lib/auth/login-redirect";
+import { getServerUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { btnSecondary, forestGradient } from "@/lib/ui-theme";
 
@@ -37,9 +38,7 @@ type LoginPageProps = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerUser(supabase, "login page");
 
   if (user) {
     const params = await searchParams;

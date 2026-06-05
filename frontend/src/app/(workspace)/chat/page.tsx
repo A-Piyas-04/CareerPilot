@@ -3,13 +3,12 @@ import { Suspense } from "react";
 
 import { ChatWorkspace } from "@/components/chat/ChatWorkspace";
 import { ContentPageSkeleton } from "@/components/ui/skeleton-layouts";
+import { getServerUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ChatPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerUser(supabase, "chat page");
 
   if (!user) {
     redirect("/login?next=/chat");

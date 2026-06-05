@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { sanitizeNextPath } from "@/lib/auth/login-redirect";
 import { requiredEnv } from "@/lib/env";
+import { getServerUser } from "@/lib/supabase/auth";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -40,9 +41,7 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerUser(supabase, "proxy session");
 
   if (user && request.nextUrl.pathname === "/login") {
     const destination = sanitizeNextPath(request.nextUrl.searchParams.get("next"));
