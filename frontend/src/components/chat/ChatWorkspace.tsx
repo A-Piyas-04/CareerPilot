@@ -12,6 +12,11 @@ import {
   useUpdateAssistantConversation,
 } from "@/lib/hooks/useAssistantConversations";
 import { listMatches } from "@/features/jobs/api";
+import {
+  DEFAULT_INTERVIEW_SETTINGS,
+  getConversationMode,
+} from "@/lib/assistant/interview/context";
+import type { AssistantMode } from "@/lib/types/assistant";
 
 import { ChatThread } from "./ChatThread";
 import { ConversationSidebar } from "./ConversationSidebar";
@@ -29,6 +34,7 @@ export function ChatWorkspace() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
     null,
   );
+  const [activeMode, setActiveMode] = useState<AssistantMode>("general_chat");
   const [jobContext, setJobContext] = useState<ActiveJobContext | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -47,19 +53,26 @@ export function ChatWorkspace() {
       ),
     [conversations],
   );
+  const modeConversations = useMemo(
+    () =>
+      persistedConversations.filter(
+        (conversation) => getConversationMode(conversation) === activeMode,
+      ),
+    [activeMode, persistedConversations],
+  );
   const activeConversation = useMemo(
     () =>
-      persistedConversations.find(
+      modeConversations.find(
         (conversation) => conversation.id === activeConversationId,
       ) ??
-      persistedConversations[0] ??
+      modeConversations[0] ??
       null,
-    [activeConversationId, persistedConversations],
+    [activeConversationId, modeConversations],
   );
 
   useEffect(() => {
     if (!jobIdParam) {
-      setJobContext(null);
+      queueMicrotask(() => setJobContext(null));
       return;
     }
 
@@ -90,10 +103,30 @@ export function ChatWorkspace() {
   }, [jobIdParam]);
 
   async function handleCreateConversation() {
+    const context =
+      activeMode === "interview_prep"
+        ? {
+            mode: activeMode,
+            interview: {
+              ...DEFAULT_INTERVIEW_SETTINGS,
+              jobId: jobContext?.jobId,
+              targetRole: jobContext?.title,
+            },
+          }
+        : { mode: activeMode };
     const conversation = await createConversationMutation.mutateAsync({
-      title: "New conversation",
+      context,
+      title:
+        activeMode === "interview_prep"
+          ? "New interview prep"
+          : "New conversation",
     });
     setActiveConversationId(conversation.id);
+  }
+
+  function handleModeChange(mode: AssistantMode) {
+    setActiveMode(mode);
+    setActiveConversationId(null);
   }
 
   function handleDeleteConversation(conversationId: string) {
@@ -130,20 +163,23 @@ export function ChatWorkspace() {
       />
       <ConversationSidebar
         activeConversationId={activeConversation?.id ?? null}
-        conversations={conversations}
+        conversations={modeConversations}
         errorMessage={conversationsQuery.error?.message}
         isCreating={createConversationMutation.isPending}
         isDeleting={deleteConversationMutation.isPending}
         isRenaming={renameConversationMutation.isPending}
         isLoading={conversationsQuery.isLoading}
+        mode={activeMode}
         onCreateConversation={handleCreateConversation}
         onDeleteConversation={handleDeleteConversation}
+        onModeChange={handleModeChange}
         onRenameConversation={handleRenameConversation}
         onSelectConversation={setActiveConversationId}
       />
       <ChatThread
         conversation={activeConversation}
         jobContext={jobContext}
+        mode={activeMode}
         onCreateConversation={handleCreateConversation}
       />
     </main>

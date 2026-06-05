@@ -134,7 +134,15 @@ async function fetchAssistantMessages(conversationId: string) {
 }
 
 async function streamAssistantMessage(
-  { content, conversation, jobId }: SendAssistantMessageInput,
+  {
+    content,
+    conversation,
+    interviewAction,
+    interviewSettings,
+    jobId,
+    mode,
+    problemId,
+  }: SendAssistantMessageInput,
   queryClient: ReturnType<typeof useQueryClient>,
 ) {
   if (isTemporaryAssistantConversationId(conversation.id)) {
@@ -148,8 +156,12 @@ async function streamAssistantMessage(
     },
     body: JSON.stringify({
       conversationId: conversation.id,
+      interviewAction,
+      interviewSettings,
       message: content,
+      mode,
       jobId: jobId ?? undefined,
+      problemId: problemId ?? undefined,
     }),
   });
 
@@ -227,6 +239,62 @@ async function streamAssistantMessage(
   return { assistantMessageId, fullContent };
 }
 
+export function useEvaluateInterviewUpload() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      file,
+      problemId,
+      transcriptionOverride,
+    }: {
+      conversationId: string;
+      file?: File;
+      problemId: string;
+      transcriptionOverride?: string;
+    }) => {
+      try {
+        const form = new FormData();
+        form.set("conversationId", conversationId);
+        form.set("problemId", problemId);
+        if (file) {
+          form.set("file", file);
+        }
+        if (transcriptionOverride?.trim()) {
+          form.set("transcriptionOverride", transcriptionOverride.trim());
+        }
+
+        const response = await fetch("/api/assistant/interview/evaluate-upload", {
+          method: "POST",
+          body: form,
+        });
+
+        if (!response.ok) {
+          throw new Error(await readErrorResponse(response));
+        }
+
+        return (await response.json()) as {
+          feedback: string;
+          transcription: string;
+          transcriptionConfidence: "high" | "medium" | "low";
+        };
+      } catch (error) {
+        showErrorToast(getErrorMessage(error));
+        throw error;
+      }
+    },
+    onSettled: (_data, _error, input) => {
+      queryClient.invalidateQueries({
+        queryKey: assistantMessageKeys.list(input.conversationId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: assistantConversationKeys.all,
+      });
+    },
+  });
+}
+
 async function readErrorResponse(response: Response) {
   const contentType = response.headers.get("content-type") ?? "";
 
@@ -239,7 +307,8 @@ async function readErrorResponse(response: Response) {
 }
 
 function shouldGenerateTitle(title: string | null) {
-  return !title || title.trim().toLowerCase() === "new conversation";
+  const normalized = title?.trim().toLowerCase();
+  return !normalized || normalized === "new conversation" || normalized === "new interview prep";
 }
 
 function titleFromMessage(content: string) {

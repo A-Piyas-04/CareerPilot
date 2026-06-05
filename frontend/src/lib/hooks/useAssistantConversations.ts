@@ -48,7 +48,7 @@ export function useCreateAssistantConversation() {
         id: `temp-${crypto.randomUUID()}`,
         user_id: userId,
         title: input.title ?? "New conversation",
-        context: {},
+        context: input.context ?? {},
         created_at: now,
         updated_at: now,
       };
@@ -218,7 +218,7 @@ async function createAssistantConversation(
     .insert({
       user_id: userId,
       title: input.title ?? "New conversation",
-      context: {},
+      context: input.context ?? {},
     })
     .select("*")
     .single();

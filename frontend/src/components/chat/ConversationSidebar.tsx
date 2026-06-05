@@ -7,7 +7,7 @@ import {
   isYesterday,
   parseISO,
 } from "date-fns";
-import { MessageSquarePlus, MessageSquareText, Pencil, Trash2, X } from "lucide-react";
+import { Brain, MessageSquarePlus, MessageSquareText, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -15,7 +15,7 @@ import { ListCardSkeleton, SpinnerButton } from "@/components/ui";
 import {
   isTemporaryAssistantConversationId,
 } from "@/lib/hooks/useAssistantConversations";
-import type { AssistantConversation } from "@/lib/types/assistant";
+import type { AssistantConversation, AssistantMode } from "@/lib/types/assistant";
 import { btnPrimarySky, iconTile, inputFieldSky } from "@/lib/ui-theme";
 
 type Props = {
@@ -26,8 +26,10 @@ type Props = {
   isDeleting?: boolean;
   isRenaming?: boolean;
   isLoading?: boolean;
+  mode: AssistantMode;
   onCreateConversation: () => void;
   onDeleteConversation: (conversationId: string) => void;
+  onModeChange: (mode: AssistantMode) => void;
   onRenameConversation: (conversationId: string, title: string) => Promise<void>;
   onSelectConversation: (conversationId: string) => void;
 };
@@ -49,12 +51,15 @@ export function ConversationSidebar({
   isDeleting,
   isRenaming,
   isLoading,
+  mode,
   onCreateConversation,
   onDeleteConversation,
+  onModeChange,
   onRenameConversation,
   onSelectConversation,
 }: Props) {
   const grouped = groupConversations(conversations);
+  const isInterviewMode = mode === "interview_prep";
 
   return (
     <aside className="flex h-full min-h-0 w-full shrink-0 flex-col border-r border-[var(--cp-border)] bg-[var(--cp-surface-muted)] lg:w-72 xl:w-80">
@@ -63,12 +68,33 @@ export function ConversationSidebar({
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconTile("sky")}`}
           >
-            <MessageSquareText className="h-5 w-5" />
+            {isInterviewMode ? (
+              <Brain className="h-5 w-5" />
+            ) : (
+              <MessageSquareText className="h-5 w-5" />
+            )}
           </div>
-          <h1 className="min-w-0 text-base font-semibold tracking-tight text-[var(--cp-text-primary)]">
-            Career Assistant
-          </h1>
+          <div className="min-w-0">
+            <h1 className="text-base font-semibold tracking-tight text-[var(--cp-text-primary)]">
+              Chat
+            </h1>
+            <p className="text-xs font-medium text-[var(--cp-text-muted)]">
+              {isInterviewMode ? "Interview Prep" : "Career Assistant"}
+            </p>
+          </div>
         </div>
+
+        <label className="block">
+          <span className="sr-only">Chat mode</span>
+          <select
+            className={`${inputFieldSky} h-10 text-sm font-semibold`}
+            value={mode}
+            onChange={(event) => onModeChange(event.target.value as AssistantMode)}
+          >
+            <option value="general_chat">Career Assistant</option>
+            <option value="interview_prep">Interview Prep</option>
+          </select>
+        </label>
 
         <button
           className={`${btnPrimarySky} h-10 w-full rounded-xl shadow-sm`}
@@ -77,7 +103,7 @@ export function ConversationSidebar({
           disabled={isCreating}
         >
           <MessageSquarePlus className="h-4 w-4" />
-          New Chat
+          {isInterviewMode ? "New Interview" : "New Chat"}
         </button>
       </header>
 
@@ -122,8 +148,9 @@ export function ConversationSidebar({
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-[var(--cp-border)] bg-[var(--cp-surface)] p-4 text-sm text-[var(--cp-text-muted)]">
-            No conversations yet. Start a new chat to save your first career
-            question.
+            {isInterviewMode
+              ? "No interview sessions yet. Start practice to save your first mock interview."
+              : "No conversations yet. Start a new chat to save your first career question."}
           </div>
         )}
       </div>

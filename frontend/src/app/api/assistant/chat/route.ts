@@ -1,9 +1,12 @@
 import { NextRequest } from "next/server";
 
 import { buildSystemPrompt } from "@/lib/assistant/buildSystemPrompt";
-import { detectAssistantIntent } from "@/lib/assistant/detectIntent";
+import { detectAssistantIntent, type IntentDetectionResult } from "@/lib/assistant/detectIntent";
 import { getJobContext } from "@/lib/assistant/getJobContext";
 import { getResumeContext } from "@/lib/assistant/getResumeContext";
+import { getModeFromContext, normalizeInterviewSettings } from "@/lib/assistant/interview/context";
+import { buildInterviewSystemPrompt } from "@/lib/assistant/interview/prompts";
+import { findCodingProblem, selectCodingProblem } from "@/lib/assistant/interview/problemBank";
 import { buildIntentPrompt } from "@/lib/assistant/intentPrompts";
 import { loadConversationMemory } from "@/lib/assistant/loadConversationMemory";
 import type { AssistantProfile } from "@/lib/assistant/types";
@@ -20,8 +23,12 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
       conversationId?: unknown;
+      interviewAction?: unknown;
+      interviewSettings?: unknown;
       message?: unknown;
+      mode?: unknown;
       jobId?: unknown;
+      problemId?: unknown;
     };
     const conversationId =
       typeof body.conversationId === "string" ? body.conversationId : "";
@@ -29,6 +36,21 @@ export async function POST(request: NextRequest) {
     const jobId =
       typeof body.jobId === "string" && isUuid(body.jobId.trim())
         ? body.jobId.trim()
+        : null;
+    const requestedMode =
+      body.mode === "interview_prep" ? "interview_prep" : undefined;
+    const interviewAction =
+      body.interviewAction === "start" ||
+      body.interviewAction === "next_question" ||
+      body.interviewAction === "evaluate" ||
+      body.interviewAction === "answer"
+        ? body.interviewAction
+        : "answer";
+    const requestedProblemId =
+      typeof body.problemId === "string" ? body.problemId.trim() : null;
+    const requestedInterviewSettings =
+      body.interviewSettings && typeof body.interviewSettings === "object"
+        ? body.interviewSettings
         : null;
 
     if (!conversationId) {
@@ -72,7 +94,40 @@ export async function POST(request: NextRequest) {
       return jsonError("User not authenticated", 401);
     }
 
-    const intentDetection = await detectAssistantIntent(message);
+    const storedConversationContext =
+      conversation.context && typeof conversation.context === "object"
+        ? conversation.context as Record<string, unknown>
+        : {};
+    const assistantMode = requestedMode ?? getModeFromContext(storedConversationContext);
+    const conversationContext =
+      assistantMode === "interview_prep" && requestedInterviewSettings
+        ? {
+            ...storedConversationContext,
+            mode: "interview_prep",
+            interview: {
+              ...(storedConversationContext.interview &&
+              typeof storedConversationContext.interview === "object"
+                ? (storedConversationContext.interview as Record<string, unknown>)
+                : {}),
+              ...(requestedInterviewSettings as Record<string, unknown>),
+            },
+          }
+        : storedConversationContext;
+    const preliminaryInterviewSettings = normalizeInterviewSettings(
+      conversationContext.interview,
+    );
+    const jobIdForContext =
+      jobId ?? preliminaryInterviewSettings.jobId ?? null;
+    const intentDetection: IntentDetectionResult =
+      assistantMode === "interview_prep"
+        ? {
+            confidence: 1,
+            intent: "general" as const,
+            matchedPattern: "assistant_conversations.context.mode=interview_prep",
+            method: "rule" as const,
+            reason: "Interview prep mode uses a dedicated interview prompt.",
+          }
+        : await detectAssistantIntent(message);
     const intent = intentDetection.intent;
 
     const [profile, resumeContext, memory, jobContext] = await Promise.all([
@@ -89,8 +144,27 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         limit: 12,
       }),
-      jobId ? getJobContext({ userId: user.id, jobId }) : Promise.resolve(null),
+      jobIdForContext
+        ? getJobContext({ userId: user.id, jobId: jobIdForContext })
+        : Promise.resolve(null),
     ]);
+    const interviewSettings = normalizeInterviewSettings(
+      conversationContext.interview,
+      profile?.target_role ?? jobContext?.title ?? null,
+    );
+    const selectedProblem =
+      assistantMode === "interview_prep" &&
+      (interviewSettings.interviewType === "coding" ||
+        interviewSettings.interviewType === "mixed" ||
+        requestedProblemId)
+        ? findCodingProblem(requestedProblemId) ??
+          selectCodingProblem({
+            conversationId,
+            difficulty: interviewSettings.difficulty,
+            focusAreas: interviewSettings.focusAreas,
+            messageCount: memory.length,
+          })
+        : null;
 
     const noResumeGuard =
       !resumeContext.hasResume
@@ -98,22 +172,52 @@ export async function POST(request: NextRequest) {
         : resumeContext.usedResumeChunks.length === 0
           ? "\n\nIMPORTANT: No relevant CV excerpts were retrieved. Only answer from what is explicitly in the CV context above; do not invent background."
           : "";
-    const baseSystemPrompt = buildSystemPrompt({
-      profile,
-      resumeContext: resumeContext.text,
-      jobContext: jobContext?.text,
-    });
-    const intentPrompt = buildIntentPrompt(intent, {
-      conversationMemory: memory,
-      profile,
-      resumeContext: resumeContext.text,
-      userMessage: message,
-    });
+    const baseSystemPrompt =
+      assistantMode === "interview_prep"
+        ? buildInterviewSystemPrompt({
+            action: interviewAction,
+            jobContext,
+            memory,
+            problem: selectedProblem,
+            profile,
+            resumeContext: resumeContext.text,
+            settings: interviewSettings,
+            userMessage: message,
+          })
+        : buildSystemPrompt({
+            profile,
+            resumeContext: resumeContext.text,
+            jobContext: jobContext?.text,
+          });
+    const intentPrompt =
+      assistantMode === "interview_prep"
+        ? ""
+        : buildIntentPrompt(intent, {
+            conversationMemory: memory,
+            profile,
+            resumeContext: resumeContext.text,
+            userMessage: message,
+          });
     const systemPrompt = `${baseSystemPrompt}\n\n${intentPrompt}${noResumeGuard}`;
     const nextTitle = shouldGenerateTitle(conversation.title)
       ? titleFromMessage(message)
       : conversation.title;
     const now = new Date().toISOString();
+
+    if (
+      assistantMode === "interview_prep" &&
+      requestedInterviewSettings
+    ) {
+      const { error: contextUpdateError } = await supabase
+        .from("assistant_conversations")
+        .update({ context: conversationContext })
+        .eq("id", conversationId)
+        .eq("user_id", user.id);
+
+      if (contextUpdateError) {
+        return jsonError(contextUpdateError.message, 500);
+      }
+    }
 
     const { error: userMessageError } = await supabase
       .from("assistant_messages")
@@ -164,6 +268,18 @@ export async function POST(request: NextRequest) {
               intent_detection_method: intentDetection.method,
               intent_reason: intentDetection.reason,
               matched_pattern: intentDetection.matchedPattern,
+              assistant_mode: assistantMode,
+              interview:
+                assistantMode === "interview_prep"
+                  ? {
+                      action: interviewAction,
+                      difficulty: interviewSettings.difficulty,
+                      focus_areas: interviewSettings.focusAreas,
+                      interview_type: interviewSettings.interviewType,
+                      problem_id: selectedProblem?.id ?? null,
+                      target_role: interviewSettings.targetRole ?? null,
+                    }
+                  : undefined,
               rag_used: true,
               has_resume: resumeContext.hasResume,
               resume_id: resumeContext.resumeId,
@@ -293,6 +409,19 @@ export async function POST(request: NextRequest) {
                   intent_detection_method: intentDetection.method,
                   intent_reason: intentDetection.reason,
                   matched_pattern: intentDetection.matchedPattern,
+                  assistant_mode: assistantMode,
+                  interview:
+                    assistantMode === "interview_prep"
+                      ? {
+                          action: interviewAction,
+                          difficulty: interviewSettings.difficulty,
+                          focus_areas: interviewSettings.focusAreas,
+                          interview_type: interviewSettings.interviewType,
+                          problem_id: selectedProblem?.id ?? null,
+                          problem_title: selectedProblem?.title ?? null,
+                          target_role: interviewSettings.targetRole ?? null,
+                        }
+                      : undefined,
                   rag_used: true,
                   has_resume: resumeContext.hasResume,
                   resume_id: resumeContext.resumeId,
@@ -306,9 +435,13 @@ export async function POST(request: NextRequest) {
                   job_company: jobContext?.company ?? null,
                   job_fit_score: jobContext?.fitScore ?? null,
                   can_save_roadmap:
-                    intent === "roadmap_generation" && resumeContext.hasResume,
+                    assistantMode === "general_chat" &&
+                    intent === "roadmap_generation" &&
+                    resumeContext.hasResume,
                   can_save_cover_letter:
-                    intent === "cover_letter" && resumeContext.hasResume,
+                    assistantMode === "general_chat" &&
+                    intent === "cover_letter" &&
+                    resumeContext.hasResume,
                 },
               });
 
@@ -365,7 +498,8 @@ async function loadProfile(userId: string): Promise<AssistantProfile | null> {
 }
 
 function shouldGenerateTitle(title: string | null) {
-  return !title || title.trim().toLowerCase() === "new conversation";
+  const normalized = title?.trim().toLowerCase();
+  return !normalized || normalized === "new conversation" || normalized === "new interview prep";
 }
 
 function titleFromMessage(content: string) {

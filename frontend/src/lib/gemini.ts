@@ -42,7 +42,15 @@ export class GeminiApiError extends Error {
 
 type GeminiContent = {
   role: "user" | "model";
-  parts: { text: string }[];
+  parts: Array<
+    | { text: string }
+    | {
+        inlineData: {
+          data: string;
+          mimeType: string;
+        };
+      }
+  >;
 };
 
 export type GeminiStreamResult = {
@@ -207,6 +215,65 @@ export async function createGeminiText({
   });
 
   return text;
+}
+
+export async function createGeminiMultimodalText({
+  fileBase64,
+  maxOutputTokens = 1200,
+  mimeType,
+  model = GEMINI_MODEL,
+  modelCascade,
+  prompt,
+  systemPrompt,
+  temperature = 0.2,
+}: {
+  fileBase64: string;
+  maxOutputTokens?: number;
+  mimeType: string;
+  model?: string;
+  modelCascade?: string[];
+  prompt: string;
+  systemPrompt?: string;
+  temperature?: number;
+}) {
+  const apiKey = requireGeminiApiKey();
+  const models = modelCascade ?? generationModelCascade(model);
+  const body = JSON.stringify({
+    ...(systemPrompt
+      ? {
+          systemInstruction: {
+            parts: [{ text: systemPrompt }],
+          },
+        }
+      : {}),
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { text: prompt },
+          {
+            inlineData: {
+              data: fileBase64,
+              mimeType,
+            },
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      maxOutputTokens,
+      responseMimeType: "application/json",
+      temperature,
+    },
+  });
+
+  const { model: usedModel, text } = await requestGeminiTextWithCascade({
+    apiKey,
+    body,
+    models,
+  });
+
+  return { model: usedModel, text };
 }
 
 export function extractGeminiTextFromSsePayload(payload: string) {

@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 
 import { Badge } from "@/components/ui";
 import { saveCoverLetter, saveRoadmap } from "@/lib/career-api";
+import { useEvaluateInterviewUpload } from "@/lib/hooks/useAssistantMessages";
 import { btnPrimarySky, surfaceCardElevated } from "@/lib/ui-theme";
 import type { AssistantMessage } from "@/lib/types/assistant";
 
@@ -37,6 +38,7 @@ export function ChatMessage({ message }: Props) {
   const isUser = message.role === "user";
   const action = assistantMessageAction(message);
   const evidenceChunks = parseEvidenceChunks(message);
+  const interviewUpload = parseInterviewUpload(message);
   const hasResume = message.metadata?.has_resume === true;
   const showNoResumeBanner =
     !isUser && message.metadata?.has_resume === false;
@@ -90,6 +92,13 @@ export function ChatMessage({ message }: Props) {
             {hasResume && evidenceChunks.length > 0 ? (
               <CvEvidenceSection chunks={evidenceChunks} />
             ) : null}
+            {interviewUpload ? (
+              <InterviewTranscriptionCorrection
+                conversationId={message.conversation_id}
+                problemId={interviewUpload.problemId}
+                transcription={interviewUpload.transcription}
+              />
+            ) : null}
           </>
         )}
 
@@ -103,6 +112,59 @@ export function ChatMessage({ message }: Props) {
           {format(new Date(message.created_at), "MMM d, h:mm a")}
         </p>
       </article>
+    </div>
+  );
+}
+
+function InterviewTranscriptionCorrection({
+  conversationId,
+  problemId,
+  transcription,
+}: {
+  conversationId: string;
+  problemId: string;
+  transcription: string;
+}) {
+  const [draft, setDraft] = useState(transcription);
+  const [open, setOpen] = useState(false);
+  const uploadMutation = useEvaluateInterviewUpload();
+
+  if (!transcription.trim()) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 border-t border-sky-100 pt-3">
+      <button
+        className="text-xs font-semibold text-sky-700 hover:text-sky-900"
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+      >
+        {open ? "Hide transcription editor" : "Correct transcription"}
+      </button>
+      {open ? (
+        <div className="mt-2 space-y-2">
+          <textarea
+            className="min-h-32 w-full resize-y rounded-xl border border-sky-100 bg-sky-50/60 px-3 py-2 font-mono text-xs leading-5 text-zinc-900 outline-none transition focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+          />
+          <button
+            className={`${btnPrimarySky} h-8 rounded-lg px-3 text-xs disabled:opacity-60`}
+            type="button"
+            disabled={uploadMutation.isPending || !draft.trim()}
+            onClick={() =>
+              uploadMutation.mutate({
+                conversationId,
+                problemId,
+                transcriptionOverride: draft,
+              })
+            }
+          >
+            Re-evaluate corrected code
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -275,6 +337,28 @@ function parseEvidenceChunks(message: AssistantMessage): EvidenceChunk[] {
     return [];
   }
   return raw.filter(isEvidenceChunk);
+}
+
+function parseInterviewUpload(message: AssistantMessage) {
+  const interview = message.metadata?.interview;
+
+  if (!interview || typeof interview !== "object") {
+    return null;
+  }
+
+  const metadata = interview as Record<string, unknown>;
+  if (metadata.action !== "evaluate_upload") {
+    return null;
+  }
+
+  const problemId = metadata.problem_id;
+  const transcription = metadata.transcription;
+
+  if (typeof problemId !== "string" || typeof transcription !== "string") {
+    return null;
+  }
+
+  return { problemId, transcription };
 }
 
 function isEvidenceChunk(value: unknown): value is EvidenceChunk {
