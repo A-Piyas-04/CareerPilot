@@ -8,7 +8,6 @@ import { useMemo, useState } from "react";
 import { PageHeader, PageShell } from "@/components/layout";
 import { TransitionLink } from "@/components/navigation/navigation-transition";
 import { EmptyState, Skeleton } from "@/components/ui";
-import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import { alertError, btnPrimary, btnSecondary } from "@/lib/ui-theme";
 
 import { AddApplicationDrawer } from "./add-application-drawer";
@@ -112,11 +111,8 @@ export function TrackerBoard() {
     <PageShell width="wide">
       <PageHeader
         accent="violet"
-        eyebrowText="Track"
         icon={BriefcaseBusiness}
         title="Application Tracker"
-        description="Drag applications across stages, open details for fit scores, and jump to cover letters or the assistant."
-        relatedLinks={PAGE_RELATED_LINKS["/tracker"]}
         actions={
           <button
             className={btnPrimary}

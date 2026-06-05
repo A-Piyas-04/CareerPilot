@@ -101,15 +101,6 @@ export function ActiveResumeSelector({
           {resumeTypeLabel(selectedResume?.file_type)}
         </p>
 
-        <p className="mt-2 flex items-start gap-2 text-sm leading-relaxed text-zinc-600">
-          <Sparkles
-            className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"
-            aria-hidden
-          />
-          <span>
-            Powers AI chat, job fit scores, and cover letter generation.
-          </span>
-        </p>
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center gap-2 self-start sm:self-center">

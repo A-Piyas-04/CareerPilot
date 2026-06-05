@@ -74,8 +74,10 @@ export function AppFooterScrollRegion({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-[var(--cp-workspace-main)]">
-      {children}
-      <AppFooter />
+      <div className="flex min-h-full flex-col">
+        <div className="flex-1">{children}</div>
+        <AppFooter />
+      </div>
     </div>
   );
 }

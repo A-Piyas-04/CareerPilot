@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Brain,
   BriefcaseBusiness,
   CalendarDays,
   FileText,
@@ -68,6 +69,13 @@ export const NAV_GROUPS: NavGroup[] = [
         shortLabel: "Chat",
         icon: MessageSquareText,
         description: "CV-grounded career chat",
+      },
+      {
+        href: "/interview-prep",
+        label: "Interview Prep",
+        shortLabel: "Prep",
+        icon: Brain,
+        description: "Timed mock interviews",
       },
     ],
   },
@@ -154,6 +162,11 @@ export const PAGE_RELATED_LINKS: Record<string, RelatedLink[]> = {
   ],
   "/chat": [
     { href: "/jobs", label: "Job Hunter" },
+    { href: "/resume", label: "CV" },
+    { href: "/interview-prep", label: "Interview Prep" },
+  ],
+  "/interview-prep": [
+    { href: "/chat", label: "Assistant" },
     { href: "/resume", label: "CV" },
     { href: "/roadmap", label: "Roadmap" },
   ],

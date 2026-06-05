@@ -10,7 +10,6 @@ import { RoadmapList } from "@/components/roadmap/RoadmapList";
 import { SubmissionProgress } from "@/components/ui";
 import { ROADMAP_GENERATE_STEPS } from "@/lib/progress/roadmap-progress";
 import { useGenerateRoadmap, useRoadmaps } from "@/lib/hooks/useRoadmaps";
-import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import { surfaceCard } from "@/lib/ui-theme";
 import type { GenerateRoadmapRequest } from "@/lib/roadmap/types";
 
@@ -43,11 +42,8 @@ export function RoadmapPageClient() {
     <PageShell>
       <PageHeader
         accent="sky"
-        eyebrowText="Plan"
         icon={Map}
         title="Learning Roadmap"
-        description="Generate weekly learning plans from skill gaps or target roles, then track progress over time."
-        relatedLinks={PAGE_RELATED_LINKS["/roadmap"]}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">

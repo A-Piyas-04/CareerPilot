@@ -14,7 +14,6 @@ import {
   useCoverLetters,
   useGenerateCoverLetter,
 } from "@/lib/hooks/useCoverLetters";
-import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import { surfaceCard } from "@/lib/ui-theme";
 import type { GenerateCoverLetterRequest } from "@/lib/cover-letter/types";
 
@@ -80,11 +79,8 @@ export function CoverLettersPageClient() {
     <PageShell>
       <PageHeader
         accent="sky"
-        eyebrowText="Plan"
         icon={Mail}
         title="Cover Letters"
-        description="Generate tailored letters from job descriptions and verified CV context."
-        relatedLinks={PAGE_RELATED_LINKS["/cover-letters"]}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">

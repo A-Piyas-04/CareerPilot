@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import { PageHeader, PageShell } from "@/components/layout";
 import { TaskList } from "@/components/tasks/TaskList";
 import { EmptyState, ListCardSkeleton } from "@/components/ui";
-import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import { getPageAccentStyles } from "@/lib/nav-styles";
 import { alertError, btnPrimary, surfaceCardElevated } from "@/lib/ui-theme";
 
@@ -40,11 +39,8 @@ export function GoalsWorkspace() {
     <PageShell width="wide">
       <PageHeader
         accent="violet"
-        eyebrowText="Track"
         icon={Target}
         title="Goals"
-        description="Set career milestones, break them into tasks, and track progress alongside your applications."
-        relatedLinks={PAGE_RELATED_LINKS["/goals"]}
         actions={
           <button className={btnPrimary} type="button" onClick={handleCreateGoal}>
             <Plus className="h-4 w-4" />

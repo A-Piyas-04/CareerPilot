@@ -1,7 +1,7 @@
 "use client";
 
 import { Paperclip, SendHorizonal, X } from "lucide-react";
-import { ChangeEvent, KeyboardEvent, useRef, useState } from "react";
+import { ChangeEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { SpinnerButton } from "@/components/ui";
 import type { AssistantMode } from "@/lib/types/assistant";
@@ -28,6 +28,18 @@ export function MessageComposer({
   const isInterviewMode = mode === "interview_prep";
   const canSend = Boolean(content.trim()) && !disabled && !isSending;
   const canUpload = Boolean(selectedFile) && Boolean(onUpload) && !disabled && !isSending;
+
+  useEffect(() => {
+    try {
+      const draft = window.localStorage.getItem("careerpilot_chat_draft");
+      if (draft?.trim()) {
+        window.setTimeout(() => setContent(draft), 0);
+        window.localStorage.removeItem("careerpilot_chat_draft");
+      }
+    } catch {
+      // Ignore storage failures.
+    }
+  }, []);
 
   async function handleSend() {
     const trimmed = content.trim();

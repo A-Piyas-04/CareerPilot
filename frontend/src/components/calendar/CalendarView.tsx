@@ -20,7 +20,6 @@ import type {
   CalendarEventType,
 } from "@/lib/hooks/useCalendarEvents";
 import { useCalendarEvents } from "@/lib/hooks/useCalendarEvents";
-import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import { getPageAccentStyles } from "@/lib/nav-styles";
 import { btnPrimary, premiumCard } from "@/lib/ui-theme";
 
@@ -97,11 +96,8 @@ export function CalendarView() {
     <PageShell width="wide">
       <PageHeader
         accent="violet"
-        eyebrowText="Track"
         icon={CalendarDays}
         title="Calendar"
-        description="See deadlines, interviews, and roadmap milestones alongside your goals and tracker."
-        relatedLinks={PAGE_RELATED_LINKS["/calendar"]}
         actions={
           <button
             className={btnPrimary}

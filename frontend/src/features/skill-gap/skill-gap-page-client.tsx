@@ -14,7 +14,6 @@ import {
   useSkillGapAnalyses,
   useSkillGapDetail,
 } from "@/lib/hooks/useSkillGap";
-import { PAGE_RELATED_LINKS } from "@/lib/navigation-config";
 import { surfaceCard } from "@/lib/ui-theme";
 
 import { SkillGapAnalyzeForm } from "./skill-gap-analyze-form";
@@ -114,11 +113,9 @@ export function SkillGapPageClient() {
     <PageShell>
       <PageHeader
         accent="sky"
-        eyebrowText="Plan"
         icon={LineChart}
         title="Skill Gap Analysis"
         description="Compare your CV against a target role and get prioritized learning recommendations."
-        relatedLinks={PAGE_RELATED_LINKS["/skill-gap"]}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">

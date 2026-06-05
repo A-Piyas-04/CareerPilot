@@ -13,7 +13,6 @@ import {
   resumePageCard,
   resumeCardBody,
   resumeCardHeader,
-  resumeCardSubtext,
   resumePromptChip,
 } from "./resume-ui";
 import type { ResumeStatus } from "./types";
@@ -78,9 +77,6 @@ export function ResumeAnswerBox({
             <h2 className={`${resumeCardHeader} border-0 pb-0`}>
               Ask about your resume
             </h2>
-            <p className={resumeCardSubtext}>
-              Answers are grounded in your uploaded CV.
-            </p>
           </div>
         </div>
 
