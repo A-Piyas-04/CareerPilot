@@ -4,7 +4,6 @@ import {
   AlertCircle,
   FileText,
   Loader2,
-  PenLine,
   RefreshCw,
   Sparkles,
   Trash2,
@@ -58,7 +57,6 @@ type ResumeSummaryProps = {
   error: Error | null;
   hasResumes: boolean;
   onRequestReupload?: () => void;
-  onEditInBuilder?: (detail: ResumeDetail) => void;
   onEditInManual?: (detail: ResumeDetail) => void;
 };
 
@@ -68,7 +66,6 @@ export function ResumeSummary({
   error,
   hasResumes,
   onRequestReupload,
-  onEditInBuilder,
   onEditInManual,
 }: ResumeSummaryProps) {
   const groupedSkills = useMemo(
@@ -186,17 +183,6 @@ export function ResumeSummary({
               <Sparkles className="h-4 w-4" />
             )}
             Use for AI features
-          </button>
-        )}
-
-        {isProcessed && onEditInBuilder && resume.file_type === "builder" && (
-          <button
-            className={`${resumeSecondaryButton} w-full sm:w-auto`}
-            type="button"
-            onClick={() => onEditInBuilder(detail)}
-          >
-            <PenLine className="h-4 w-4" />
-            Edit in builder
           </button>
         )}
 

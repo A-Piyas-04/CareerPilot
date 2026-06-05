@@ -13,7 +13,7 @@ type ResumeWorkspacePanelProps = {
   children: ReactNode;
 };
 
-/** Unified center column: active resume band + CV input (upload / build / manual) */
+/** Unified center column: active resume band + CV input (upload / manual) */
 export function ResumeWorkspacePanel({
   activeResume,
   children,

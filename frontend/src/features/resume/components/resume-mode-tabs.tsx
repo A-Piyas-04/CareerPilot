@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, PenLine, Upload } from "lucide-react";
+import { FileText, Upload } from "lucide-react";
 
 import {
   resumeSegmentGroup,
@@ -8,7 +8,7 @@ import {
   resumeSegmentTab,
 } from "../resume-ui";
 
-export type CvInputMode = "upload" | "build" | "manual";
+export type CvInputMode = "upload" | "manual";
 
 type ResumeModeTabsProps = {
   inputMode: CvInputMode;
@@ -17,17 +17,15 @@ type ResumeModeTabsProps = {
 
 const TABS: { id: CvInputMode; label: string; shortLabel: string; icon: typeof Upload }[] = [
   { id: "upload", label: "Upload CV", shortLabel: "Upload", icon: Upload },
-  { id: "build", label: "Build CV", shortLabel: "Build", icon: PenLine },
   { id: "manual", label: "Manual", shortLabel: "Manual", icon: FileText },
 ];
 
 const MODE_INDEX: Record<CvInputMode, number> = {
   upload: 0,
-  build: 1,
-  manual: 2,
+  manual: 1,
 };
 
-const INDICATOR_WIDTH = "calc((100% - 0.5rem) / 3)";
+const INDICATOR_WIDTH = "calc((100% - 0.25rem) / 2)";
 
 export function ResumeModeTabs({ inputMode, onChange }: ResumeModeTabsProps) {
   const activeIndex = MODE_INDEX[inputMode];

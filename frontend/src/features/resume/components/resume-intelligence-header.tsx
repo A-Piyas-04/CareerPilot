@@ -13,7 +13,7 @@ const RESUME_INTELLIGENCE_STEPS = [
   {
     title: "Add your resume",
     description:
-      "Upload a file, build section-by-section, or use the manual editor to create your profile.",
+      "Upload a file or use the manual editor to create your profile.",
   },
   {
     title: "Wait for processing",

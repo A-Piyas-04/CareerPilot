@@ -621,13 +621,7 @@ function payloadFromDetail(detail?: ResumeDetail): ManualResumePayload {
       formData<{ summary: string }>("summary")?.summary ??
       section("summary")?.content ??
       "",
-    skills:
-      formData<ManualSkillInput[]>("skills") ??
-      detail.skills.map((skill) => ({
-        category: skill.category ?? "",
-        proficiency: skill.proficiency ?? "",
-        skill_name: skill.skill_name,
-      })),
+    skills: formData<ManualSkillInput[]>("skills") ?? [],
     experience:
       formData<ManualExperienceInput[]>("experience") ??
       sectionFallback(section("experience")?.content, emptyExperience, "description"),
