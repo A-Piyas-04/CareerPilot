@@ -107,9 +107,11 @@ const WORKFLOW_STEPS = [
 type FeatureAccent = "emerald" | "sky" | "violet";
 
 const ACCENT_BADGE: Record<FeatureAccent, string> = {
-  emerald: "bg-emerald-900/10 text-emerald-900 ring-emerald-800/20",
-  sky: "bg-sky-900/10 text-sky-900 ring-sky-800/20",
-  violet: "bg-violet-900/10 text-violet-900 ring-violet-800/20",
+  emerald:
+    "bg-emerald-900/10 text-emerald-900 ring-emerald-800/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/25",
+  sky: "bg-sky-900/10 text-sky-900 ring-sky-800/20 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/25",
+  violet:
+    "bg-violet-900/10 text-violet-900 ring-violet-800/20 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/25",
 };
 
 const FEATURE_MODULES: {
@@ -243,26 +245,26 @@ const FAQ_ITEMS = [
 
 /** Shared landing visual tokens */
 const forestGradient =
-  "bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950";
+  "bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 dark:from-[#021510] dark:via-[#042f24] dark:to-[#0a1f2e]";
 const premiumCard =
-  "rounded-3xl border border-emerald-900/10 bg-gradient-to-b from-white via-white to-emerald-50/40 shadow-lg shadow-emerald-950/10 ring-1 ring-emerald-900/[0.06] backdrop-blur-sm transition-all duration-300 ease-out";
+  "rounded-3xl border border-emerald-900/10 bg-gradient-to-b from-white via-white to-emerald-50/40 shadow-lg shadow-emerald-950/10 ring-1 ring-emerald-900/[0.06] backdrop-blur-sm transition-all duration-300 ease-out dark:border-emerald-500/15 dark:bg-gradient-to-b dark:from-[#141f30] dark:via-[#111827] dark:to-[#0d1524] dark:shadow-black/50 dark:ring-emerald-500/10";
 const cardHoverLift =
-  "hover:-translate-y-1.5 hover:scale-[1.01] hover:border-emerald-600/25 hover:shadow-xl hover:shadow-emerald-900/20";
+  "hover:-translate-y-1.5 hover:scale-[1.01] hover:border-emerald-600/25 hover:shadow-xl hover:shadow-emerald-900/20 dark:hover:border-emerald-500/30 dark:hover:shadow-emerald-500/10 dark:hover:shadow-2xl";
 const sectionTitle =
-  "bg-gradient-to-r from-emerald-950 via-emerald-800 to-teal-800 bg-clip-text text-transparent";
+  "bg-gradient-to-r from-emerald-950 via-emerald-800 to-teal-800 bg-clip-text text-transparent dark:from-emerald-200 dark:via-emerald-300 dark:to-teal-200";
 const navSignInStyles =
-  "h-11 items-center justify-center rounded-lg bg-emerald-900 px-5 text-[15px] font-semibold text-white shadow-sm shadow-emerald-950/20 transition duration-200 hover:bg-emerald-800 hover:shadow-md hover:shadow-emerald-950/30 active:scale-[0.98]";
+  "h-11 items-center justify-center rounded-lg bg-emerald-900 px-5 text-[15px] font-semibold text-white shadow-sm shadow-emerald-950/20 transition duration-200 hover:bg-emerald-800 hover:shadow-md hover:shadow-emerald-950/30 active:scale-[0.98] dark:bg-emerald-600 dark:shadow-emerald-500/20 dark:hover:bg-emerald-500 dark:hover:shadow-emerald-500/30";
 const navSignIn = `hidden sm:inline-flex ${navSignInStyles}`;
 const navCtaPrimary =
-  "inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-900 px-5 text-[15px] font-semibold text-white shadow-md shadow-emerald-900/25 ring-1 ring-emerald-700/30 transition duration-200 hover:shadow-lg hover:shadow-emerald-900/30 hover:brightness-110";
+  "inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-900 px-5 text-[15px] font-semibold text-white shadow-md shadow-emerald-900/25 ring-1 ring-emerald-700/30 transition duration-200 hover:shadow-lg hover:shadow-emerald-900/30 hover:brightness-110 dark:from-emerald-600 dark:via-emerald-500 dark:to-teal-700 dark:shadow-emerald-500/20 dark:ring-emerald-500/40 dark:hover:shadow-emerald-500/30";
 const btnForest =
-  "inline-flex items-center justify-center gap-2 rounded-xl border-2 border-white/30 bg-gradient-to-r from-emerald-950 via-emerald-800 to-emerald-900 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-950/30 transition-all duration-300 hover:scale-[1.02] hover:border-white/50 hover:from-emerald-900 hover:via-emerald-700 hover:to-teal-800 hover:shadow-emerald-900/40 active:scale-[0.98]";
+  "inline-flex items-center justify-center gap-2 rounded-xl border-2 border-white/30 bg-gradient-to-r from-emerald-950 via-emerald-800 to-emerald-900 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-950/30 transition-all duration-300 hover:scale-[1.02] hover:border-white/50 hover:from-emerald-900 hover:via-emerald-700 hover:to-teal-800 hover:shadow-emerald-900/40 active:scale-[0.98] dark:border-emerald-400/25 dark:from-emerald-800 dark:via-emerald-700 dark:to-teal-800 dark:shadow-emerald-500/15 dark:hover:border-emerald-300/40 dark:hover:shadow-emerald-500/25";
 
 const PROOF_CARD_TINTS = [
-  "from-emerald-600/10 to-teal-500/5 group-hover:from-emerald-600/20",
-  "from-teal-600/10 to-cyan-500/5 group-hover:from-teal-600/20",
-  "from-sky-600/10 to-indigo-500/5 group-hover:from-sky-600/20",
-  "from-violet-600/10 to-fuchsia-500/5 group-hover:from-violet-600/20",
+  "from-emerald-600/10 to-teal-500/5 group-hover:from-emerald-600/20 dark:from-emerald-500/8 dark:to-teal-500/4 dark:group-hover:from-emerald-500/15",
+  "from-teal-600/10 to-cyan-500/5 group-hover:from-teal-600/20 dark:from-teal-500/8 dark:to-cyan-500/4 dark:group-hover:from-teal-500/15",
+  "from-sky-600/10 to-indigo-500/5 group-hover:from-sky-600/20 dark:from-sky-500/8 dark:to-indigo-500/4 dark:group-hover:from-sky-500/15",
+  "from-violet-600/10 to-fuchsia-500/5 group-hover:from-violet-600/20 dark:from-violet-500/8 dark:to-fuchsia-500/4 dark:group-hover:from-violet-500/15",
 ] as const;
 
 const PROOF_ICON_GRADIENTS = [
@@ -274,10 +276,10 @@ const PROOF_ICON_GRADIENTS = [
 
 const FEATURE_CARD_GLOW: Record<FeatureAccent, string> = {
   emerald:
-    "hover:shadow-emerald-600/25 group-hover:border-emerald-500/30 before:group-hover:opacity-100 before:bg-gradient-to-r before:from-emerald-600 before:via-emerald-500 before:to-teal-500",
-  sky: "hover:shadow-sky-600/20 group-hover:border-sky-500/30 before:group-hover:opacity-100 before:bg-gradient-to-r before:from-sky-600 before:via-cyan-500 before:to-emerald-500",
+    "hover:shadow-emerald-600/25 group-hover:border-emerald-500/30 before:group-hover:opacity-100 before:bg-gradient-to-r before:from-emerald-600 before:via-emerald-500 before:to-teal-500 dark:hover:shadow-emerald-500/15 dark:group-hover:border-emerald-400/35",
+  sky: "hover:shadow-sky-600/20 group-hover:border-sky-500/30 before:group-hover:opacity-100 before:bg-gradient-to-r before:from-sky-600 before:via-cyan-500 before:to-emerald-500 dark:hover:shadow-sky-500/15 dark:group-hover:border-sky-400/35",
   violet:
-    "hover:shadow-violet-600/20 group-hover:border-violet-500/30 before:group-hover:opacity-100 before:bg-gradient-to-r before:from-violet-600 before:via-purple-500 before:to-indigo-500",
+    "hover:shadow-violet-600/20 group-hover:border-violet-500/30 before:group-hover:opacity-100 before:bg-gradient-to-r before:from-violet-600 before:via-purple-500 before:to-indigo-500 dark:hover:shadow-violet-500/15 dark:group-hover:border-violet-400/35",
 };
 
 const ACCENT_CHIP_GRADIENT: Record<FeatureAccent, string> = {
@@ -289,13 +291,14 @@ const ACCENT_CHIP_GRADIENT: Record<FeatureAccent, string> = {
 
 /** Section shells — alternating bands for clear separation (features section excluded) */
 const sectionShell =
-  "border-y border-emerald-200/80 py-16 md:py-24";
-const sectionBgWorkflow = "bg-white";
-const sectionBgModules = "bg-emerald-50/90";
-const sectionBgDemo = "bg-teal-50/80";
-const sectionBgPreview = "bg-sky-50/50";
-const sectionBgFaq = "bg-zinc-100/90";
-const sectionBgCta = "bg-gradient-to-b from-emerald-100/40 to-emerald-50/30";
+  "border-y border-emerald-200/80 py-16 md:py-24 dark:border-emerald-900/25";
+const sectionBgWorkflow = "bg-white dark:bg-[#0a0e16]";
+const sectionBgModules = "bg-emerald-50/90 dark:bg-[#071210]";
+const sectionBgDemo = "bg-teal-50/80 dark:bg-[#061218]";
+const sectionBgPreview = "bg-sky-50/50 dark:bg-[#080f18]";
+const sectionBgFaq = "bg-zinc-100/90 dark:bg-[#0c1018]";
+const sectionBgCta =
+  "bg-gradient-to-b from-emerald-100/40 to-emerald-50/30 dark:from-[#071510] dark:to-[#060a12]";
 
 function BrandLogo({ compact = false }: { compact?: boolean }) {
   return <LandingBrandLogo compact={compact} />;
@@ -304,7 +307,7 @@ function BrandLogo({ compact = false }: { compact?: boolean }) {
 function LandingNavbar({ isSignedIn }: { isSignedIn: boolean }) {
   return (
     <header className="sticky top-0 z-50">
-      <div className="border-b border-zinc-200/90 bg-white/90 shadow-[0_1px_0_0_rgba(255,255,255,0.8)_inset,0_4px_24px_-4px_rgba(6,78,59,0.12)] backdrop-blur-xl backdrop-saturate-150">
+      <div className="border-b border-zinc-200/90 bg-white/90 shadow-[0_1px_0_0_rgba(255,255,255,0.8)_inset,0_4px_24px_-4px_rgba(6,78,59,0.12)] backdrop-blur-xl backdrop-saturate-150 dark:border-emerald-900/30 dark:bg-[#0a0f18]/85 dark:shadow-[0_1px_0_0_rgba(16,185,129,0.06)_inset,0_4px_32px_-4px_rgba(0,0,0,0.55)]">
         <div
           className={`${LANDING_MAX} flex h-[4.5rem] items-center justify-between gap-4 lg:gap-8`}
         >
@@ -322,21 +325,21 @@ function LandingNavbar({ isSignedIn }: { isSignedIn: boolean }) {
 
             <details className="relative lg:hidden">
               <summary
-                className="flex h-11 w-11 list-none cursor-pointer items-center justify-center rounded-lg border border-zinc-200/90 bg-zinc-50 text-zinc-700 transition hover:border-emerald-300/60 hover:bg-white hover:text-emerald-900 marker:content-none [&::-webkit-details-marker]:hidden"
+                className="flex h-11 w-11 list-none cursor-pointer items-center justify-center rounded-lg border border-zinc-200/90 bg-zinc-50 text-zinc-700 transition hover:border-emerald-300/60 hover:bg-white hover:text-emerald-900 marker:content-none dark:border-emerald-900/40 dark:bg-[#141f30] dark:text-zinc-300 dark:hover:border-emerald-600/50 dark:hover:bg-[#1a2538] dark:hover:text-emerald-300 [&::-webkit-details-marker]:hidden"
                 aria-label="Open menu"
               >
                 <Menu className="h-5 w-5" aria-hidden />
               </summary>
-              <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-60 overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-2xl shadow-emerald-950/10 ring-1 ring-zinc-100">
-                <div className="border-b border-zinc-100 bg-zinc-50/80 px-4 py-3">
-                  <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+              <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-60 overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-2xl shadow-emerald-950/10 ring-1 ring-zinc-100 dark:border-emerald-900/40 dark:bg-[#111827] dark:shadow-black/60 dark:ring-emerald-900/30">
+                <div className="border-b border-zinc-100 bg-zinc-50/80 px-4 py-3 dark:border-emerald-900/30 dark:bg-[#0f1624]">
+                  <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-emerald-400/70">
                     Navigate
                   </p>
                 </div>
                 <div className="p-2">
                   <LandingMobileNavLinks items={NAV_ANCHORS} />
                 </div>
-                <div className="space-y-2 border-t border-zinc-100 bg-zinc-50/50 p-3">
+                <div className="space-y-2 border-t border-zinc-100 bg-zinc-50/50 p-3 dark:border-emerald-900/30 dark:bg-[#0d1524]">
                   {isSignedIn ? (
                     <Link className={`${navCtaPrimary} w-full`} href="/dashboard">
                       Go to dashboard
@@ -355,7 +358,7 @@ function LandingNavbar({ isSignedIn }: { isSignedIn: boolean }) {
             </details>
 
             <span
-              className="mx-0.5 hidden h-8 w-px bg-zinc-200 sm:block lg:mx-1"
+              className="mx-0.5 hidden h-8 w-px bg-zinc-200 sm:block lg:mx-1 dark:bg-emerald-900/40"
               aria-hidden
             />
 
@@ -379,53 +382,53 @@ function LandingNavbar({ isSignedIn }: { isSignedIn: boolean }) {
 function HeroMockPanel() {
   return (
     <div
-      className={`${premiumCard} ${cardHoverLift} relative overflow-hidden p-1 ring-2 ring-emerald-900/10`}
+      className={`${premiumCard} ${cardHoverLift} relative overflow-hidden p-1 ring-2 ring-emerald-900/10 dark:ring-emerald-500/15`}
       aria-hidden
     >
       <div className={`absolute inset-0 opacity-90 ${forestGradient}`} />
-      <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-teal-400/30 blur-3xl" />
-      <div className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-emerald-300/25 blur-3xl" />
-      <div className="relative rounded-[1.35rem] border border-white/10 bg-gradient-to-b from-white/95 to-emerald-50/80 p-5 shadow-inner backdrop-blur-md">
-        <div className="flex items-center justify-between border-b border-emerald-900/10 pb-4">
+      <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-teal-400/30 blur-3xl dark:bg-teal-500/20" />
+      <div className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-emerald-300/25 blur-3xl dark:bg-emerald-500/15" />
+      <div className="relative rounded-[1.35rem] border border-white/10 bg-gradient-to-b from-white/95 to-emerald-50/80 p-5 shadow-inner backdrop-blur-md dark:border-emerald-500/15 dark:from-[#141f30]/95 dark:to-[#0f172a]/90">
+        <div className="flex items-center justify-between border-b border-emerald-900/10 pb-4 dark:border-emerald-700/25">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-400">
               Career cockpit
             </p>
-            <p className="mt-1 text-sm font-semibold text-zinc-950">
+            <p className="mt-1 text-sm font-semibold text-zinc-950 dark:text-zinc-100">
               Senior Software Engineer match
             </p>
           </div>
-          <span className="rounded-full bg-gradient-to-r from-emerald-700 to-emerald-950 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+          <span className="rounded-full bg-gradient-to-r from-emerald-700 to-emerald-950 px-2.5 py-1 text-xs font-bold text-white shadow-sm dark:from-emerald-600 dark:to-teal-800">
             CV indexed
           </span>
         </div>
 
         <div className="mt-5 flex items-center gap-4">
           <div
-            className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-2xl font-bold text-white shadow-lg shadow-emerald-600/30"
+            className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-2xl font-bold text-white shadow-lg shadow-emerald-600/30 dark:from-emerald-500 dark:to-teal-700 dark:shadow-emerald-500/25"
             role="img"
             aria-label="86 percent job fit"
           >
             86%
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Job fit
             </p>
-            <p className="text-lg font-semibold text-zinc-950">Strong match</p>
-            <p className="mt-1 text-sm text-zinc-600">
+            <p className="text-lg font-semibold text-zinc-950 dark:text-zinc-100">Strong match</p>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
               Evidence from 12 CV chunks · 3 gaps to close
             </p>
           </div>
         </div>
 
         <div className="mt-5">
-          <p className="text-xs font-semibold text-zinc-500">Matched skills</p>
+          <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Matched skills</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {["Python", "React", "SQL", "AWS"].map((skill) => (
               <span
                 key={skill}
-                className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800"
+                className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-1 dark:ring-emerald-500/20"
               >
                 {skill}
               </span>
@@ -434,12 +437,12 @@ function HeroMockPanel() {
         </div>
 
         <div className="mt-4">
-          <p className="text-xs font-semibold text-zinc-500">Missing skills</p>
+          <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Missing skills</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {["Kubernetes", "GraphQL"].map((skill) => (
               <span
                 key={skill}
-                className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900"
+                className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-1 dark:ring-amber-500/20"
               >
                 {skill}
               </span>
@@ -447,12 +450,12 @@ function HeroMockPanel() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3">
+        <div className="mt-5 rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 dark:border-sky-500/20 dark:bg-sky-950/40">
           <div className="flex items-start gap-2">
-            <Bot className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" aria-hidden />
+            <Bot className="mt-0.5 h-4 w-4 shrink-0 text-sky-700 dark:text-sky-400" aria-hidden />
             <div>
-              <p className="text-xs font-semibold text-sky-800">AI recommendation</p>
-              <p className="mt-1 text-sm leading-relaxed text-sky-950">
+              <p className="text-xs font-semibold text-sky-800 dark:text-sky-300">AI recommendation</p>
+              <p className="mt-1 text-sm leading-relaxed text-sky-950 dark:text-sky-100">
                 Prioritize a Kubernetes mini-project, then generate a tailored cover
                 letter for this role.
               </p>
@@ -460,14 +463,14 @@ function HeroMockPanel() {
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-3">
+        <div className="mt-4 flex items-center justify-between rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-3 dark:border-violet-500/20 dark:bg-violet-950/35">
           <div className="flex items-center gap-2">
-            <BriefcaseBusiness className="h-4 w-4 text-violet-700" aria-hidden />
-            <span className="text-sm font-semibold text-violet-900">
+            <BriefcaseBusiness className="h-4 w-4 text-violet-700 dark:text-violet-400" aria-hidden />
+            <span className="text-sm font-semibold text-violet-900 dark:text-violet-200">
               Tracker status
             </span>
           </div>
-          <span className="text-sm font-medium text-violet-800">
+          <span className="text-sm font-medium text-violet-800 dark:text-violet-300">
             2 in Interviewing · 5 Saved
           </span>
         </div>
@@ -495,10 +498,10 @@ function ProofStrip() {
             >
               <Icon className="h-5 w-5" aria-hidden />
             </span>
-            <h3 className="relative mt-4 text-base font-semibold text-emerald-950">
+            <h3 className="relative mt-4 text-base font-semibold text-emerald-950 dark:text-emerald-200">
               {card.title}
             </h3>
-            <p className="relative mt-2 text-sm leading-relaxed text-zinc-600">
+            <p className="relative mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
               {card.description}
             </p>
           </article>
@@ -513,16 +516,16 @@ function WorkflowTimeline() {
   <>
     <ol className="relative hidden gap-0 lg:grid lg:grid-cols-6">
       <div
-        className="pointer-events-none absolute left-[8%] right-[8%] top-6 h-0.5 bg-gradient-to-r from-emerald-200 via-sky-200 to-violet-200"
+        className="pointer-events-none absolute left-[8%] right-[8%] top-6 h-0.5 bg-gradient-to-r from-emerald-200 via-sky-200 to-violet-200 dark:from-emerald-800/60 dark:via-sky-800/50 dark:to-violet-800/50"
         aria-hidden
       />
       {WORKFLOW_STEPS.map((item) => (
         <li key={item.step} className="group relative flex flex-col items-center px-2 text-center">
-          <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-800 via-emerald-700 to-teal-900 text-sm font-bold text-white shadow-lg shadow-emerald-950/30 transition duration-300 group-hover:scale-110 group-hover:shadow-emerald-600/40">
+          <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-800 via-emerald-700 to-teal-900 text-sm font-bold text-white shadow-lg shadow-emerald-950/30 transition duration-300 group-hover:scale-110 group-hover:shadow-emerald-600/40 dark:from-emerald-600 dark:via-emerald-500 dark:to-teal-700 dark:shadow-emerald-500/20 dark:group-hover:shadow-emerald-500/30">
             {item.step}
           </span>
-          <h3 className="mt-4 text-sm font-semibold text-zinc-950">{item.title}</h3>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-600">
+          <h3 className="mt-4 text-sm font-semibold text-zinc-950 dark:text-zinc-100">{item.title}</h3>
+          <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
             {item.description}
           </p>
         </li>
@@ -533,14 +536,14 @@ function WorkflowTimeline() {
       {WORKFLOW_STEPS.map((item, index) => (
         <li
           key={item.step}
-          className="relative flex gap-4 border-l-2 border-emerald-200 pb-8 pl-6 last:border-transparent last:pb-0"
+          className="relative flex gap-4 border-l-2 border-emerald-200 pb-8 pl-6 last:border-transparent last:pb-0 dark:border-emerald-800/50"
         >
-          <span className="absolute -left-[1.05rem] flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-800 to-emerald-950 text-xs font-bold text-white shadow-md">
+          <span className="absolute -left-[1.05rem] flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-800 to-emerald-950 text-xs font-bold text-white shadow-md dark:from-emerald-600 dark:to-teal-800">
             {item.step}
           </span>
           <div>
-            <h3 className="text-base font-semibold text-zinc-950">{item.title}</h3>
-            <p className="mt-1 text-sm leading-relaxed text-zinc-600">
+            <h3 className="text-base font-semibold text-zinc-950 dark:text-zinc-100">{item.title}</h3>
+            <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
               {item.description}
             </p>
           </div>
@@ -579,11 +582,11 @@ function FeatureCard({
           {badge}
         </span>
       </div>
-      <h3 className="mt-5 text-lg font-semibold text-emerald-950">{title}</h3>
-      <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-600">
+      <h3 className="mt-5 text-lg font-semibold text-emerald-950 dark:text-emerald-200">{title}</h3>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
         {description}
       </p>
-      <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-800 transition group-hover:text-emerald-950">
+      <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-800 transition group-hover:text-emerald-950 dark:text-emerald-400 dark:group-hover:text-emerald-300">
         Explore
         <ChevronRight
           className="h-4 w-4 transition group-hover:translate-x-1"
@@ -609,17 +612,17 @@ function DemoJourney() {
                   <div
                     className={`${premiumCard} ${cardHoverLift} group/step flex flex-1 flex-col items-center p-4 text-center lg:p-5`}
                   >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-800 via-emerald-600 to-teal-700 text-white shadow-lg shadow-emerald-900/30 transition duration-300 group-hover/step:scale-110 group-hover/step:shadow-emerald-700/40">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-800 via-emerald-600 to-teal-700 text-white shadow-lg shadow-emerald-900/30 transition duration-300 group-hover/step:scale-110 group-hover/step:shadow-emerald-700/40 dark:from-emerald-600 dark:via-emerald-500 dark:to-teal-600 dark:shadow-emerald-500/20 dark:group-hover/step:shadow-emerald-500/30">
                       <Icon className="h-5 w-5" aria-hidden />
                     </span>
-                    <p className="mt-3 text-sm font-semibold text-zinc-950">
+                    <p className="mt-3 text-sm font-semibold text-zinc-950 dark:text-zinc-100">
                       {step.label}
                     </p>
-                    <p className="mt-1 text-xs text-zinc-500">Step {index + 1}</p>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Step {index + 1}</p>
                   </div>
                   {index < DEMO_STEPS.length - 1 && (
                     <div
-                      className="flex items-center justify-center py-2 text-emerald-400 lg:hidden"
+                      className="flex items-center justify-center py-2 text-emerald-400 lg:hidden dark:text-emerald-600"
                       aria-hidden
                     >
                       <ChevronRight className="h-5 w-5 rotate-90" />
@@ -628,7 +631,7 @@ function DemoJourney() {
                 </div>
                 {index < DEMO_STEPS.length - 1 && (
                   <div
-                    className="hidden shrink-0 items-center px-1 text-emerald-300 lg:flex"
+                    className="hidden shrink-0 items-center px-1 text-emerald-300 lg:flex dark:text-emerald-700"
                     aria-hidden
                   >
                     <ChevronRight className="h-5 w-5" />
@@ -655,13 +658,13 @@ function SectionHeader({
 }) {
   return (
     <div className="max-w-3xl">
-      <p className="inline-flex rounded-full bg-gradient-to-r from-emerald-900/10 to-teal-800/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-900 ring-1 ring-emerald-800/15">
+      <p className="inline-flex rounded-full bg-gradient-to-r from-emerald-900/10 to-teal-800/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-900 ring-1 ring-emerald-800/15 dark:from-emerald-500/10 dark:to-teal-500/10 dark:text-emerald-300 dark:ring-emerald-500/25">
         {eyebrowText}
       </p>
       <h2 id={id} className={`mt-3 text-3xl font-semibold tracking-tight md:text-4xl ${sectionTitle}`}>
         {title}
       </h2>
-      <p className="mt-3 text-base leading-7 text-zinc-600">{description}</p>
+      <p className="mt-3 text-base leading-7 text-zinc-600 dark:text-zinc-400">{description}</p>
     </div>
   );
 }
@@ -669,10 +672,10 @@ function SectionHeader({
 function ResumeMockPanel() {
   return (
     <div className={`${premiumCard} ${cardHoverLift} p-6 transition duration-300 hover:ring-emerald-600/20`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-400">
         Resume intelligence
       </p>
-      <h3 className="mt-2 text-lg font-semibold text-zinc-950">Indexed CV sections</h3>
+      <h3 className="mt-2 text-lg font-semibold text-zinc-950 dark:text-zinc-100">Indexed CV sections</h3>
       <ul className="mt-4 space-y-3">
         {[
           { section: "Experience", score: 94 },
@@ -681,24 +684,24 @@ function ResumeMockPanel() {
         ].map((row) => (
           <li
             key={row.section}
-            className="rounded-2xl border border-zinc-100 bg-zinc-50/80 p-3"
+            className="rounded-2xl border border-zinc-100 bg-zinc-50/80 p-3 dark:border-emerald-900/30 dark:bg-[#0f1624]"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium text-zinc-900">{row.section}</span>
-              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-800">
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200">{row.section}</span>
+              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-800 dark:bg-indigo-500/15 dark:text-indigo-300 dark:ring-1 dark:ring-indigo-500/20">
                 {row.score}% match
               </span>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200">
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-[#1a2538]">
               <div
-                className="h-full rounded-full bg-indigo-500"
+                className="h-full rounded-full bg-indigo-500 dark:bg-indigo-400"
                 style={{ width: `${row.score}%` }}
               />
             </div>
           </li>
         ))}
       </ul>
-      <p className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-3 text-sm text-indigo-950">
+      <p className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-3 text-sm text-indigo-950 dark:border-indigo-500/20 dark:bg-indigo-950/35 dark:text-indigo-200">
         “Led migration to microservices…” — chunk evidence for fit scoring.
       </p>
     </div>
@@ -708,34 +711,34 @@ function ResumeMockPanel() {
 function JobMatchMockPanel() {
   return (
     <div className={`${premiumCard} ${cardHoverLift} p-6 transition duration-300 md:-rotate-1 md:hover:rotate-0`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-400">
         Job match
       </p>
-      <h3 className="mt-2 text-lg font-semibold text-zinc-950">
+      <h3 className="mt-2 text-lg font-semibold text-zinc-950 dark:text-zinc-100">
         Senior Software Engineer
       </h3>
-      <p className="text-sm text-zinc-600">Northline Labs · Remote</p>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">Northline Labs · Remote</p>
       <div className="mt-4 flex items-center gap-3">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-lg font-bold text-white shadow-lg shadow-emerald-900/30">
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-lg font-bold text-white shadow-lg shadow-emerald-900/30 dark:from-emerald-600 dark:to-teal-800 dark:shadow-emerald-500/20">
           86
         </span>
         <div>
-          <p className="font-semibold text-emerald-800">Strong fit</p>
-          <p className="text-sm text-zinc-600">Programmatic score with evidence</p>
+          <p className="font-semibold text-emerald-800 dark:text-emerald-300">Strong fit</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Programmatic score with evidence</p>
         </div>
       </div>
-      <ul className="mt-4 space-y-2 text-sm text-zinc-700">
+      <ul className="mt-4 space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
         <li className="flex gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
           4+ years backend experience cited from CV
         </li>
         <li className="flex gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
           React and SQL listed in skills section
         </li>
       </ul>
       <div className="mt-4 flex flex-wrap gap-1.5">
-        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900">
+        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-1 dark:ring-amber-500/20">
           Gap: Kubernetes
         </span>
       </div>
@@ -746,20 +749,20 @@ function JobMatchMockPanel() {
 function TrackerDashboardMockPanel() {
   return (
     <div className={`${premiumCard} ${cardHoverLift} p-6 transition duration-300 md:rotate-1 md:hover:rotate-0`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-violet-800">
+      <p className="text-xs font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-400">
         Tracker & dashboard
       </p>
       <div className="mt-4 grid grid-cols-3 gap-2">
         {["Saved", "Applied", "Interview"].map((col, i) => (
           <div
             key={col}
-            className="rounded-xl border border-zinc-100 bg-zinc-50/80 p-2"
+            className="rounded-xl border border-zinc-100 bg-zinc-50/80 p-2 dark:border-emerald-900/30 dark:bg-[#0f1624]"
           >
-            <p className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
               {col}
             </p>
             <div
-              className={`mt-2 rounded-lg border border-dashed border-zinc-200 bg-white p-2 text-xs font-medium text-zinc-700 ${i === 2 ? "border-emerald-200 bg-emerald-50/50" : ""}`}
+              className={`mt-2 rounded-lg border border-dashed border-zinc-200 bg-white p-2 text-xs font-medium text-zinc-700 dark:border-emerald-900/40 dark:bg-[#141f30] dark:text-zinc-300 ${i === 2 ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-600/30 dark:bg-emerald-950/40" : ""}`}
             >
               {i === 0 ? "3 roles" : i === 1 ? "2 roles" : "2 active"}
             </div>
@@ -767,13 +770,13 @@ function TrackerDashboardMockPanel() {
         ))}
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="rounded-2xl border border-zinc-100 bg-white p-3">
-          <p className="text-xs text-zinc-500">Applications</p>
-          <p className="text-2xl font-semibold text-zinc-950">12</p>
+        <div className="rounded-2xl border border-zinc-100 bg-white p-3 dark:border-emerald-900/30 dark:bg-[#141f30]">
+          <p className="text-xs text-zinc-500 dark:text-zinc-500">Applications</p>
+          <p className="text-2xl font-semibold text-zinc-950 dark:text-zinc-100">12</p>
         </div>
-        <div className="rounded-2xl border border-zinc-100 bg-white p-3">
-          <p className="text-xs text-zinc-500">Skills indexed</p>
-          <p className="text-2xl font-semibold text-zinc-950">28</p>
+        <div className="rounded-2xl border border-zinc-100 bg-white p-3 dark:border-emerald-900/30 dark:bg-[#141f30]">
+          <p className="text-xs text-zinc-500 dark:text-zinc-500">Skills indexed</p>
+          <p className="text-2xl font-semibold text-zinc-950 dark:text-zinc-100">28</p>
         </div>
       </div>
     </div>
@@ -788,17 +791,17 @@ function FaqItem({
   answer: string;
 }) {
   return (
-    <details className="group rounded-2xl border border-emerald-900/10 bg-gradient-to-r from-white to-emerald-50/30 shadow-sm transition-all duration-300 hover:border-emerald-700/25 hover:shadow-md hover:shadow-emerald-900/10 open:border-emerald-700/30 open:bg-gradient-to-r open:from-emerald-50/50 open:to-white open:shadow-lg">
-      <summary className="cursor-pointer list-none px-5 py-4 text-base font-semibold text-emerald-950 marker:content-none transition-colors hover:text-emerald-900 [&::-webkit-details-marker]:hidden">
+    <details className="group rounded-2xl border border-emerald-900/10 bg-gradient-to-r from-white to-emerald-50/30 shadow-sm transition-all duration-300 hover:border-emerald-700/25 hover:shadow-md hover:shadow-emerald-900/10 open:border-emerald-700/30 open:bg-gradient-to-r open:from-emerald-50/50 open:to-white open:shadow-lg dark:border-emerald-800/25 dark:bg-gradient-to-r dark:from-[#111827] dark:to-[#0f1624] dark:shadow-black/30 dark:hover:border-emerald-600/35 dark:hover:shadow-emerald-500/5 dark:open:border-emerald-500/40 dark:open:from-[#0f1a14] dark:open:to-[#111827] dark:open:shadow-emerald-500/10">
+      <summary className="cursor-pointer list-none px-5 py-4 text-base font-semibold text-emerald-950 marker:content-none transition-colors hover:text-emerald-900 dark:text-emerald-200 dark:hover:text-emerald-100 [&::-webkit-details-marker]:hidden">
         <span className="flex items-center justify-between gap-3">
           {question}
           <ChevronRight
-            className="h-5 w-5 shrink-0 text-zinc-400 transition group-open:rotate-90"
+            className="h-5 w-5 shrink-0 text-zinc-400 transition group-open:rotate-90 dark:text-zinc-500"
             aria-hidden
           />
         </span>
       </summary>
-      <div className="border-t border-zinc-100 px-5 pb-4 pt-3 text-sm leading-relaxed text-zinc-600">
+      <div className="border-t border-zinc-100 px-5 pb-4 pt-3 text-sm leading-relaxed text-zinc-600 dark:border-emerald-900/30 dark:text-zinc-400">
         {answer}
       </div>
     </details>
@@ -808,15 +811,15 @@ function FaqItem({
 function FinalCta() {
   return (
     <section
-      className={`relative overflow-hidden rounded-3xl px-6 py-14 text-center text-white shadow-2xl shadow-emerald-950/40 md:px-12 ${forestGradient}`}
+      className={`relative overflow-hidden rounded-3xl px-6 py-14 text-center text-white shadow-2xl shadow-emerald-950/40 md:px-12 dark:shadow-black/60 ${forestGradient}`}
       aria-labelledby="final-cta-heading"
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.12),transparent_45%),radial-gradient(circle_at_80%_70%,rgba(20,184,166,0.25),transparent_50%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.12),transparent_45%),radial-gradient(circle_at_80%_70%,rgba(20,184,166,0.25),transparent_50%)] dark:bg-[radial-gradient(circle_at_20%_30%,rgba(52,211,153,0.08),transparent_45%),radial-gradient(circle_at_80%_70%,rgba(20,184,166,0.15),transparent_50%)]"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-teal-400/20 blur-3xl"
+        className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-teal-400/20 blur-3xl dark:bg-teal-500/10"
         aria-hidden
       />
       <h2
@@ -825,20 +828,20 @@ function FinalCta() {
       >
         Start with your CV. Let CareerPilot handle the rest.
       </h2>
-      <p className="relative mx-auto mt-4 max-w-2xl text-base text-emerald-50">
+      <p className="relative mx-auto mt-4 max-w-2xl text-base text-emerald-50 dark:text-emerald-200/80">
         Sign in to upload your resume, search jobs, score fit, and track every
         application in one workspace.
       </p>
       <div className="relative mt-8 flex flex-wrap items-center justify-center gap-3">
         <AuthEntryLink
-          className="inline-flex h-12 items-center gap-2 rounded-xl bg-white px-6 text-sm font-bold text-emerald-900 shadow-lg transition duration-300 hover:scale-105 hover:bg-emerald-50 hover:shadow-xl"
+          className="inline-flex h-12 items-center gap-2 rounded-xl bg-white px-6 text-sm font-bold text-emerald-900 shadow-lg transition duration-300 hover:scale-105 hover:bg-emerald-50 hover:shadow-xl dark:bg-emerald-100 dark:text-emerald-950 dark:hover:bg-white"
           href={loginNext("/resume")}
         >
           Upload CV
           <ArrowRight className="h-4 w-4" aria-hidden />
         </AuthEntryLink>
         <AuthEntryLink
-          className="inline-flex h-12 items-center rounded-xl border-2 border-white/40 px-6 text-sm font-bold text-white backdrop-blur transition duration-300 hover:scale-105 hover:border-white hover:bg-white/15"
+          className="inline-flex h-12 items-center rounded-xl border-2 border-white/40 px-6 text-sm font-bold text-white backdrop-blur transition duration-300 hover:scale-105 hover:border-white hover:bg-white/15 dark:border-emerald-300/30 dark:hover:border-emerald-200/60 dark:hover:bg-emerald-500/10"
           href="/login"
         >
           Sign in
@@ -850,21 +853,21 @@ function FinalCta() {
 
 function LandingFooter() {
   return (
-    <footer className={`border-t border-emerald-900/15 py-10 text-emerald-50 ${forestGradient}`}>
+    <footer className={`border-t border-emerald-900/15 py-10 text-emerald-50 dark:border-emerald-800/30 ${forestGradient}`}>
       <div
         className={`${LANDING_MAX} flex flex-col items-center justify-between gap-6 sm:flex-row`}
       >
         <Link className="flex items-center gap-2.5" href="/">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 shadow-sm ring-1 ring-white/20">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 shadow-sm ring-1 ring-white/20 dark:bg-emerald-500/15 dark:ring-emerald-400/25">
             <Sparkles className="h-4 w-4 text-white" aria-hidden />
           </span>
           <span className="text-sm font-bold text-white">CareerPilot</span>
         </Link>
-        <p className="text-sm text-emerald-100/80">
+        <p className="text-sm text-emerald-100/80 dark:text-emerald-300/70">
           © {new Date().getFullYear()} CareerPilot. AI-powered career co-pilot.
         </p>
         <AuthEntryLink
-          className="rounded-lg border border-white/25 px-4 py-2 text-sm font-semibold text-white transition duration-300 hover:scale-105 hover:border-white/50 hover:bg-white/10"
+          className="rounded-lg border border-white/25 px-4 py-2 text-sm font-semibold text-white transition duration-300 hover:scale-105 hover:border-white/50 hover:bg-white/10 dark:border-emerald-400/25 dark:hover:border-emerald-300/50 dark:hover:bg-emerald-500/10"
           href="/login"
         >
           Sign in
@@ -879,33 +882,33 @@ export default async function Home() {
   const user = await getServerUser(supabase, "home page");
 
   return (
-    <main className="min-h-screen bg-zinc-200/50 text-zinc-950">
+    <main className="min-h-screen bg-zinc-200/50 text-zinc-950 dark:bg-[#060a12] dark:text-zinc-50">
       <LandingNavbar isSignedIn={Boolean(user)} />
 
       {/* Hero */}
       <section
         id="features"
-        className={`relative overflow-hidden border-b border-emerald-900/10 ${LANDING_SECTION_SCROLL_MARGIN}`}
+        className={`relative overflow-hidden border-b border-emerald-900/10 ${LANDING_SECTION_SCROLL_MARGIN} dark:border-emerald-900/25`}
         aria-labelledby="hero-heading"
       >
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_0%,rgba(6,78,59,0.15),transparent_50%),radial-gradient(ellipse_at_80%_100%,rgba(14,116,144,0.12),transparent_45%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_0%,rgba(6,78,59,0.15),transparent_50%),radial-gradient(ellipse_at_80%_100%,rgba(14,116,144,0.12),transparent_45%)] dark:bg-[radial-gradient(ellipse_at_20%_0%,rgba(16,185,129,0.08),transparent_50%),radial-gradient(ellipse_at_80%_100%,rgba(20,184,166,0.06),transparent_45%)]"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(6,95,70,0.08)_1px,transparent_0)] [background-size:28px_28px]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(6,95,70,0.08)_1px,transparent_0)] [background-size:28px_28px] dark:bg-[radial-gradient(circle_at_1px_1px,rgba(16,185,129,0.06)_1px,transparent_0)]"
           aria-hidden
         />
         <div className={`${LANDING_MAX} relative grid gap-10 py-14 md:py-20 lg:grid-cols-2 lg:items-center lg:gap-12`}>
           <div
-            className={`relative overflow-hidden rounded-3xl p-8 shadow-2xl shadow-emerald-950/25 ring-1 ring-emerald-900/20 md:p-10 ${forestGradient}`}
+            className={`relative overflow-hidden rounded-3xl p-8 shadow-2xl shadow-emerald-950/25 ring-1 ring-emerald-900/20 md:p-10 dark:shadow-black/50 dark:ring-emerald-500/20 ${forestGradient}`}
           >
             <div
-              className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-teal-400/20 blur-3xl"
+              className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-teal-400/20 blur-3xl dark:bg-teal-500/10"
               aria-hidden
             />
-            <p className="relative inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm font-semibold text-emerald-100 backdrop-blur">
-              <Zap className="h-4 w-4 text-emerald-300" aria-hidden />
+            <p className="relative inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm font-semibold text-emerald-100 backdrop-blur dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200">
+              <Zap className="h-4 w-4 text-emerald-300 dark:text-emerald-400" aria-hidden />
               AI-powered career co-pilot
             </p>
             <h1
@@ -914,7 +917,7 @@ export default async function Home() {
             >
               Your AI Career Co-pilot from CV to Job Offer
             </h1>
-            <p className="relative mt-5 max-w-xl text-lg leading-8 text-emerald-100/90">
+            <p className="relative mt-5 max-w-xl text-lg leading-8 text-emerald-100/90 dark:text-emerald-200/85">
               CareerPilot understands your CV, finds matching jobs, scores fit with
               evidence, drafts applications, builds learning roadmaps, and tracks
               your progress — from first upload to offer.
@@ -925,7 +928,7 @@ export default async function Home() {
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </AuthEntryLink>
               <AuthEntryLink
-                className="inline-flex h-12 items-center rounded-xl border-2 border-white/30 bg-white/10 px-5 text-sm font-bold text-white backdrop-blur transition duration-300 hover:scale-[1.02] hover:border-white/50 hover:bg-white/20"
+                className="inline-flex h-12 items-center rounded-xl border-2 border-white/30 bg-white/10 px-5 text-sm font-bold text-white backdrop-blur transition duration-300 hover:scale-[1.02] hover:border-white/50 hover:bg-white/20 dark:border-emerald-400/25 dark:bg-emerald-500/10 dark:hover:border-emerald-300/40 dark:hover:bg-emerald-500/20"
                 href={loginNext("/jobs")}
               >
                 Find matching jobs
@@ -953,7 +956,7 @@ export default async function Home() {
             id="workflow-heading"
             title="How CareerPilot works"
           />
-          <div className="mt-12 rounded-3xl border border-emerald-200/80 bg-white p-6 shadow-lg shadow-emerald-950/8 md:p-10">
+          <div className="mt-12 rounded-3xl border border-emerald-200/80 bg-white p-6 shadow-lg shadow-emerald-950/8 md:p-10 dark:border-emerald-900/30 dark:bg-[#111827] dark:shadow-black/40">
             <WorkflowTimeline />
           </div>
         </div>

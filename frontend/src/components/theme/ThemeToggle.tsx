@@ -1,14 +1,24 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
+import { useSyncExternalStore } from "react";
 
 import { suppressExtensionHydrationProps } from "@/lib/hydration";
 
 import { useTheme } from "./ThemeProvider";
 
+function subscribe() {
+  return () => {};
+}
+
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
-  const isDark = theme === "dark";
+  const mounted = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
+  const isDark = mounted && theme === "dark";
 
   return (
     <button

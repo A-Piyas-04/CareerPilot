@@ -124,11 +124,11 @@ export function LandingSectionNav({ items }: LandingSectionNavProps) {
   return (
     <div
       ref={containerRef}
-      className="relative inline-flex items-center rounded-full border border-zinc-200/90 bg-zinc-100 p-1 shadow-inner shadow-zinc-900/[0.05]"
+      className="relative inline-flex items-center rounded-full border border-zinc-200/90 bg-zinc-100 p-1 shadow-inner shadow-zinc-900/[0.05] dark:border-emerald-900/40 dark:bg-[#0f1624] dark:shadow-black/30"
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-white shadow-sm ring-1 ring-zinc-200/70 transition-[left,width] duration-500 ease-out"
+        className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-white shadow-sm ring-1 ring-zinc-200/70 transition-[left,width] duration-500 ease-out dark:bg-[#1a2538] dark:shadow-emerald-950/40 dark:ring-emerald-700/30"
         style={{ left: indicator.left, width: indicator.width }}
       />
       {items.map((item, index) => {
@@ -144,8 +144,8 @@ export function LandingSectionNav({ items }: LandingSectionNavProps) {
             onClick={(event) => handleNavClick(event, index, item.href)}
             className={`relative z-10 rounded-full px-5 py-2.5 text-[15px] font-medium tracking-wide transition-colors duration-300 ease-out ${
               isActive
-                ? "text-emerald-900"
-                : "text-zinc-600 hover:text-zinc-900"
+                ? "text-emerald-900 dark:text-emerald-300"
+                : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             }`}
           >
             {item.label}

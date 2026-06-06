@@ -1,20 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ThemeInitScript } from "@/components/theme/ThemeInitScript";
 import { Providers } from "./providers";
-
-const themeInitScript = `
-(function () {
-  try {
-    var theme = window.localStorage.getItem("careerpilot-theme");
-    if (theme !== "dark" && theme !== "light") theme = "light";
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.style.colorScheme = theme;
-  } catch (_) {
-    document.documentElement.dataset.theme = "light";
-  }
-})();
-`;
 
 export const metadata: Metadata = {
   title: "CareerPilot",
@@ -28,10 +15,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
       <body className="flex min-h-full flex-col bg-[var(--cp-workspace-main)]">
+        <ThemeInitScript />
         <Providers>{children}</Providers>
       </body>
     </html>

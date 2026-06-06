@@ -2,10 +2,11 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -21,21 +22,28 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+const themeListeners = new Set<() => void>();
+let persistedTheme: ThemeMode | null = null;
+
 function isThemeMode(value: unknown): value is ThemeMode {
   return value === "light" || value === "dark";
 }
 
 function readStoredTheme(): ThemeMode {
-  if (typeof window === "undefined") {
-    return "light";
-  }
-
   try {
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
     return isThemeMode(stored) ? stored : "light";
   } catch {
     return "light";
   }
+}
+
+function readResolvedTheme(): ThemeMode {
+  const fromDom = document.documentElement.dataset.theme;
+  if (isThemeMode(fromDom)) {
+    return fromDom;
+  }
+  return readStoredTheme();
 }
 
 function applyTheme(theme: ThemeMode) {
@@ -48,38 +56,80 @@ function applyTheme(theme: ThemeMode) {
   document.documentElement.style.colorScheme = theme;
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>(() => readStoredTheme());
+function getServerSnapshot(): ThemeMode {
+  return "light";
+}
 
-  useEffect(() => {
-    applyTheme(theme);
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-    } catch {
-      /* ignore storage errors */
-    }
-  }, [theme]);
+function getClientSnapshot(): ThemeMode {
+  if (persistedTheme !== null) {
+    return persistedTheme;
+  }
+
+  return readResolvedTheme();
+}
+
+function subscribe(listener: () => void) {
+  themeListeners.add(listener);
+  return () => {
+    themeListeners.delete(listener);
+  };
+}
+
+function notifyThemeListeners() {
+  themeListeners.forEach((listener) => {
+    listener();
+  });
+}
+
+function setPersistedTheme(theme: ThemeMode) {
+  persistedTheme = theme;
+  applyTheme(theme);
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    /* ignore storage errors */
+  }
+  notifyThemeListeners();
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const theme = useSyncExternalStore(
+    subscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
 
   useEffect(() => {
     function handleStorage(event: StorageEvent) {
       if (event.key !== THEME_STORAGE_KEY || !isThemeMode(event.newValue)) {
         return;
       }
-      setThemeState(event.newValue);
+
+      persistedTheme = event.newValue;
+      applyTheme(event.newValue);
+      notifyThemeListeners();
     }
 
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
+  const setTheme = useCallback((next: ThemeMode) => {
+    setPersistedTheme(next);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    const current = getClientSnapshot();
+    setPersistedTheme(current === "dark" ? "light" : "dark");
+  }, []);
+
   const value = useMemo<ThemeContextValue>(
     () => ({
       theme,
-      setTheme: setThemeState,
-      toggleTheme: () =>
-        setThemeState((current) => (current === "dark" ? "light" : "dark")),
+      setTheme,
+      toggleTheme,
     }),
-    [theme],
+    [theme, setTheme, toggleTheme],
   );
 
   return (
