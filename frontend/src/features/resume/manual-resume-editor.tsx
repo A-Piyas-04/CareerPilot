@@ -179,7 +179,7 @@ export function ManualResumeEditor({
             value={payload.summary}
             onChange={(value) => setField("summary", value)}
             placeholder="Short overview of your background, target role, and strengths."
-            rows={4}
+            rows={8}
           />
         </EditorBlock>
 
@@ -340,8 +340,8 @@ function ExperienceEditor({
                   Current role
                 </label>
               </div>
-              <Textarea label="Description" value={item.description} onChange={(value) => onChange(updateAt(items, index, { ...item, description: value }))} rows={3} />
-              <Textarea label="Highlights, one per line" value={item.highlights.join("\n")} onChange={(value) => onChange(updateAt(items, index, { ...item, highlights: lines(value) }))} rows={3} />
+              <Textarea label="Description" value={item.description} onChange={(value) => onChange(updateAt(items, index, { ...item, description: value }))} rows={6} />
+              <Textarea label="Highlights, one per line" value={item.highlights.join("\n")} onChange={(value) => onChange(updateAt(items, index, { ...item, highlights: lines(value) }))} rows={6} />
             </div>
           </RepeatableRow>
         ))}
@@ -372,7 +372,9 @@ function EducationEditor({
               <Field label="Location" value={item.location} onChange={(value) => onChange(updateAt(items, index, { ...item, location: value }))} />
               <Field label="Start year" value={item.start_year} onChange={(value) => onChange(updateAt(items, index, { ...item, start_year: value }))} />
               <Field label="End year" value={item.end_year} onChange={(value) => onChange(updateAt(items, index, { ...item, end_year: value }))} />
-              <Field label="Details" value={item.details} onChange={(value) => onChange(updateAt(items, index, { ...item, details: value }))} />
+              <div className="sm:col-span-2">
+                <Textarea label="Details" value={item.details} onChange={(value) => onChange(updateAt(items, index, { ...item, details: value }))} rows={6} />
+              </div>
             </div>
           </RepeatableRow>
         ))}
@@ -403,8 +405,8 @@ function ProjectEditor({
                 <Field label="Technologies" value={item.technologies} onChange={(value) => onChange(updateAt(items, index, { ...item, technologies: value }))} placeholder="FastAPI, PostgreSQL" />
                 <Field label="Link" value={item.link} onChange={(value) => onChange(updateAt(items, index, { ...item, link: value }))} />
               </div>
-              <Textarea label="Description" value={item.description} onChange={(value) => onChange(updateAt(items, index, { ...item, description: value }))} rows={3} />
-              <Textarea label="Highlights, one per line" value={item.highlights.join("\n")} onChange={(value) => onChange(updateAt(items, index, { ...item, highlights: lines(value) }))} rows={3} />
+              <Textarea label="Description" value={item.description} onChange={(value) => onChange(updateAt(items, index, { ...item, description: value }))} rows={6} />
+              <Textarea label="Highlights, one per line" value={item.highlights.join("\n")} onChange={(value) => onChange(updateAt(items, index, { ...item, highlights: lines(value) }))} rows={6} />
             </div>
           </RepeatableRow>
         ))}
@@ -433,7 +435,9 @@ function CertificationEditor({
               <Field label="Name" value={item.name} onChange={(value) => onChange(updateAt(items, index, { ...item, name: value }))} />
               <Field label="Issuer" value={item.issuer} onChange={(value) => onChange(updateAt(items, index, { ...item, issuer: value }))} />
               <Field label="Date" value={item.date} onChange={(value) => onChange(updateAt(items, index, { ...item, date: value }))} />
-              <Field label="Details" value={item.details} onChange={(value) => onChange(updateAt(items, index, { ...item, details: value }))} />
+              <div className="sm:col-span-2">
+                <Textarea label="Details" value={item.details} onChange={(value) => onChange(updateAt(items, index, { ...item, details: value }))} rows={6} />
+              </div>
             </div>
           </RepeatableRow>
         ))}
@@ -560,11 +564,14 @@ function Field({
   );
 }
 
+const manualEditorProseTextareaClass =
+  "text-[1.3125rem] leading-[1.75] placeholder:text-[1.125rem]";
+
 function Textarea({
   label,
   onChange,
   placeholder,
-  rows = 3,
+  rows = 6,
   value,
 }: {
   label: string;
@@ -574,10 +581,10 @@ function Textarea({
   value: string;
 }) {
   return (
-    <label className="block text-xs font-semibold text-zinc-600">
+    <label className="block text-sm font-semibold text-zinc-600">
       {label}
       <textarea
-        className={`${textareaField} mt-1 font-medium leading-6 text-zinc-950`}
+        className={`${textareaField} mt-1.5 font-medium text-zinc-950 ${manualEditorProseTextareaClass}`}
         placeholder={placeholder}
         rows={rows}
         value={value}
@@ -638,13 +645,7 @@ function payloadFromDetail(detail?: ResumeDetail): ManualResumePayload {
         emptyCertification,
         "details",
       ),
-    languages:
-      formData<ManualLanguageInput[]>("languages") ??
-      section("languages")?.content
-        ?.split("\n")
-        .map((name) => ({ name: name.trim(), proficiency: "" }))
-        .filter((item) => item.name) ??
-      [],
+    languages: formData<ManualLanguageInput[]>("languages") ?? [],
   };
 }
 
