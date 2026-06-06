@@ -21,6 +21,7 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 _embedding_config_cache: dict = {}
+_cors_origins = settings.cors_origin_list
 
 
 @asynccontextmanager
@@ -28,6 +29,7 @@ async def lifespan(_app: FastAPI):
     """Validate embedding configuration on startup."""
     global _embedding_config_cache
     try:
+        logger.info("Configured CORS origins: %s", _cors_origins)
         _embedding_config_cache = validate_embedding_config_at_startup(strict=True)
     except Exception as exc:
         logger.error("Embedding configuration validation failed: %s", exc)
@@ -39,7 +41,7 @@ app = FastAPI(title="CareerPilot API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,7 +51,7 @@ app.add_middleware(
 def _cors_headers(request: Request) -> dict[str, str]:
     """Return CORS headers for the request origin when the origin is allowed."""
     origin = request.headers.get("origin")
-    if origin and (origin in settings.cors_origins or "*" in settings.cors_origins):
+    if origin and (origin in _cors_origins or "*" in _cors_origins):
         return {
             "Access-Control-Allow-Origin": origin,
             "Access-Control-Allow-Credentials": "true",

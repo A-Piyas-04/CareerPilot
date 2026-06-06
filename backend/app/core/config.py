@@ -1,5 +1,6 @@
 """Application configuration from environment variables."""
 from functools import lru_cache
+import json
 
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -7,6 +8,28 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Must match Supabase resume_chunks.embedding and match_resume_chunks RPC (vector(384)).
 DEFAULT_EMBEDDING_VECTOR_DIM = 384
 ALLOWED_EMBEDDING_COLUMNS = frozenset({"embedding", "embedding_new"})
+DEFAULT_CORS_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
+
+
+def _parse_cors_origins(value: str) -> list[str]:
+    """Parse CORS_ORIGINS from comma-separated text or a JSON string array."""
+    raw = (value or DEFAULT_CORS_ORIGINS).strip()
+    if not raw:
+        return []
+
+    if raw.startswith("["):
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            parsed = []
+        if isinstance(parsed, list):
+            return [
+                str(origin).strip().rstrip("/")
+                for origin in parsed
+                if str(origin).strip()
+            ]
+
+    return [origin.strip().rstrip("/") for origin in raw.split(",") if origin.strip()]
 
 
 class Settings(BaseSettings):
@@ -107,13 +130,14 @@ class Settings(BaseSettings):
     )
 
     # CORS
-    cors_origins: list[str] = Field(
-        default_factory=lambda: [
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-        ],
+    cors_origins: str = Field(
+        default=DEFAULT_CORS_ORIGINS,
         validation_alias="CORS_ORIGINS",
     )
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return _parse_cors_origins(self.cors_origins)
 
     model_config = SettingsConfigDict(
         env_file=".env",
