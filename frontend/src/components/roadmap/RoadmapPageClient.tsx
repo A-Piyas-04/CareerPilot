@@ -63,11 +63,12 @@ export function RoadmapPageClient() {
       return;
     }
 
+    const jobId = jobIdParam;
     let cancelled = false;
 
     async function loadJobContext() {
       try {
-        const matches = await listMatches({ job_id: jobIdParam, limit: 1 });
+        const matches = await listMatches({ job_id: jobId, limit: 1 });
         if (cancelled || !matches.length) {
           return;
         }
