@@ -3,6 +3,8 @@
 import { LineChart } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
+import type { MatchSummary } from "@/features/jobs/types";
+import { SavedJobSelect } from "@/features/jobs/saved-job-select";
 import { SpinnerButton } from "@/components/ui";
 import { suppressExtensionHydrationProps } from "@/lib/hydration";
 import {
@@ -23,6 +25,11 @@ type Props = {
   initialValues?: Partial<SkillGapFormValues>;
   previewMissingSkills?: string[];
   prefillLabel?: string | null;
+  savedJobs?: MatchSummary[];
+  isLoadingSavedJobs?: boolean;
+  savedJobsError?: string | null;
+  onSelectSavedJob?: (match: MatchSummary) => void;
+  onClearSavedJob?: () => void;
   isAnalyzing: boolean;
   onAnalyze: (values: SkillGapFormValues) => void;
 };
@@ -31,6 +38,11 @@ export function SkillGapAnalyzeForm({
   initialValues,
   previewMissingSkills = [],
   prefillLabel,
+  savedJobs = [],
+  isLoadingSavedJobs = false,
+  savedJobsError,
+  onSelectSavedJob,
+  onClearSavedJob,
   isAnalyzing,
   onAnalyze,
 }: Props) {
@@ -38,15 +50,41 @@ export function SkillGapAnalyzeForm({
   const [jobDescription, setJobDescription] = useState(
     initialValues?.jobDescription ?? "",
   );
+  const [selectedJobId, setSelectedJobId] = useState(
+    initialValues?.jobId ?? "",
+  );
 
   useEffect(() => {
-    if (initialValues?.targetRole) {
+    if (initialValues?.targetRole !== undefined) {
       setTargetRole(initialValues.targetRole);
     }
-    if (initialValues?.jobDescription) {
+    if (initialValues?.jobDescription !== undefined) {
       setJobDescription(initialValues.jobDescription);
     }
-  }, [initialValues?.targetRole, initialValues?.jobDescription]);
+    if (initialValues?.jobId !== undefined) {
+      setSelectedJobId(initialValues.jobId ?? "");
+    }
+  }, [
+    initialValues?.targetRole,
+    initialValues?.jobDescription,
+    initialValues?.jobId,
+  ]);
+
+  function handleSavedJobChange(jobId: string) {
+    if (!jobId) {
+      setSelectedJobId("");
+      onClearSavedJob?.();
+      return;
+    }
+
+    const match = savedJobs.find((item) => item.job.id === jobId);
+    if (!match) {
+      return;
+    }
+
+    setSelectedJobId(jobId);
+    onSelectSavedJob?.(match);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,7 +93,7 @@ export function SkillGapAnalyzeForm({
     onAnalyze({
       targetRole: targetRole.trim(),
       jobDescription: jobDescription.trim(),
-      jobId: initialValues?.jobId,
+      jobId: selectedJobId || initialValues?.jobId || null,
       resumeId: initialValues?.resumeId,
     });
   }
@@ -75,9 +113,20 @@ export function SkillGapAnalyzeForm({
 
       {prefillLabel ? (
         <p className={`mt-4 ${formHintPanel}`}>
-          Prefilled from Job Hunter — {prefillLabel}
+          Loaded job — {prefillLabel}
         </p>
       ) : null}
+
+      <div className="mt-5">
+        <SavedJobSelect
+          disabled={isAnalyzing}
+          error={savedJobsError}
+          isLoading={isLoadingSavedJobs}
+          onChange={handleSavedJobChange}
+          savedJobs={savedJobs}
+          value={selectedJobId}
+        />
+      </div>
 
       {previewMissingSkills.length > 0 ? (
         <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3">

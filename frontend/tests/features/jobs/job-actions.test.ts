@@ -38,11 +38,8 @@ describe("job action link builders", () => {
     expect(buildTrackerHref("app-1")).toBe("/tracker?applicationId=app-1");
   });
 
-  it("builds roadmap href with role and job description", () => {
-    const href = buildRoadmapHref(baseMatch);
-    expect(href).toContain("targetRole=Backend+Intern");
-    expect(href).toContain("company=Acme");
-    expect(href).toContain("jobDescription=");
+  it("builds roadmap href with job id", () => {
+    expect(buildRoadmapHref("job-1")).toBe("/roadmap?jobId=job-1");
   });
 
   it("returns standard job actions", () => {

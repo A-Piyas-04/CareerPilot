@@ -1,17 +1,42 @@
 "use client";
 
 import { Map } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { PageHeader, PageShell } from "@/components/layout";
 import { RoadmapGenerateForm } from "@/components/roadmap/RoadmapGenerateForm";
 import { RoadmapList } from "@/components/roadmap/RoadmapList";
 import { SubmissionProgress } from "@/components/ui";
+import { listMatches } from "@/features/jobs/api";
+import { useSavedJobMatches } from "@/features/jobs/hooks";
+import {
+  matchToSavedJobPrefill,
+  type SavedJobPrefill,
+} from "@/features/jobs/job-prefill";
 import { ROADMAP_GENERATE_STEPS } from "@/lib/progress/roadmap-progress";
 import { useGenerateRoadmap, useRoadmaps } from "@/lib/hooks/useRoadmaps";
 import { surfaceCard } from "@/lib/ui-theme";
 import type { GenerateRoadmapRequest } from "@/lib/roadmap/types";
+
+function prefillFromSearchParams(
+  targetRole: string | null,
+  jobDescription: string | null,
+  company: string | null,
+  jobId: string | null,
+): SavedJobPrefill | null {
+  if (!targetRole) {
+    return null;
+  }
+
+  return {
+    targetRole,
+    jobDescription: jobDescription ?? "",
+    jobId: jobId ?? "",
+    label: company ? `${targetRole} at ${company}` : targetRole,
+    previewMissingSkills: [],
+  };
+}
 
 export function RoadmapPageClient() {
   const router = useRouter();
@@ -19,16 +44,45 @@ export function RoadmapPageClient() {
   const targetRoleParam = searchParams.get("targetRole");
   const jobDescriptionParam = searchParams.get("jobDescription");
   const companyParam = searchParams.get("company");
+  const jobIdParam = searchParams.get("jobId");
 
   const roadmaps = useRoadmaps();
   const generateRoadmap = useGenerateRoadmap();
+  const savedJobsQuery = useSavedJobMatches();
+  const [prefill, setPrefill] = useState<SavedJobPrefill | null>(() =>
+    prefillFromSearchParams(
+      targetRoleParam,
+      jobDescriptionParam,
+      companyParam,
+      jobIdParam,
+    ),
+  );
 
-  const prefillLabel = useMemo(() => {
-    if (!targetRoleParam) return null;
-    return companyParam
-      ? `${targetRoleParam} at ${companyParam}`
-      : targetRoleParam;
-  }, [companyParam, targetRoleParam]);
+  useEffect(() => {
+    if (!jobIdParam) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadJobContext() {
+      try {
+        const matches = await listMatches({ job_id: jobIdParam, limit: 1 });
+        if (cancelled || !matches.length) {
+          return;
+        }
+
+        setPrefill(matchToSavedJobPrefill(matches[0]));
+      } catch {
+        // Prefill is optional; form remains usable without it.
+      }
+    }
+
+    void loadJobContext();
+    return () => {
+      cancelled = true;
+    };
+  }, [jobIdParam]);
 
   const handleGenerate = (payload: GenerateRoadmapRequest) => {
     generateRoadmap.mutate(payload, {
@@ -52,10 +106,18 @@ export function RoadmapPageClient() {
             isGenerating={generateRoadmap.isPending}
             onGenerate={handleGenerate}
             initialValues={{
-              targetRole: targetRoleParam ?? undefined,
-              jobDescription: jobDescriptionParam ?? undefined,
+              targetRole: prefill?.targetRole,
+              jobDescription: prefill?.jobDescription,
+              jobId: prefill?.jobId ?? jobIdParam,
             }}
-            prefillLabel={prefillLabel}
+            prefillLabel={prefill?.label}
+            savedJobs={savedJobsQuery.data ?? []}
+            isLoadingSavedJobs={savedJobsQuery.isLoading}
+            savedJobsError={savedJobsQuery.error?.message}
+            onSelectSavedJob={(match) =>
+              setPrefill(matchToSavedJobPrefill(match))
+            }
+            onClearSavedJob={() => setPrefill(null)}
           />
           <SubmissionProgress
             isActive={generateRoadmap.isPending}

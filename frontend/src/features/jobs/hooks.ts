@@ -16,6 +16,7 @@ export const jobsKeys = {
   matches: (resumeId: string | null, searchId?: string | null) =>
     ["job-matches", resumeId, searchId ?? "all"] as const,
   matchDetail: (matchId: string | null) => ["job-match", matchId] as const,
+  savedMatches: () => ["job-matches", "saved"] as const,
   searches: () => ["job-searches"] as const,
 };
 
@@ -32,6 +33,15 @@ export function useJobMatches(
         search_id: searchId ?? undefined,
       }),
     enabled: Boolean(resumeId) && enabled,
+  });
+}
+
+export function useSavedJobMatches(options: { enabled?: boolean } = {}) {
+  const { enabled = true } = options;
+  return useQuery({
+    queryKey: jobsKeys.savedMatches(),
+    queryFn: () => listMatches({ saved_only: true, limit: 100 }),
+    enabled,
   });
 }
 

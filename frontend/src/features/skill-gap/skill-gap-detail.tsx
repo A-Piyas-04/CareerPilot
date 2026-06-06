@@ -5,7 +5,6 @@ import { LineChart, Map } from "lucide-react";
 
 import { EmptyState, ListCardSkeleton } from "@/components/ui";
 import { buildRoadmapHref } from "@/features/jobs/job-actions";
-import type { MatchSummary } from "@/features/jobs/types";
 import type { SkillGapAnalysisDetail } from "@/lib/career-api";
 import {
   alertError,
@@ -54,34 +53,6 @@ export function SkillGapDetail({ analysis, isLoading, error }: Props) {
       )
     : [];
 
-  const roadmapMatch: MatchSummary = {
-    match_id: null,
-    job: {
-      id: analysis.job_id ?? "",
-      search_id: null,
-      title: analysis.target_role ?? "Target role",
-      company: null,
-      location: null,
-      salary_range: null,
-      job_type: null,
-      deadline: null,
-      description: null,
-      requirements: null,
-      source: null,
-      source_url: null,
-      raw_data: null,
-      created_at: analysis.created_at,
-    },
-    fit_score: 0,
-    matched_skills: analysis.current_skills,
-    missing_skills: analysis.missing_skills,
-    explanation: "",
-    evidence_chunks: [],
-    skills_component: 0,
-    mean_similarity: 0,
-    tracker_application_id: null,
-  };
-
   return (
     <div className="space-y-4">
       <div>
@@ -127,7 +98,14 @@ export function SkillGapDetail({ analysis, isLoading, error }: Props) {
       ) : null}
 
       {analysis.missing_skills.length > 0 ? (
-        <Link href={buildRoadmapHref(roadmapMatch)} className={btnPrimarySky}>
+        <Link
+          href={
+            analysis.job_id
+              ? buildRoadmapHref(analysis.job_id)
+              : `/roadmap?targetRole=${encodeURIComponent(analysis.target_role ?? "Target role")}`
+          }
+          className={btnPrimarySky}
+        >
           <Map className="h-4 w-4" />
           Build roadmap from gaps
         </Link>

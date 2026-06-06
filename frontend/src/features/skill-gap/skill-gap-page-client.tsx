@@ -7,6 +7,11 @@ import { useSearchParams } from "next/navigation";
 import { PageHeader, PageShell } from "@/components/layout";
 import { SubmissionProgress } from "@/components/ui";
 import { listMatches } from "@/features/jobs/api";
+import { useSavedJobMatches } from "@/features/jobs/hooks";
+import {
+  matchToSavedJobPrefill,
+  type SavedJobPrefill,
+} from "@/features/jobs/job-prefill";
 import { useResumes } from "@/features/resume/hooks";
 import { pickPrimaryResume } from "@/features/resume/types";
 import {
@@ -41,14 +46,9 @@ export function SkillGapPageClient() {
 
   const analysesQuery = useSkillGapAnalyses();
   const analyze = useAnalyzeSkillGap();
+  const savedJobsQuery = useSavedJobMatches();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [prefill, setPrefill] = useState<{
-    targetRole: string;
-    jobDescription: string;
-    jobId: string;
-    label: string;
-    previewMissingSkills: string[];
-  } | null>(null);
+  const [prefill, setPrefill] = useState<SavedJobPrefill | null>(null);
 
   const detailQuery = useSkillGapDetail(selectedId);
 
@@ -63,20 +63,7 @@ export function SkillGapPageClient() {
         const matches = await listMatches({ job_id: jobId, limit: 1 });
         if (cancelled || !matches.length) return;
 
-        const match = matches[0];
-        const job = match.job;
-        const description = [job.description, job.requirements]
-          .filter(Boolean)
-          .join("\n\n")
-          .trim();
-
-        setPrefill({
-          targetRole: job.title,
-          jobDescription: description,
-          jobId: job.id,
-          label: [job.title, job.company].filter(Boolean).join(" at "),
-          previewMissingSkills: match.missing_skills,
-        });
+        setPrefill(matchToSavedJobPrefill(matches[0]));
       } catch {
         // Prefill is optional; form remains usable without it.
       }
@@ -87,6 +74,14 @@ export function SkillGapPageClient() {
       cancelled = true;
     };
   }, [jobIdParam]);
+
+  function handleSelectSavedJob(match: Parameters<typeof matchToSavedJobPrefill>[0]) {
+    setPrefill(matchToSavedJobPrefill(match));
+  }
+
+  function handleClearSavedJob() {
+    setPrefill(null);
+  }
 
   function handleAnalyze(values: {
     targetRole: string;
@@ -129,6 +124,11 @@ export function SkillGapPageClient() {
             }}
             previewMissingSkills={prefill?.previewMissingSkills ?? []}
             prefillLabel={prefill?.label}
+            savedJobs={savedJobsQuery.data ?? []}
+            isLoadingSavedJobs={savedJobsQuery.isLoading}
+            savedJobsError={savedJobsQuery.error?.message}
+            onSelectSavedJob={handleSelectSavedJob}
+            onClearSavedJob={handleClearSavedJob}
             isAnalyzing={analyze.isPending}
             onAnalyze={handleAnalyze}
           />

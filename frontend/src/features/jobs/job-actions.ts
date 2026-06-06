@@ -9,11 +9,6 @@ export type JobActionLink = {
   shortLabel: string;
 };
 
-function buildJobDescription(job: MatchSummary["job"]): string {
-  const parts = [job.description, job.requirements].filter(Boolean);
-  return parts.join("\n\n").trim();
-}
-
 export function buildCoverLetterHref(jobId: string): string {
   return `/cover-letters?jobId=${encodeURIComponent(jobId)}`;
 }
@@ -22,17 +17,8 @@ export function buildSkillGapHref(jobId: string): string {
   return `/skill-gap?jobId=${encodeURIComponent(jobId)}`;
 }
 
-export function buildRoadmapHref(match: MatchSummary): string {
-  const params = new URLSearchParams();
-  params.set("targetRole", match.job.title);
-  const jd = buildJobDescription(match.job);
-  if (jd) {
-    params.set("jobDescription", jd.slice(0, 4000));
-  }
-  if (match.job.company) {
-    params.set("company", match.job.company);
-  }
-  return `/roadmap?${params.toString()}`;
+export function buildRoadmapHref(jobId: string): string {
+  return `/roadmap?jobId=${encodeURIComponent(jobId)}`;
 }
 
 export function buildChatHref(jobId: string): string {
@@ -64,7 +50,7 @@ export function getMatchJobActions(match: MatchSummary): JobActionLink[] {
     },
     {
       key: "roadmap",
-      href: buildRoadmapHref(match),
+      href: buildRoadmapHref(jobId),
       label: "Build roadmap",
       shortLabel: "Roadmap",
     },
