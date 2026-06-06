@@ -7,8 +7,8 @@ import { useAiNudgeNotifications } from "@/components/nudges/AiNudgeProvider";
 import { btnPrimary } from "@/lib/ui-theme";
 
 export function AiNudgeToast() {
-  const { activeNudges, dismissNudge, isLoading } = useAiNudgeNotifications();
-  const nudge = activeNudges[0] ?? null;
+  const { dismissToast, isLoading, toastNudge } = useAiNudgeNotifications();
+  const nudge = toastNudge;
 
   if (isLoading || !nudge) {
     return null;
@@ -35,8 +35,8 @@ export function AiNudgeToast() {
               <button
                 type="button"
                 className="shrink-0 rounded-md p-1 text-[var(--cp-text-muted)] transition hover:bg-[var(--cp-surface-hover)] hover:text-[var(--cp-text-primary)]"
-                onClick={() => dismissNudge(nudge.id)}
-                aria-label="Dismiss nudge"
+                onClick={() => dismissToast(nudge.id)}
+                aria-label="Close nudge popup"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -47,7 +47,6 @@ export function AiNudgeToast() {
             <Link
               href={nudge.actionHref}
               className={`${btnPrimary} mt-3 inline-flex text-xs`}
-              onClick={() => dismissNudge(nudge.id)}
             >
               {nudge.actionLabel}
             </Link>

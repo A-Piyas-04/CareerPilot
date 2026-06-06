@@ -10,11 +10,11 @@ import { btnPrimary, btnSecondary } from "@/lib/ui-theme";
 
 export function AiNudgeBell() {
   const {
-    activeNudges,
-    dismissNudge,
+    dismissFromPanel,
     error,
     generatedAt,
     isLoading,
+    panelNudges,
     refreshNudges,
   } = useAiNudgeNotifications();
   const [open, setOpen] = useState(false);
@@ -48,7 +48,7 @@ export function AiNudgeBell() {
     };
   }, [open]);
 
-  const count = activeNudges.length;
+  const count = panelNudges.length;
 
   return (
     <div className="relative" ref={panelRef}>
@@ -122,13 +122,13 @@ export function AiNudgeBell() {
               <p className="px-4 py-8 text-center text-sm text-red-600">
                 {error}
               </p>
-            ) : activeNudges.length === 0 ? (
+            ) : panelNudges.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-[var(--cp-text-muted)]">
                 You&apos;re all caught up. No new AI suggestions right now.
               </p>
             ) : (
               <ul className="divide-y divide-[var(--cp-border-soft)]">
-                {activeNudges.map((nudge) => (
+                {panelNudges.map((nudge) => (
                   <li key={nudge.id} className="p-4">
                     <div className="flex items-start gap-3">
                       <div className="min-w-0 flex-1">
@@ -142,7 +142,7 @@ export function AiNudgeBell() {
                           href={nudge.actionHref}
                           className={`${btnPrimary} mt-3 inline-flex text-xs`}
                           onClick={() => {
-                            dismissNudge(nudge.id);
+                            dismissFromPanel(nudge.id);
                             setOpen(false);
                           }}
                         >
@@ -152,8 +152,8 @@ export function AiNudgeBell() {
                       <button
                         type="button"
                         className="shrink-0 rounded-md p-1.5 text-[var(--cp-text-muted)] transition hover:bg-[var(--cp-surface-hover)] hover:text-[var(--cp-text-primary)]"
-                        onClick={() => dismissNudge(nudge.id)}
-                        aria-label={`Dismiss ${nudge.title}`}
+                        onClick={() => dismissFromPanel(nudge.id)}
+                        aria-label={`Remove ${nudge.title} from notifications`}
                       >
                         <X className="h-4 w-4" />
                       </button>
