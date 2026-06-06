@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
@@ -14,17 +14,11 @@ export type DueReminder = {
   type: "calendar" | "task" | "application" | "roadmap";
 };
 
-const DISMISS_PREFIX = "careerpilot_due_reminders_";
 const POLL_MS = 60_000;
 
 export function useDueReminders() {
   const [reminders, setReminders] = useState<DueReminder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
-  const visibleReminders = useMemo(
-    () => reminders.filter((reminder) => !dismissed.has(reminder.id)),
-    [dismissed, reminders],
-  );
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -33,19 +27,6 @@ export function useDueReminders() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  const dismiss = useCallback((id: string) => {
-    setDismissed((current) => {
-      const next = new Set(current);
-      next.add(id);
-      writeDismissed(next);
-      return next;
-    });
-  }, []);
-
-  useEffect(() => {
-    setDismissed(readDismissed());
   }, []);
 
   useEffect(() => {
@@ -58,10 +39,9 @@ export function useDueReminders() {
   }, [refresh]);
 
   return {
-    dismiss,
     isLoading,
     refresh,
-    reminders: visibleReminders,
+    reminders,
   };
 }
 
@@ -175,24 +155,4 @@ function stringValue(value: unknown) {
 
 function nullableString(value: unknown) {
   return typeof value === "string" && value ? value : null;
-}
-
-function storageKey() {
-  return `${DISMISS_PREFIX}${new Date().toISOString().slice(0, 10)}`;
-}
-
-function readDismissed() {
-  if (typeof window === "undefined") {
-    return new Set<string>();
-  }
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(storageKey()) ?? "[]");
-    return new Set(Array.isArray(parsed) ? parsed.filter((id) => typeof id === "string") : []);
-  } catch {
-    return new Set<string>();
-  }
-}
-
-function writeDismissed(ids: Set<string>) {
-  window.localStorage.setItem(storageKey(), JSON.stringify(Array.from(ids)));
 }

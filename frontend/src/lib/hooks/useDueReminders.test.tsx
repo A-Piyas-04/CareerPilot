@@ -1,4 +1,4 @@
-import { renderHook, waitFor, act } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FakeSupabase } from "@/test/fakeSupabase";
@@ -20,7 +20,7 @@ describe("useDueReminders", () => {
     vi.mocked(createClient).mockReturnValue(supabase as never);
   });
 
-  it("loads due reminders and respects dismissal", async () => {
+  it("loads due reminders", async () => {
     supabase.setTable("calendar_events", [
       {
         data: [
@@ -42,8 +42,5 @@ describe("useDueReminders", () => {
 
     await waitFor(() => expect(result.current.reminders).toHaveLength(1));
     expect(result.current.reminders[0].title).toBe("Calendar reminder");
-
-    act(() => result.current.dismiss(result.current.reminders[0].id));
-    expect(result.current.reminders).toHaveLength(0);
   });
 });

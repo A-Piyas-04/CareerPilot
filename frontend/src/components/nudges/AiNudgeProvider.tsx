@@ -10,18 +10,23 @@ import {
   type ReactNode,
 } from "react";
 
-import { useAiNudges } from "@/lib/hooks/useAiNudges";
 import {
-  readPanelDismissedNudges,
-  readToastDismissedNudges,
-  writePanelDismissedNudges,
-  writeToastDismissedNudges,
-} from "@/lib/nudges/dismiss-storage";
-import type { AiNudge } from "@/lib/reminders/types";
+  aiNotificationId,
+  reminderNotificationId,
+  type WorkspaceNotification,
+} from "@/components/nudges/types";
+import { useAiNudges } from "@/lib/hooks/useAiNudges";
+import { useDueReminders } from "@/lib/hooks/useDueReminders";
+import {
+  readPanelDismissedNotifications,
+  readToastDismissedNotifications,
+  writePanelDismissedNotifications,
+  writeToastDismissedNotifications,
+} from "@/lib/nudges/notification-storage";
 
-type AiNudgeContextValue = {
-  panelNudges: AiNudge[];
-  toastNudge: AiNudge | null;
+type WorkspaceNotificationsContextValue = {
+  panelNotifications: WorkspaceNotification[];
+  toastNotification: WorkspaceNotification | null;
   dismissFromPanel: (id: string) => void;
   dismissToast: (id: string) => void;
   error: string | null;
@@ -30,11 +35,29 @@ type AiNudgeContextValue = {
   refreshNudges: () => Promise<void>;
 };
 
-const AiNudgeContext = createContext<AiNudgeContextValue | null>(null);
+const WorkspaceNotificationsContext =
+  createContext<WorkspaceNotificationsContextValue | null>(null);
+
+function sortNotifications(items: WorkspaceNotification[]) {
+  return [...items].sort((a, b) => {
+    if (a.sortKey !== b.sortKey) {
+      return a.sortKey - b.sortKey;
+    }
+    if (a.kind !== b.kind) {
+      return a.kind === "due-reminder" ? -1 : 1;
+    }
+    return a.title.localeCompare(b.title);
+  });
+}
 
 export function AiNudgeProvider({ children }: { children: ReactNode }) {
   const { error, generatedAt, isLoading, nudges, refreshNudges } =
     useAiNudges();
+  const {
+    isLoading: isLoadingReminders,
+    refresh: refreshReminders,
+    reminders,
+  } = useDueReminders();
   const [panelDismissed, setPanelDismissed] = useState<Set<string>>(
     () => new Set(),
   );
@@ -45,19 +68,63 @@ export function AiNudgeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
-      setPanelDismissed(readPanelDismissedNudges());
-      setToastDismissed(readToastDismissedNudges());
+      setPanelDismissed(readPanelDismissedNotifications());
+      setToastDismissed(readToastDismissedNotifications());
       setMounted(true);
     }, 0);
 
     return () => window.clearTimeout(timeout);
   }, []);
 
+  const allNotifications = useMemo(() => {
+    if (!mounted) {
+      return [];
+    }
+
+    const dueReminderNotifications: WorkspaceNotification[] = reminders.map(
+      (reminder) => ({
+        actionHref: reminder.actionHref,
+        actionLabel: reminder.actionLabel,
+        id: reminderNotificationId(reminder.id),
+        kind: "due-reminder",
+        message: reminder.message,
+        sortKey: new Date(reminder.dueAt).getTime(),
+        title: reminder.title,
+      }),
+    );
+
+    const aiNotifications: WorkspaceNotification[] = nudges.map((nudge) => ({
+      actionHref: nudge.actionHref,
+      actionLabel: nudge.actionLabel,
+      id: aiNotificationId(nudge.id),
+      kind: "ai-nudge",
+      message: nudge.message,
+      sortKey: Number.MAX_SAFE_INTEGER,
+      title: nudge.title,
+    }));
+
+    return sortNotifications([
+      ...dueReminderNotifications,
+      ...aiNotifications,
+    ]);
+  }, [mounted, nudges, reminders]);
+
+  const panelNotifications = useMemo(
+    () => allNotifications.filter((item) => !panelDismissed.has(item.id)),
+    [allNotifications, panelDismissed],
+  );
+
+  const toastNotification = useMemo(
+    () =>
+      panelNotifications.find((item) => !toastDismissed.has(item.id)) ?? null,
+    [panelNotifications, toastDismissed],
+  );
+
   const dismissFromPanel = useCallback((id: string) => {
     setPanelDismissed((current) => {
       const next = new Set(current);
       next.add(id);
-      writePanelDismissedNudges(next);
+      writePanelDismissedNotifications(next);
       return next;
     });
   }, []);
@@ -66,42 +133,25 @@ export function AiNudgeProvider({ children }: { children: ReactNode }) {
     setToastDismissed((current) => {
       const next = new Set(current);
       next.add(id);
-      writeToastDismissedNudges(next);
+      writeToastDismissedNotifications(next);
       return next;
     });
   }, []);
 
-  const panelNudges = useMemo(
-    () =>
-      mounted
-        ? nudges.filter((nudge) => !panelDismissed.has(nudge.id))
-        : [],
-    [mounted, nudges, panelDismissed],
-  );
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refreshNudges(), refreshReminders()]);
+  }, [refreshNudges, refreshReminders]);
 
-  const toastNudge = useMemo(() => {
-    if (!mounted) {
-      return null;
-    }
-
-    return (
-      nudges.find(
-        (nudge) =>
-          !panelDismissed.has(nudge.id) && !toastDismissed.has(nudge.id),
-      ) ?? null
-    );
-  }, [mounted, nudges, panelDismissed, toastDismissed]);
-
-  const value = useMemo<AiNudgeContextValue>(
+  const value = useMemo<WorkspaceNotificationsContextValue>(
     () => ({
       dismissFromPanel,
       dismissToast,
       error,
       generatedAt,
-      isLoading,
-      panelNudges,
-      refreshNudges,
-      toastNudge,
+      isLoading: isLoading || isLoadingReminders,
+      panelNotifications,
+      refreshNudges: refreshAll,
+      toastNotification,
     }),
     [
       dismissFromPanel,
@@ -109,23 +159,30 @@ export function AiNudgeProvider({ children }: { children: ReactNode }) {
       error,
       generatedAt,
       isLoading,
-      panelNudges,
-      refreshNudges,
-      toastNudge,
+      isLoadingReminders,
+      panelNotifications,
+      refreshAll,
+      toastNotification,
     ],
   );
 
   return (
-    <AiNudgeContext.Provider value={value}>{children}</AiNudgeContext.Provider>
+    <WorkspaceNotificationsContext.Provider value={value}>
+      {children}
+    </WorkspaceNotificationsContext.Provider>
   );
 }
 
 export function useAiNudgeNotifications() {
-  const context = useContext(AiNudgeContext);
+  const context = useContext(WorkspaceNotificationsContext);
   if (!context) {
     throw new Error(
       "useAiNudgeNotifications must be used within AiNudgeProvider",
     );
   }
   return context;
+}
+
+export function useWorkspaceNotifications() {
+  return useAiNudgeNotifications();
 }
