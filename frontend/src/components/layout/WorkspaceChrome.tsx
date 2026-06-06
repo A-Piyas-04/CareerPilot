@@ -3,6 +3,11 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 
+import {
+  AiNudgeProvider,
+  AiNudgeToast,
+} from "@/components/nudges";
+
 import { AppFooterScrollRegion } from "./AppFooter";
 import { AppSidebar } from "./AppSidebar";
 import { AppTopHeader } from "./AppTopHeader";
@@ -46,17 +51,20 @@ export function WorkspaceChrome({ children }: WorkspaceChromeProps) {
   }, []);
 
   return (
-    <div className="relative flex h-dvh max-h-dvh overflow-hidden">
-      <AppSidebar
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={toggleSidebar}
-      />
+    <AiNudgeProvider>
+      <div className="relative flex h-dvh max-h-dvh overflow-hidden">
+        <AppSidebar
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebar}
+        />
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <AppTopHeader />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <AppTopHeader />
+          <AiNudgeToast />
 
-        <AppFooterScrollRegion>{children}</AppFooterScrollRegion>
+          <AppFooterScrollRegion>{children}</AppFooterScrollRegion>
+        </div>
       </div>
-    </div>
+    </AiNudgeProvider>
   );
 }

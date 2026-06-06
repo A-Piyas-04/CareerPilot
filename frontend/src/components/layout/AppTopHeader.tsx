@@ -9,6 +9,7 @@ import {
   MobileNavDrawer,
   MobileNavTrigger,
 } from "@/components/nav/MobileNavDrawer";
+import { AiNudgeBell } from "@/components/nudges";
 import { TransitionLink } from "@/components/navigation/navigation-transition";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { suppressExtensionHydrationProps } from "@/lib/hydration";
@@ -50,6 +51,7 @@ export function AppTopHeader() {
         </Link>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <AiNudgeBell />
           <ThemeToggle />
 
           <TransitionLink
