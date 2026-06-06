@@ -134,6 +134,7 @@ class Settings(BaseSettings):
         default=DEFAULT_CORS_ORIGINS,
         validation_alias="CORS_ORIGINS",
     )
+    cors_origin_regex: str = Field(default="", validation_alias="CORS_ORIGIN_REGEX")
 
     @property
     def cors_origin_list(self) -> list[str]:

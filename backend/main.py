@@ -1,4 +1,5 @@
 import logging
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -22,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 _embedding_config_cache: dict = {}
 _cors_origins = settings.cors_origin_list
+_cors_origin_regex = (settings.cors_origin_regex or "").strip() or None
+_cors_origin_pattern = re.compile(_cors_origin_regex) if _cors_origin_regex else None
 
 
 @asynccontextmanager
@@ -29,7 +32,13 @@ async def lifespan(_app: FastAPI):
     """Validate embedding configuration on startup."""
     global _embedding_config_cache
     try:
-        logger.info("Configured CORS origins: %s", _cors_origins)
+        print(
+            "Configured CORS origins:",
+            _cors_origins,
+            "regex:",
+            _cors_origin_regex,
+            flush=True,
+        )
         _embedding_config_cache = validate_embedding_config_at_startup(strict=True)
     except Exception as exc:
         logger.error("Embedding configuration validation failed: %s", exc)
@@ -42,6 +51,7 @@ app = FastAPI(title="CareerPilot API", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
+    allow_origin_regex=_cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -51,7 +61,15 @@ app.add_middleware(
 def _cors_headers(request: Request) -> dict[str, str]:
     """Return CORS headers for the request origin when the origin is allowed."""
     origin = request.headers.get("origin")
-    if origin and (origin in _cors_origins or "*" in _cors_origins):
+    origin_allowed = bool(
+        origin
+        and (
+            origin in _cors_origins
+            or "*" in _cors_origins
+            or (_cors_origin_pattern and _cors_origin_pattern.fullmatch(origin))
+        )
+    )
+    if origin_allowed:
         return {
             "Access-Control-Allow-Origin": origin,
             "Access-Control-Allow-Credentials": "true",
