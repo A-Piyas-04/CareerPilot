@@ -1,0 +1,333 @@
+% CareerPilot — Dependencies (LaTeX)
+% Compile: pdflatex dependencies.tex  (run twice for references)
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=18mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[most]{tcolorbox}
+\usepackage{colortbl}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  urlcolor=blue!60!black,
+  pdftitle={CareerPilot Dependencies},
+}
+
+% --- Colors & helpers -------------------------------------------------------
+\definecolor{sectiontitlebg}{RGB}{255, 225, 185}
+\definecolor{scopebg}{RGB}{235, 245, 255}
+\definecolor{scopeborder}{RGB}{90, 130, 190}
+\definecolor{codebg}{RGB}{248, 248, 252}
+\definecolor{codeframe}{RGB}{200, 205, 220}
+\definecolor{rowalt}{RGB}{250, 252, 255}
+\definecolor{subsec}{RGB}{55, 65, 85}
+
+\newcommand{\pkg}[1]{\texttt{#1}}
+\newcommand{\envvar}[1]{\texttt{#1}}
+\newcommand{\semver}[1]{\texttt{\textasciicircum#1}}
+
+\newcommand{\sectiontitle}[1]{%
+  \vspace{0.9em}%
+  \noindent
+  \colorbox{sectiontitlebg}{%
+    \parbox{\dimexpr\linewidth-2\fboxsep}{%
+      \vspace{6pt}%
+      {\fontsize{18}{22}\bfseries\selectfont #1}%
+      \vspace{6pt}%
+    }%
+  }%
+  \par\vspace{0.55em}%
+}
+
+\newcommand{\subsectiontitle}[1]{%
+  \vspace{0.65em}%
+  {\large\bfseries\color{subsec} #1\par}%
+  \vspace{0.35em}%
+}
+
+\newtcolorbox{scopebox}{
+  colback=scopebg,
+  colframe=scopeborder,
+  boxrule=0.5pt,
+  arc=2pt,
+  left=6pt, right=6pt, top=5pt, bottom=5pt,
+  fontupper=\small,
+}
+
+\newtcblisting{codeblock}{
+  listing only,
+  listing options={
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+  },
+  colback=codebg,
+  colframe=codeframe,
+  boxrule=0.4pt,
+  arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt,
+}
+
+% Compact table column helpers
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+
+\begin{document}
+
+% ---------------------------------------------------------------------------
+\begin{center}
+  {\LARGE\bfseries CareerPilot --- Dependencies}\\[0.4em]
+  {\small Node 20 \textbullet\ Python 3.11 \textbullet\ Next.js 16 \textbullet\ FastAPI \textbullet\ Supabase \textbullet\ Gemini}\\[0.2em]
+  {\footnotesize Runtime requirements, external services, and package manifests \quad|\quad Submission artifact}
+\end{center}
+\vspace{0.5em}
+\hrule
+\vspace{0.8em}
+
+\begin{scopebox}
+\textbf{Scope:} Runtime requirements, external services, and package manifests for the monorepo.\\
+\textbf{Manifests:}
+\pkg{frontend/package.json},
+\pkg{backend/requirements.txt},
+\pkg{package.json} (root).
+\end{scopebox}
+
+% ===========================================================================
+\sectiontitle{1. Runtime \& Tooling}
+% ===========================================================================
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.28}
+\begin{tabularx}{\linewidth}{@{}L{3.2cm} L{4.8cm} X@{}}
+\toprule
+\textbf{Requirement} & \textbf{Version} & \textbf{Used by} \\
+\midrule
+\textbf{Node.js} & 20 (Docker: \pkg{node:20-slim}) & Frontend, root Supabase CLI \\
+\textbf{Python} & 3.11 (Docker: \pkg{python:3.11-slim}) & Backend API \\
+\textbf{Docker + Compose} & --- & Local dev (\pkg{docker-compose.yml}) \\
+\textbf{npm} & --- & Frontend install / build \\
+\textbf{pip} & --- & Backend install \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ===========================================================================
+\sectiontitle{2. External Services \& APIs}
+% ===========================================================================
+
+\noindent
+These are not npm/pip packages --- they require accounts, API keys, and environment configuration.
+
+\vspace{0.45em}
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\linewidth}{@{}L{2.4cm} L{4.6cm} X@{}}
+\toprule
+\textbf{Service} & \textbf{Purpose} & \textbf{Config (env vars)} \\
+\midrule
+\textbf{Supabase} &
+PostgreSQL 15, Auth, RLS, pgvector, PostgREST &
+\envvar{SUPABASE\_URL}, \envvar{NEXT\_PUBLIC\_SUPABASE\_*}, \envvar{SUPABASE\_SERVICE\_ROLE\_KEY}, \envvar{DATABASE\_URL} \\
+\rowcolor{rowalt}
+\textbf{Google Gemini} &
+Embeddings, chat, cover letters, skill gap, roadmaps, nudges &
+\envvar{GEMINI\_API\_KEY}, optional \envvar{GEMINI\_*\_MODEL} overrides \\
+\textbf{JSearch (RapidAPI)} &
+Live job listings (external tool call) &
+\envvar{JSEARCH\_API\_KEY}, \envvar{JSEARCH\_API\_HOST}, \envvar{JSEARCH\_BASE\_URL} \\
+\rowcolor{rowalt}
+\textbf{Hugging Face} &
+Optional model downloads for local embeddings &
+\envvar{HF\_TOKEN} (transformers backend only) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\vspace{0.35em}
+\noindent\textbf{Env templates:}
+\pkg{backend/.env.example},
+\pkg{frontend/.env.example},
+\pkg{.env.example}.
+
+\vspace{0.25em}
+\noindent\textbf{Database migrations:}
+\pkg{supabase/migrations/} --- applied via Supabase CLI or dashboard.
+
+% ===========================================================================
+\sectiontitle{3. Frontend (\texttt{frontend/})}
+% ===========================================================================
+
+\subsectiontitle{Production dependencies}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{@{}L{4.2cm} R{1.6cm} X@{}}
+\toprule
+\textbf{Package} & \textbf{Version} & \textbf{Role} \\
+\midrule
+\pkg{next} & 16.2.6 & App Router, SSR, API routes (BFF) \\
+\rowcolor{rowalt}
+\pkg{react}, \pkg{react-dom} & 19.2.4 & UI runtime \\
+\pkg{@supabase/ssr} & \semver{0.10.3} & Cookie-based auth sessions \\
+\rowcolor{rowalt}
+\pkg{@supabase/supabase-js} & \semver{2.106.1} & Supabase client (browser + server) \\
+\pkg{@tanstack/react-query} & \semver{5.100.14} & Server-state caching (dashboard, tracker) \\
+\rowcolor{rowalt}
+\pkg{@hello-pangea/dnd} & \semver{18.0.1} & Kanban drag-and-drop (tracker) \\
+\pkg{react-big-calendar} & \semver{1.19.4} & Calendar / deadline views \\
+\rowcolor{rowalt}
+\pkg{recharts} & \semver{3.8.1} & Dashboard charts \\
+\pkg{react-markdown} & \semver{10.1.0} & Render assistant markdown \\
+\rowcolor{rowalt}
+\pkg{lucide-react} & \semver{1.16.0} & Icons \\
+\pkg{date-fns} & \semver{4.3.0} & Date formatting \\
+\rowcolor{rowalt}
+\pkg{sonner} & \semver{2.0.7} & Toast notifications \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsectiontitle{Dev dependencies}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}L{5.8cm} X@{}}
+\toprule
+\textbf{Package} & \textbf{Role} \\
+\midrule
+\pkg{typescript}, \pkg{@types/*} & Type checking \\
+\rowcolor{rowalt}
+\pkg{tailwindcss}, \pkg{@tailwindcss/postcss} & Styling (v4) \\
+\pkg{eslint}, \pkg{eslint-config-next} & Linting \\
+\rowcolor{rowalt}
+\pkg{vitest}, \pkg{@testing-library/react}, \pkg{@testing-library/jest-dom}, \pkg{jsdom} & Unit / component tests \\
+\pkg{babel-plugin-react-compiler} & React Compiler (Next 16) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ===========================================================================
+\newpage
+\sectiontitle{4. Backend (\texttt{backend/})}
+% ===========================================================================
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\linewidth}{@{}L{4.4cm} X@{}}
+\toprule
+\textbf{Package} & \textbf{Role} \\
+\midrule
+\pkg{fastapi} & REST API framework \\
+\rowcolor{rowalt}
+\pkg{uvicorn[standard]} & ASGI server \\
+\pkg{python-dotenv} & Load \pkg{.env} \\
+\rowcolor{rowalt}
+\pkg{pydantic}, \pkg{pydantic-settings} & Request/response models, config \\
+\pkg{python-multipart} & File uploads (CV PDF/DOCX) \\
+\rowcolor{rowalt}
+\pkg{supabase} & Python Supabase client (service role) \\
+\pkg{httpx} & Async HTTP (JSearch, external calls) \\
+\rowcolor{rowalt}
+\pkg{sqlalchemy[asyncio]}, \pkg{asyncpg} & Async Postgres access \\
+\pkg{alembic} & Schema migrations \\
+\rowcolor{rowalt}
+\pkg{pgvector} & Vector column types / similarity \\
+\pkg{pypdf}, \pkg{python-docx} & CV text extraction \\
+\rowcolor{rowalt}
+\pkg{numpy} & Numeric helpers (fit scoring) \\
+\pkg{google-generativeai} & Gemini embeddings \& generation \\
+\rowcolor{rowalt}
+\pkg{pytest} & Backend tests \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsectiontitle{Optional (not installed by default)}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}L{4.2cm} X@{}}
+\toprule
+\textbf{Package} & \textbf{When to install} \\
+\midrule
+\pkg{sentence-transformers} &
+Local embeddings: \pkg{pip install sentence-transformers} + \envvar{EMBEDDING\_BACKEND=transformers} (${\sim}$2\,GB with PyTorch) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ===========================================================================
+\sectiontitle{5. Root (\texttt{/})}
+% ===========================================================================
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}L{2.8cm} R{1.8cm} X@{}}
+\toprule
+\textbf{Package} & \textbf{Version} & \textbf{Role} \\
+\midrule
+\pkg{supabase} & \semver{2.101.0} & Supabase CLI (migrations, local dev) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ===========================================================================
+\sectiontitle{6. Install Commands}
+% ===========================================================================
+
+\begin{codeblock}
+# Frontend
+cd frontend && npm install
+
+# Backend
+cd backend && pip install -r requirements.txt
+
+# Root (Supabase CLI)
+npm install
+
+# Full stack (Docker)
+docker compose up --build
+\end{codeblock}
+
+% ===========================================================================
+\sectiontitle{7. Related Docs}
+% ===========================================================================
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}L{4.2cm} X@{}}
+\toprule
+\textbf{Document} & \textbf{Focus} \\
+\midrule
+\pkg{stack-report.md} & Why each technology was chosen \\
+\rowcolor{rowalt}
+\pkg{system-design.md} / \pkg{system-design.tex} & Architecture, data flow, deployment \\
+\pkg{README.md} & Setup and run instructions \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\vfill
+\begin{center}
+{\footnotesize\itshape Submission artifact --- \pkg{Docs/submit/}}
+\end{center}
+
+\end{document}

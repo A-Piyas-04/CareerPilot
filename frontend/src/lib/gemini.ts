@@ -10,11 +10,13 @@ export const GEMINI_INTENT_MODEL =
   process.env.GEMINI_MODEL?.trim() ||
   "gemini-2.5-flash-lite";
 
-/** Ordered fallback models for streamed chat replies. */
+/** Ordered fallback models for streamed chat replies and long-form generation. */
 export const DEFAULT_GENERATION_CASCADE = [
   "gemini-2.5-pro",
   "gemini-2.5-flash",
   "gemini-2.0-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash-lite",
 ] as const;
 
 /** Lighter models for intent classification. */
@@ -105,6 +107,23 @@ export function intentModelCascade(preferred?: string) {
     preferred ?? process.env.GEMINI_INTENT_MODEL?.trim() ?? GEMINI_INTENT_MODEL,
     [...configuredFallbacks, ...DEFAULT_INTENT_CASCADE],
   );
+}
+
+export function geminiGenerationFriendlyError(error: GeminiApiError) {
+  const normalized = error.message.toLowerCase();
+  const isQuotaOrRateLimited =
+    error.status === 429 ||
+    (error.status === 403 &&
+      (normalized.includes("quota") ||
+        normalized.includes("rate") ||
+        normalized.includes("billing") ||
+        normalized.includes("exhausted")));
+
+  if (isQuotaOrRateLimited) {
+    return "AI generation is temporarily rate-limited. Please wait a minute and try again.";
+  }
+
+  return error.message;
 }
 
 export function isRetryableGeminiError(status: number, message: string) {

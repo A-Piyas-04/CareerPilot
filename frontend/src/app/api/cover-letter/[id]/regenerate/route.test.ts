@@ -6,17 +6,15 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
-vi.mock("@/lib/gemini", () => ({
-  GEMINI_MODEL: "gemini-test",
-  GeminiApiError: class GeminiApiError extends Error {
-    status: number;
-    constructor(message: string, status: number) {
-      super(message);
-      this.status = status;
-    }
-  },
-  createGeminiText: vi.fn(),
-}));
+vi.mock("@/lib/gemini", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/gemini")>();
+
+  return {
+    ...actual,
+    GEMINI_MODEL: "gemini-test",
+    createGeminiText: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/assistant/getResumeContext", () => ({
   getResumeContext: vi.fn(async () => ({

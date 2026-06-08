@@ -3,6 +3,8 @@
 import { FileText } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
+import { SavedJobSelect } from "@/features/jobs/saved-job-select";
+import type { MatchSummary } from "@/features/jobs/types";
 import { SpinnerButton } from "@/components/ui";
 import type {
   CoverLetterTone,
@@ -26,6 +28,11 @@ type CoverLetterGenerateFormProps = {
     jobId?: string;
   };
   prefillLabel?: string | null;
+  savedJobs?: MatchSummary[];
+  isLoadingSavedJobs?: boolean;
+  savedJobsError?: string | null;
+  onSelectSavedJob?: (match: MatchSummary) => void;
+  onClearSavedJob?: () => void;
 };
 
 const TONES: { label: string; value: CoverLetterTone }[] = [
@@ -39,6 +46,11 @@ export function CoverLetterGenerateForm({
   onGenerate,
   initialValues,
   prefillLabel,
+  savedJobs = [],
+  isLoadingSavedJobs = false,
+  savedJobsError,
+  onSelectSavedJob,
+  onClearSavedJob,
 }: CoverLetterGenerateFormProps) {
   const [jobTitle, setJobTitle] = useState(initialValues?.jobTitle ?? "");
   const [companyName, setCompanyName] = useState(initialValues?.companyName ?? "");
@@ -47,26 +59,51 @@ export function CoverLetterGenerateForm({
   );
   const [tone, setTone] = useState<CoverLetterTone>("professional");
   const [extraNotes, setExtraNotes] = useState("");
-  const [jobId] = useState(initialValues?.jobId ?? "");
+  const [selectedJobId, setSelectedJobId] = useState(initialValues?.jobId ?? "");
 
   useEffect(() => {
-    if (initialValues?.jobTitle) setJobTitle(initialValues.jobTitle);
-    if (initialValues?.companyName) setCompanyName(initialValues.companyName);
-    if (initialValues?.jobDescription) {
+    if (initialValues?.jobTitle !== undefined) {
+      setJobTitle(initialValues.jobTitle);
+    }
+    if (initialValues?.companyName !== undefined) {
+      setCompanyName(initialValues.companyName);
+    }
+    if (initialValues?.jobDescription !== undefined) {
       setJobDescription(initialValues.jobDescription);
+    }
+    if (initialValues?.jobId !== undefined) {
+      setSelectedJobId(initialValues.jobId ?? "");
     }
   }, [
     initialValues?.jobTitle,
     initialValues?.companyName,
     initialValues?.jobDescription,
+    initialValues?.jobId,
   ]);
+
+  function handleSavedJobChange(jobId: string) {
+    if (!jobId) {
+      setSelectedJobId("");
+      onClearSavedJob?.();
+      return;
+    }
+
+    const match = savedJobs.find((item) => item.job.id === jobId);
+    if (!match) {
+      return;
+    }
+
+    setSelectedJobId(jobId);
+    onSelectSavedJob?.(match);
+  }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (
       isGenerating ||
-      (!jobId && (!jobTitle.trim() || !companyName.trim() || !jobDescription.trim()))
+      (!selectedJobId &&
+        (!jobTitle.trim() || !companyName.trim() || !jobDescription.trim()))
     ) {
       return;
     }
@@ -77,7 +114,7 @@ export function CoverLetterGenerateForm({
       jobDescription: jobDescription.trim(),
       jobTitle: jobTitle.trim(),
       tone,
-      jobId: jobId || undefined,
+      jobId: selectedJobId || undefined,
     });
   };
 
@@ -99,9 +136,20 @@ export function CoverLetterGenerateForm({
 
       {prefillLabel ? (
         <p className={`mt-4 ${formHintPanel}`}>
-          Prefilled from Job Hunter — {prefillLabel}
+          Loaded job — {prefillLabel}
         </p>
       ) : null}
+
+      <div className="mt-5">
+        <SavedJobSelect
+          disabled={isGenerating}
+          error={savedJobsError}
+          isLoading={isLoadingSavedJobs}
+          onChange={handleSavedJobChange}
+          savedJobs={savedJobs}
+          value={selectedJobId}
+        />
+      </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <label className="flex flex-col gap-1.5">
@@ -184,7 +232,7 @@ export function CoverLetterGenerateForm({
           loadingLabel="Generating…"
           disabled={
             isGenerating ||
-            (!jobId &&
+            (!selectedJobId &&
               (!jobTitle.trim() ||
                 !companyName.trim() ||
                 !jobDescription.trim()))

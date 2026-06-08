@@ -9,6 +9,11 @@ import { CoverLetterList } from "@/components/cover-letters/CoverLetterList";
 import { PageHeader, PageShell } from "@/components/layout";
 import { SubmissionProgress } from "@/components/ui";
 import { listMatches } from "@/features/jobs/api";
+import { useSavedJobMatches } from "@/features/jobs/hooks";
+import {
+  matchToCoverLetterPrefill,
+  type CoverLetterJobPrefill,
+} from "@/features/jobs/job-prefill";
 import { COVER_LETTER_GENERATE_STEPS } from "@/lib/progress/cover-letter-progress";
 import {
   useCoverLetters,
@@ -24,13 +29,8 @@ export function CoverLettersPageClient() {
 
   const coverLetters = useCoverLetters();
   const generateCoverLetter = useGenerateCoverLetter();
-  const [prefill, setPrefill] = useState<{
-    jobTitle: string;
-    companyName: string;
-    jobDescription: string;
-    jobId: string;
-    label: string;
-  } | null>(null);
+  const savedJobsQuery = useSavedJobMatches();
+  const [prefill, setPrefill] = useState<CoverLetterJobPrefill | null>(null);
 
   useEffect(() => {
     if (!jobIdParam) return;
@@ -43,19 +43,7 @@ export function CoverLettersPageClient() {
         const matches = await listMatches({ job_id: jobId, limit: 1 });
         if (cancelled || !matches.length) return;
 
-        const job = matches[0].job;
-        const description = [job.description, job.requirements]
-          .filter(Boolean)
-          .join("\n\n")
-          .trim();
-
-        setPrefill({
-          jobTitle: job.title,
-          companyName: job.company ?? "",
-          jobDescription: description,
-          jobId: job.id,
-          label: [job.title, job.company].filter(Boolean).join(" at "),
-        });
+        setPrefill(matchToCoverLetterPrefill(matches[0]));
       } catch {
         // Optional prefill only.
       }
@@ -88,10 +76,20 @@ export function CoverLettersPageClient() {
           <CoverLetterGenerateForm
             isGenerating={generateCoverLetter.isPending}
             onGenerate={handleGenerate}
-            initialValues={
-              prefill ?? (jobIdParam ? { jobId: jobIdParam } : undefined)
-            }
+            initialValues={{
+              jobTitle: prefill?.jobTitle,
+              companyName: prefill?.companyName,
+              jobDescription: prefill?.jobDescription,
+              jobId: prefill?.jobId ?? jobIdParam ?? undefined,
+            }}
             prefillLabel={prefill?.label}
+            savedJobs={savedJobsQuery.data ?? []}
+            isLoadingSavedJobs={savedJobsQuery.isLoading}
+            savedJobsError={savedJobsQuery.error?.message}
+            onSelectSavedJob={(match) =>
+              setPrefill(matchToCoverLetterPrefill(match))
+            }
+            onClearSavedJob={() => setPrefill(null)}
           />
           <SubmissionProgress
             isActive={generateCoverLetter.isPending}

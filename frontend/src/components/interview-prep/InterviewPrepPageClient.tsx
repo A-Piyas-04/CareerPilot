@@ -368,7 +368,7 @@ export function InterviewPrepPageClient() {
         accent="emerald"
         description="Run timed, one-way mock interviews with role-specific questions, scoring, and coding practice."
         icon={Brain}
-        title="Interview Prep"
+        title="Demo Interview"
       />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">

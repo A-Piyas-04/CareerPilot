@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import type { MatchSummary } from "@/features/jobs/types";
 
-import { formatSavedJobOption, matchToSavedJobPrefill } from "./job-prefill";
+import {
+  formatSavedJobOption,
+  matchToCoverLetterPrefill,
+  matchToSavedJobPrefill,
+} from "./job-prefill";
 
 function makeMatch(overrides: Partial<MatchSummary> = {}): MatchSummary {
   return {
@@ -44,6 +48,18 @@ describe("matchToSavedJobPrefill", () => {
     expect(prefill.jobId).toBe("job-1");
     expect(prefill.label).toBe("Backend Engineer at Acme");
     expect(prefill.previewMissingSkills).toEqual(["Kubernetes"]);
+  });
+});
+
+describe("matchToCoverLetterPrefill", () => {
+  it("maps saved job fields into cover letter form prefill", () => {
+    const prefill = matchToCoverLetterPrefill(makeMatch());
+
+    expect(prefill.jobTitle).toBe("Backend Engineer");
+    expect(prefill.companyName).toBe("Acme");
+    expect(prefill.jobDescription).toBe("Build APIs\n\nPython, FastAPI");
+    expect(prefill.jobId).toBe("job-1");
+    expect(prefill.label).toBe("Backend Engineer at Acme");
   });
 });
 

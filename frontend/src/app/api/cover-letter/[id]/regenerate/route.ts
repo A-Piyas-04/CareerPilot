@@ -1,4 +1,10 @@
-import { GeminiApiError, GEMINI_MODEL, createGeminiText } from "@/lib/gemini";
+import {
+  GeminiApiError,
+  GEMINI_MODEL,
+  createGeminiText,
+  geminiGenerationFriendlyError,
+  generationModelCascade,
+} from "@/lib/gemini";
 import { parseCoverLetterJson } from "@/lib/cover-letter/parser";
 import { buildCoverLetterPrompt, COVER_LETTER_SYSTEM_PROMPT } from "@/lib/cover-letter/prompts";
 import {
@@ -59,6 +65,7 @@ export async function POST(_request: Request, context: RouteContext) {
     const rawResponse = await createGeminiText({
       maxOutputTokens: 1800,
       model: GEMINI_MODEL,
+      modelCascade: generationModelCascade(GEMINI_MODEL),
       prompt: buildCoverLetterPrompt({
         companyName,
         extraNotes: existing.extra_notes ?? undefined,
@@ -114,8 +121,12 @@ export async function POST(_request: Request, context: RouteContext) {
 
     return Response.json({ coverLetter: normalizeCoverLetter(data) });
   } catch (error) {
-    if (error instanceof CoverLetterHttpError || error instanceof GeminiApiError) {
+    if (error instanceof CoverLetterHttpError) {
       return jsonError(error.message, error.status);
+    }
+
+    if (error instanceof GeminiApiError) {
+      return jsonError(geminiGenerationFriendlyError(error), error.status);
     }
 
     const message =

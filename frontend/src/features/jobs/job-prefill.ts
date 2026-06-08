@@ -8,6 +8,14 @@ export type SavedJobPrefill = {
   previewMissingSkills: string[];
 };
 
+export type CoverLetterJobPrefill = {
+  jobTitle: string;
+  companyName: string;
+  jobDescription: string;
+  jobId: string;
+  label: string;
+};
+
 export function matchToSavedJobPrefill(match: MatchSummary): SavedJobPrefill {
   const job = match.job;
   const description = [job.description, job.requirements]
@@ -21,6 +29,18 @@ export function matchToSavedJobPrefill(match: MatchSummary): SavedJobPrefill {
     jobId: job.id,
     label: [job.title, job.company].filter(Boolean).join(" at "),
     previewMissingSkills: match.missing_skills,
+  };
+}
+
+export function matchToCoverLetterPrefill(match: MatchSummary): CoverLetterJobPrefill {
+  const base = matchToSavedJobPrefill(match);
+
+  return {
+    jobTitle: base.targetRole,
+    companyName: match.job.company ?? "",
+    jobDescription: base.jobDescription,
+    jobId: base.jobId,
+    label: base.label,
   };
 }
 

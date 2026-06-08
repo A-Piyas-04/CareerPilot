@@ -6,17 +6,15 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
-vi.mock("@/lib/gemini", () => ({
-  GEMINI_MODEL: "gemini-test",
-  GeminiApiError: class GeminiApiError extends Error {
-    status: number;
-    constructor(message: string, status: number) {
-      super(message);
-      this.status = status;
-    }
-  },
-  createGeminiText: vi.fn(),
-}));
+vi.mock("@/lib/gemini", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/gemini")>();
+
+  return {
+    ...actual,
+    GEMINI_MODEL: "gemini-test",
+    createGeminiText: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/assistant/getResumeContext", () => ({
   getResumeContext: vi.fn(async () => ({
@@ -106,6 +104,9 @@ describe("POST /api/cover-letter/generate", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
+    expect(createGeminiText).toHaveBeenCalledWith(
+      expect.objectContaining({ modelCascade: expect.any(Array) }),
+    );
     expect(body.coverLetter).toMatchObject({
       company_name: "Acme Corp",
       content: "Dear Hiring Manager...",
@@ -149,6 +150,7 @@ describe("POST /api/cover-letter/generate", () => {
     );
 
     expect(response.status).toBe(429);
+    expect((await response.json()).detail).toContain("rate-limited");
     expect(
       supabase.calls.some(
         (call) => call.table === "cover_letters" && call.mode === "insert",

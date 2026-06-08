@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createGeminiStream,
   createGeminiText,
+  geminiGenerationFriendlyError,
   generationModelCascade,
   GeminiApiError,
   intentModelCascade,
@@ -57,6 +58,8 @@ describe("gemini model cascade", () => {
       "gemini-2.5-pro",
       "gemini-2.5-flash",
       "gemini-2.0-flash",
+      "gemini-2.5-flash-lite",
+      "gemini-2.0-flash-lite",
     ]);
   });
 
@@ -73,6 +76,19 @@ describe("gemini model cascade", () => {
       "gemini-2.5-flash-lite",
       "gemini-2.0-flash-lite",
     ]);
+  });
+
+  it("returns a friendly quota message for generation errors", () => {
+    expect(
+      geminiGenerationFriendlyError(
+        new GeminiApiError("You exceeded your current quota", 429),
+      ),
+    ).toContain("rate-limited");
+    expect(
+      geminiGenerationFriendlyError(
+        new GeminiApiError("Model gemini-old was not found", 404),
+      ),
+    ).toBe("Model gemini-old was not found");
   });
 
   it("detects quota errors as retryable", () => {

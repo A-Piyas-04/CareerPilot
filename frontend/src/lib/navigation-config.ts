@@ -58,8 +58,8 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       {
         href: "/resume",
-        label: "CV Intelligence",
-        shortLabel: "CV",
+        label: "Resume",
+        shortLabel: "Resume",
         icon: FileText,
         description: "Upload, edit, and query your CV",
       },
@@ -72,8 +72,8 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       {
         href: "/interview-prep",
-        label: "Interview Prep",
-        shortLabel: "Prep",
+        label: "Demo Interview",
+        shortLabel: "Demo",
         icon: Brain,
         description: "Timed mock interviews",
       },
@@ -163,7 +163,7 @@ export const PAGE_RELATED_LINKS: Record<string, RelatedLink[]> = {
   "/chat": [
     { href: "/jobs", label: "Job Hunter" },
     { href: "/resume", label: "CV" },
-    { href: "/interview-prep", label: "Interview Prep" },
+    { href: "/interview-prep", label: "Demo Interview" },
   ],
   "/interview-prep": [
     { href: "/chat", label: "Assistant" },
