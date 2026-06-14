@@ -32,6 +32,7 @@ type SearchPrefill = {
 
 type Props = {
   resumes: Resume[];
+  resumesLoading?: boolean;
   selectedResumeId: string | null;
   prefill?: SearchPrefill | null;
   onResumeChange: (resumeId: string) => void;
@@ -42,6 +43,7 @@ type Props = {
 
 export function JobSearchForm({
   resumes,
+  resumesLoading = false,
   selectedResumeId,
   prefill,
   onResumeChange,
@@ -158,10 +160,11 @@ export function JobSearchForm({
           <select
             value={selectedResumeId ?? ""}
             onChange={(event) => onResumeChange(event.target.value)}
-            className={`${inputField} h-10`}
+            disabled={resumesLoading}
+            className={`${inputField} h-10 disabled:cursor-wait disabled:opacity-70`}
           >
             <option value="" disabled>
-              Match against CV…
+              {resumesLoading ? "Loading CVs…" : "Match against CV…"}
             </option>
             {readyResumes.map((resume) => (
               <option key={resume.id} value={resume.id}>
@@ -208,7 +211,7 @@ export function JobSearchForm({
         </SpinnerButton>
       </form>
 
-      {readyResumes.length === 0 ? (
+      {readyResumes.length === 0 && !resumesLoading ? (
         <p className={formHintPanel}>
           No processed CV found. Upload and wait for indexing on the CV
           Intelligence page before searching.

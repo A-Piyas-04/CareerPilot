@@ -43,6 +43,19 @@ def embed_query_text(text: str) -> list[float]:
     return vector
 
 
+def embed_query_batch(texts: list[str]) -> list[list[float]]:
+    """Generate retrieval_query embeddings for multiple texts."""
+    if not texts:
+        return []
+    provider = get_embedding_provider()
+    if hasattr(provider, "embed_queries"):
+        vectors = provider.embed_queries(texts)  # type: ignore[attr-defined]
+    else:
+        vectors = [provider.embed_query(text) for text in texts]
+    _validate_vectors(vectors, provider.vector_dim)
+    return vectors
+
+
 def embed_text(text: str) -> list[float]:
     """Backward-compatible alias for document embeddings."""
     return embed_document_text(text)

@@ -1,10 +1,12 @@
 "use client";
 
 import { Bookmark, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge, DrawerSkeleton, SpinnerButton } from "@/components/ui";
+import { buildEvidenceMapHref } from "@/features/jobs/job-actions";
 import { resumeOverlay } from "@/features/resume/resume-ui";
 import {
   chipAmber,
@@ -98,7 +100,7 @@ export function MatchDetailDrawer({ match, onClose, onSaved }: Props) {
                 >
                   <span className="text-lg font-bold">{source.fit_score.toFixed(0)}</span>
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <Badge
                     tone={
                       fitTierKey === "high"
@@ -112,6 +114,14 @@ export function MatchDetailDrawer({ match, onClose, onSaved }: Props) {
                   </Badge>
                   <p className="mt-1 text-sm text-zinc-600">{source.explanation}</p>
                 </div>
+                {source.match_id ? (
+                  <Link
+                    href={buildEvidenceMapHref(source.match_id)}
+                    className="inline-flex h-10 items-center gap-2 rounded-md border border-emerald-600/25 bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm shadow-emerald-900/15 transition hover:bg-emerald-700"
+                  >
+                    Open Evidence Map
+                  </Link>
+                ) : null}
               </div>
 
               <MetaBlock job={source.job} />

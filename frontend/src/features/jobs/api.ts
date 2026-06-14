@@ -1,6 +1,7 @@
 import { apiRequest } from "@/lib/api";
 
 import type {
+  EvidenceMapResponse,
   JobSearchRequest,
   JobSearchResponse,
   JobSearchSummary,
@@ -49,6 +50,12 @@ export function listJobSearches(limit = 50) {
 
 export function getMatchDetail(matchId: string) {
   return apiRequest<MatchSummary>(`/api/v1/jobs/matches/${matchId}`);
+}
+
+export function getEvidenceMap(matchId: string) {
+  return apiRequest<EvidenceMapResponse>(
+    `/api/v1/jobs/matches/${matchId}/evidence-map`,
+  );
 }
 
 export function addManualJob(input: ManualJobRequest) {

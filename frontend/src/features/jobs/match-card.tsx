@@ -22,6 +22,8 @@ import {
   surfaceCardMuted,
 } from "@/lib/ui-theme";
 
+import { buildEvidenceMapHref } from "./job-actions";
+
 import { useSaveMatchToTracker } from "./hooks";
 import type { MatchSummary } from "./types";
 import { getFitTier } from "./types";
@@ -168,6 +170,14 @@ export function MatchCard({ match, onOpenDetails, onSaved }: Props) {
                   </div>
                 ))}
               </div>
+            ) : null}
+            {match.match_id ? (
+              <Link
+                href={buildEvidenceMapHref(match.match_id)}
+                className="inline-flex text-sm font-medium text-emerald-700 hover:underline"
+              >
+                View evidence map
+              </Link>
             ) : null}
           </div>
         ) : null}

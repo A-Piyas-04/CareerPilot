@@ -30,6 +30,7 @@ export function useResumes() {
   return useQuery({
     queryKey: resumeKeys.list,
     queryFn: listResumes,
+    retry: 1,
   });
 }
 

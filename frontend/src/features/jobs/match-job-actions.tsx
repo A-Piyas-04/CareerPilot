@@ -1,6 +1,6 @@
 "use client";
 
-import { LineChart, Mail, Map, MessageSquareText } from "lucide-react";
+import { LineChart, Mail, Map, MapPinned, MessageSquareText } from "lucide-react";
 import { TransitionLink } from "@/components/navigation/navigation-transition";
 
 import type { JobActionKey, JobActionLink } from "./job-actions";
@@ -8,6 +8,7 @@ import { getMatchJobActions } from "./job-actions";
 import type { MatchSummary } from "./types";
 
 const ICONS: Record<JobActionKey, typeof Mail> = {
+  evidenceMap: MapPinned,
   coverLetter: Mail,
   skillGap: LineChart,
   roadmap: Map,

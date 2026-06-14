@@ -109,6 +109,23 @@ class GeminiEmbeddingProvider:
         client = self._get_client()
         return self._embed_one(client, text, task_type="retrieval_query")
 
+    def embed_queries(self, texts: list[str]) -> list[list[float]]:
+        """Embed multiple query strings (parallel API calls when batch size > 1)."""
+        if not texts:
+            return []
+        if len(texts) == 1:
+            return [self.embed_query(texts[0])]
+        from concurrent.futures import ThreadPoolExecutor  # noqa: PLC0415
+
+        client = self._get_client()
+        workers = min(8, len(texts))
+
+        def _embed(text: str) -> list[float]:
+            return self._embed_one(client, text, task_type="retrieval_query")
+
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            return list(pool.map(_embed, texts))
+
     def _candidate_models(self) -> list[str]:
         """Return de-duplicated model aliases to survive SDK naming differences."""
         configured = self._model

@@ -5,10 +5,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader, PageShell } from "@/components/layout";
-import { EmptyState, Skeleton } from "@/components/ui";
+import { EmptyState } from "@/components/ui";
 import { useResumes } from "@/features/resume/hooks";
 import { pickPrimaryResume } from "@/features/resume/types";
-import { alertWarning, surfaceCard } from "@/lib/ui-theme";
+import { alertError, alertWarning, surfaceCard } from "@/lib/ui-theme";
 
 import { listMatches } from "./api";
 import { JobSearchForm } from "./search-form";
@@ -162,35 +162,48 @@ export function JobsPageClient() {
       />
 
       <div className="flex flex-col gap-5">
-        {resumesQuery.isLoading ? (
-          <Skeleton className="h-24 rounded-xl" />
-        ) : resumes.length === 0 ? (
+        {resumesQuery.isError ? (
+          <div className={alertError}>
+            <p>{resumesQuery.error.message}</p>
+            <button
+              type="button"
+              onClick={() => resumesQuery.refetch()}
+              className="mt-2 text-sm font-semibold underline"
+            >
+              Retry loading CVs
+            </button>
+          </div>
+        ) : null}
+
+        {!resumesQuery.isLoading && !resumesQuery.isError && resumes.length === 0 ? (
           <div className={alertWarning}>
             Upload a CV on the{" "}
             <a className="font-semibold underline" href="/resume">
               CV Intelligence
             </a>{" "}
-            page first — Job Hunter needs an indexed CV to compute fit scores.
+            page first — Job Hunter needs an indexed CV to compute fit scores. You
+            can still paste a job posting below.
           </div>
-        ) : (
-          <JobSearchForm
-            key={
-              searchPrefill
-                ? `prefill-${searchPrefill.query}-${searchPrefill.location ?? ""}`
-                : "job-search-default"
-            }
-            resumes={resumes}
-            selectedResumeId={selectedResumeId}
-            prefill={searchPrefill}
-            onResumeChange={(resumeId) => {
-              setSelectedResumeId(resumeId);
-              setCurrentSearch(null);
-            }}
-            onSearchStart={() => setCurrentSearch(null)}
-            onSearchSuccess={handleSearchSuccess}
-            onOpenManual={() => setManualOpen(true)}
-          />
-        )}
+        ) : null}
+
+        <JobSearchForm
+          key={
+            searchPrefill
+              ? `prefill-${searchPrefill.query}-${searchPrefill.location ?? ""}`
+              : "job-search-default"
+          }
+          resumes={resumes}
+          resumesLoading={resumesQuery.isLoading}
+          selectedResumeId={selectedResumeId}
+          prefill={searchPrefill}
+          onResumeChange={(resumeId) => {
+            setSelectedResumeId(resumeId);
+            setCurrentSearch(null);
+          }}
+          onSearchStart={() => setCurrentSearch(null)}
+          onSearchSuccess={handleSearchSuccess}
+          onOpenManual={() => setManualOpen(true)}
+        />
 
         <div ref={resultsRef}>
           {currentMatches.length > 0 ? (

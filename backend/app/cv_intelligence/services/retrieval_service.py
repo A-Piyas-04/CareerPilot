@@ -10,7 +10,7 @@ from supabase import Client
 from app.core.config import settings
 from app.core.supabase_errors import run_supabase
 from app.cv_intelligence.services._helpers import _rows
-from app.cv_intelligence.services.embedding_service import embed_query_text
+from app.cv_intelligence.services.embedding_service import embed_query_batch, embed_query_text
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +100,158 @@ def search_chunks(
     )
 
 
+def search_chunks_batch(
+    user_id: str,
+    queries: list[str],
+    supabase: Client,
+    resume_id: Optional[str] = None,
+    top_k: int = 5,
+    min_similarity: float = MIN_SIMILARITY,
+) -> list[list[dict]]:
+    """
+    Retrieve top-k chunks for multiple queries efficiently.
+
+    Embeds all queries in parallel, fetches resume chunks once, and ranks
+    with numpy — avoids N sequential embedding + DB round trips.
+    """
+    if not queries:
+        return []
+    if len(queries) == 1:
+        return [
+            search_chunks(
+                user_id=user_id,
+                query=queries[0],
+                supabase=supabase,
+                resume_id=resume_id,
+                top_k=top_k,
+                min_similarity=min_similarity,
+            )
+        ]
+
+    query_embeddings = embed_query_batch(queries)
+    expected_dim = settings.embedding_vector_dim
+    for index, query_embedding in enumerate(query_embeddings):
+        if len(query_embedding) != expected_dim:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    f"Query embedding dimension {len(query_embedding)} does not match "
+                    f"configured EMBEDDING_VECTOR_DIM={expected_dim} (query index {index})."
+                ),
+            )
+
+    logger.info(
+        "Retrieval strategy=batch_numpy queries=%s top_k=%s",
+        len(queries),
+        top_k,
+    )
+    return _python_cosine_search_batch(
+        user_id=user_id,
+        query_embeddings=query_embeddings,
+        supabase=supabase,
+        resume_id=resume_id,
+        top_k=top_k,
+        min_similarity=min_similarity,
+    )
+
+
+def _fetch_user_chunk_rows(
+    user_id: str,
+    supabase: Client,
+    resume_id: Optional[str],
+) -> list[dict]:
+    embedding_column = settings.embedding_active_column.strip() or "embedding"
+    query_select = (
+        supabase.table("resume_chunks")
+        .select(f"id, resume_id, section_name, chunk_text, {embedding_column}")
+        .eq("user_id", user_id)
+    )
+    if resume_id:
+        query_select = query_select.eq("resume_id", resume_id)
+    response = run_supabase("fetch resume chunks for search", query_select.execute)
+    return _rows(response)
+
+
+def _python_cosine_search_batch(
+    user_id: str,
+    query_embeddings: list[list[float]],
+    supabase: Client,
+    resume_id: Optional[str],
+    top_k: int,
+    min_similarity: float,
+) -> list[list[dict]]:
+    """Fetch chunks once and rank each query embedding against them."""
+    try:
+        import numpy as np  # noqa: PLC0415
+    except ImportError as exc:
+        raise RuntimeError("numpy is not installed. Run: pip install numpy") from exc
+
+    rows = _fetch_user_chunk_rows(user_id, supabase, resume_id)
+    if not rows:
+        return [[] for _ in query_embeddings]
+
+    embedding_column = settings.embedding_active_column.strip() or "embedding"
+    chunk_meta: list[dict] = []
+    chunk_vectors: list[list[float]] = []
+
+    for row in rows:
+        raw_emb = row.get(embedding_column)
+        if not raw_emb:
+            continue
+        emb = _parse_embedding(raw_emb)
+        if not emb:
+            continue
+        if len(emb) != len(query_embeddings[0]):
+            if settings.retrieval_require_dim_match:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail=(
+                        "Retrieval temporarily unavailable during embedding migration. "
+                        "Please retry after re-embedding completes."
+                    ),
+                )
+            continue
+        chunk_meta.append(row)
+        chunk_vectors.append(emb)
+
+    if not chunk_vectors:
+        return [[] for _ in query_embeddings]
+
+    matrix = np.array(chunk_vectors, dtype=np.float32)
+    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    matrix = matrix / norms
+
+    results: list[list[dict]] = []
+    for query_embedding in query_embeddings:
+        q_vec = np.array(query_embedding, dtype=np.float32)
+        q_norm = np.linalg.norm(q_vec)
+        if q_norm == 0:
+            results.append([])
+            continue
+        q_vec = q_vec / q_norm
+        similarities = matrix @ q_vec
+        scored: list[tuple[float, dict]] = []
+        for index, sim in enumerate(similarities):
+            similarity = float(sim)
+            if similarity >= min_similarity:
+                scored.append((similarity, chunk_meta[index]))
+        scored.sort(key=lambda item: item[0], reverse=True)
+        top = scored[:top_k]
+        results.append([
+            {
+                "chunk_id": row["id"],
+                "resume_id": row["resume_id"],
+                "section_name": row.get("section_name"),
+                "chunk_text": row["chunk_text"],
+                "similarity": round(sim, 6),
+            }
+            for sim, row in top
+        ])
+
+    return results
+
+
 def _python_cosine_search(
     user_id: str,
     query_embedding: list[float],
@@ -115,16 +267,7 @@ def _python_cosine_search(
         raise RuntimeError("numpy is not installed. Run: pip install numpy") from exc
 
     embedding_column = settings.embedding_active_column.strip() or "embedding"
-    query_select = (
-        supabase.table("resume_chunks")
-        .select(f"id, resume_id, section_name, chunk_text, {embedding_column}")
-        .eq("user_id", user_id)
-    )
-    if resume_id:
-        query_select = query_select.eq("resume_id", resume_id)
-
-    response = run_supabase("fetch resume chunks for search", query_select.execute)
-    rows = _rows(response)
+    rows = _fetch_user_chunk_rows(user_id, supabase, resume_id)
 
     if not rows:
         return []

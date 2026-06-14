@@ -11,7 +11,8 @@ from pydantic import BaseModel, Field
 from app.core.auth import get_current_user
 from app.core.config import settings
 from app.core.database import get_supabase_client
-from app.job_intelligence.services import job_service
+from app.job_intelligence.models.evidence_map import EvidenceMapResponse
+from app.job_intelligence.services import evidence_map_service, job_service
 from app.job_intelligence.services.sources.jsearch import JSearchAdapter
 from app.job_intelligence.services.sources.jsearch_errors import JSearchError
 from app.job_intelligence.services.sources.manual_paste import ManualPasteAdapter
@@ -294,6 +295,27 @@ def list_matches(
             detail=_supabase_error_detail(exc),
         ) from exc
     return [_match_summary_from_dict(item) for item in summaries]
+
+
+@router.get("/matches/{match_id}/evidence-map", response_model=EvidenceMapResponse)
+def get_evidence_map(
+    match_id: str,
+    user_id: str = Depends(get_current_user),
+) -> EvidenceMapResponse:
+    """Build an on-demand JD ↔ CV evidence map for a job match."""
+    supabase = get_supabase_client()
+    try:
+        result = evidence_map_service.build_evidence_map(
+            user_id=user_id,
+            match_id=match_id,
+            supabase=supabase,
+        )
+    except APIError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_supabase_error_detail(exc),
+        ) from exc
+    return EvidenceMapResponse(**result)
 
 
 @router.get("/matches/{match_id}", response_model=MatchSummary)

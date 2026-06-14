@@ -82,6 +82,9 @@ export const chipViolet =
 export const chipAmber =
   "rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900 ring-1 ring-amber-200/60 dark:bg-amber-400/12 dark:text-amber-100 dark:ring-amber-300/25";
 
+export const chipRose =
+  "rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium text-rose-800 ring-1 ring-rose-200/60 dark:bg-rose-400/12 dark:text-rose-100 dark:ring-rose-300/25";
+
 export const chipNeutral =
   "rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200/60 dark:bg-white/10 dark:text-slate-100 dark:ring-white/15";
 

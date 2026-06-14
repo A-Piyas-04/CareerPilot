@@ -4,6 +4,7 @@ import { trackerKeys } from "@/features/tracker/hooks";
 
 import {
   addManualJob,
+  getEvidenceMap,
   getMatchDetail,
   listJobSearches,
   listMatches,
@@ -16,6 +17,7 @@ export const jobsKeys = {
   matches: (resumeId: string | null, searchId?: string | null) =>
     ["job-matches", resumeId, searchId ?? "all"] as const,
   matchDetail: (matchId: string | null) => ["job-match", matchId] as const,
+  evidenceMap: (matchId: string | null) => ["job-evidence-map", matchId] as const,
   savedMatches: () => ["job-matches", "saved"] as const,
   searches: () => ["job-searches"] as const,
 };
@@ -53,12 +55,23 @@ export function useMatchDetail(matchId: string | null) {
   });
 }
 
+export function useEvidenceMap(matchId: string | null) {
+  return useQuery({
+    queryKey: jobsKeys.evidenceMap(matchId),
+    queryFn: () => getEvidenceMap(matchId!),
+    enabled: Boolean(matchId),
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+  });
+}
+
 export function useJobSearchHistory(options: { enabled?: boolean } = {}) {
   const { enabled = true } = options;
   return useQuery({
     queryKey: jobsKeys.searches(),
     queryFn: () => listJobSearches(),
     enabled,
+    retry: 1,
   });
 }
 

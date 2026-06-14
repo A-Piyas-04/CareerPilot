@@ -600,6 +600,65 @@ select {
   );
 }
 
+/* Evidence Map diagram */
+:root {
+  --cp-diagram-strong-fill: #d1fae5;
+  --cp-diagram-weak-fill: #fef3c7;
+  --cp-diagram-gap-fill: #ffe4e6;
+}
+
+.dark {
+  --cp-diagram-strong-fill: #064e3b;
+  --cp-diagram-weak-fill: #78350f;
+  --cp-diagram-gap-fill: #881337;
+}
+
+@keyframes cp-diagram-bond-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cp-diagram-fit-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.cp-diagram-bond {
+  animation: cp-diagram-bond-in 600ms ease-out both;
+}
+
+.cp-diagram-fit-ring {
+  animation: cp-diagram-fit-pulse 2.4s ease-in-out infinite;
+}
+
+.cp-diagram-node-selected {
+  filter: drop-shadow(0 0 6px rgb(16 185 129 / 0.45));
+}
+
+.cp-diagram-inspector {
+  animation: cp-diagram-inspector-in 280ms ease-out both;
+}
+
+@keyframes cp-diagram-inspector-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 * {
   scrollbar-color: rgb(148 163 184 / 0.7) transparent;
 }

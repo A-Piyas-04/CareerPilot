@@ -153,3 +153,63 @@ export function filterAndSortMatches(
 
   return result;
 }
+
+export type EvidenceMapStatus = "strong" | "weak" | "missing";
+
+export type EvidenceMapCategory =
+  | "skill"
+  | "technical"
+  | "experience"
+  | "education"
+  | "soft_skill"
+  | "other";
+
+export type EvidenceMapSource = "skill_extraction" | "jd_parse" | "llm_extract";
+
+export type EvidenceMapChunk = {
+  chunk_id: string;
+  section_name: string;
+  snippet: string;
+  similarity: number;
+};
+
+export type EvidenceMapRow = {
+  id: string;
+  label: string;
+  category: EvidenceMapCategory;
+  status: EvidenceMapStatus;
+  source: EvidenceMapSource;
+  matched_skill: boolean;
+  top_similarity: number;
+  evidence_chunks: EvidenceMapChunk[];
+  guidance: string | null;
+};
+
+export type EvidenceMapSummary = {
+  strong_count: number;
+  weak_count: number;
+  missing_count: number;
+  total_requirements: number;
+  coverage_percent: number;
+};
+
+export type EvidenceMapJob = {
+  id: string;
+  title: string;
+  company: string | null;
+  location: string | null;
+  description: string | null;
+  requirements: string | null;
+};
+
+export type EvidenceMapResponse = {
+  match_id: string;
+  job: EvidenceMapJob;
+  fit_score: number;
+  summary: EvidenceMapSummary;
+  rows: EvidenceMapRow[];
+  generated_at: string;
+  empty_reason: string | null;
+};
+
+export type EvidenceMapFilter = "all" | EvidenceMapStatus;

@@ -1,6 +1,11 @@
 import type { MatchSummary } from "./types";
 
-export type JobActionKey = "coverLetter" | "skillGap" | "roadmap" | "chat";
+export type JobActionKey =
+  | "evidenceMap"
+  | "coverLetter"
+  | "skillGap"
+  | "roadmap"
+  | "chat";
 
 export type JobActionLink = {
   key: JobActionKey;
@@ -8,6 +13,10 @@ export type JobActionLink = {
   label: string;
   shortLabel: string;
 };
+
+export function buildEvidenceMapHref(matchId: string): string {
+  return `/jobs/matches/${encodeURIComponent(matchId)}/evidence`;
+}
 
 export function buildCoverLetterHref(jobId: string): string {
   return `/cover-letters?jobId=${encodeURIComponent(jobId)}`;
@@ -35,7 +44,18 @@ export function getMatchJobActions(match: MatchSummary): JobActionLink[] {
     return [];
   }
 
-  const actions: JobActionLink[] = [
+  const actions: JobActionLink[] = [];
+
+  if (match.match_id) {
+    actions.push({
+      key: "evidenceMap",
+      href: buildEvidenceMapHref(match.match_id),
+      label: "Evidence map",
+      shortLabel: "Evidence",
+    });
+  }
+
+  actions.push(
     {
       key: "coverLetter",
       href: buildCoverLetterHref(jobId),
@@ -60,7 +80,7 @@ export function getMatchJobActions(match: MatchSummary): JobActionLink[] {
       label: "Ask assistant",
       shortLabel: "Chat",
     },
-  ];
+  );
 
   return actions;
 }
